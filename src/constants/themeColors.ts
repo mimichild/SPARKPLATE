@@ -4,16 +4,16 @@ export interface ThemeColor {
 }
 
 export const THEME_COLORS: ThemeColor[] = [
-  { name: '墨黑',          value: '#111111' },
-  { name: '岩石灰',        value: '#6B7280' },
-  { name: '海洋藍',        value: '#3B82F6' },
-  { name: '薰衣紫',        value: '#7C3AED' },
-  { name: 'Mocha Mousse', value: '#A47764' }, // Pantone 2025
-  { name: 'Blush Pink',   value: '#f5baba' }, // user-specified
-  { name: '翡翠綠',        value: '#10B981' },
-  { name: '夕陽橙',        value: '#F97316' },
-  { name: '玫瑰紅',        value: '#EC4899' },
-  { name: '青瓷藍',        value: '#06B6D4' },
+  { name: '墨黑',   value: '#111111' },
+  { name: '玫瑰粉', value: '#f5baba' },
+  { name: '薄荷綠', value: '#A8D5C2' },
+  { name: '薰衣草', value: '#C4B0D6' },
+  { name: '蜜桃橘', value: '#F5B89A' },
+  { name: '粉霧藍', value: '#A8C8E0' },
+  { name: '奶油黃', value: '#F0D898' },
+  { name: '丁香紫', value: '#D4A8C8' },
+  { name: '抹茶綠', value: '#B0CC9C' },
+  { name: '奶茶棕', value: '#C8A88C' },
 ];
 
 export const DEFAULT_FONT_COLOR = '#111111';

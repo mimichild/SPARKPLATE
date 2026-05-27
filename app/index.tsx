@@ -5,9 +5,11 @@ import {
 import { router } from 'expo-router';
 import { SettingsModal } from '@/components/SettingsModal';
 import { AppText } from '@/components/AppText';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 export default function SplashScreen() {
   const [showSettings, setShowSettings] = useState(false);
+  const { fontColor } = useSettingsStore();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -35,11 +37,12 @@ export default function SplashScreen() {
 
       <TouchableOpacity
         testID="start-btn"
-        style={styles.startBtn}
-        onPress={() => router.replace('/(tabs)/today')}
+        onPress={() => router.push('/(tabs)/today')}
         activeOpacity={0.85}
       >
-        <Text style={styles.startBtnText}>開始使用</Text>
+        <View style={{ backgroundColor: fontColor, borderRadius: 14, paddingVertical: 18, alignItems: 'center', marginBottom: 48 }}>
+          <Text style={styles.startBtnText}>開始使用</Text>
+        </View>
       </TouchableOpacity>
 
       {showSettings ? <SettingsModal visible onClose={() => setShowSettings(false)} /> : null}
@@ -56,9 +59,5 @@ const styles = StyleSheet.create({
   settingsBtnText: { fontSize: 14, color: '#888' },
   sisterApps: { flexDirection: 'row', justifyContent: 'center', gap: 24, marginBottom: 32 },
   sisterLink: { fontSize: 13, color: '#aaa', textDecorationLine: 'underline' },
-  startBtn: {
-    backgroundColor: '#111', borderRadius: 14, paddingVertical: 18,
-    alignItems: 'center', marginBottom: 48,
-  },
   startBtnText: { color: '#fff', fontSize: 17, fontWeight: '700', letterSpacing: 1 },
 });

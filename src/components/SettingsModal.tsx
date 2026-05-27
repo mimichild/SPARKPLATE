@@ -50,7 +50,7 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
           </View>
 
           {/* Font color */}
-          <AppText style={styles.colorSectionLabel}>字體顏色</AppText>
+          <AppText style={styles.colorSectionLabel}>主題顏色</AppText>
           <View style={styles.colorGrid}>
             {THEME_COLORS.map((c) => {
               const selected = pendingColor === c.value;
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: '700', marginBottom: 24, textAlign: 'center', color: '#111' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 },
   labelGroup: { flex: 1, marginRight: 12 },
-  label: { fontSize: 15, fontWeight: '600' },
+  label: { fontSize: 20, fontWeight: '700' },
   hint: { fontSize: 12, color: '#999', marginTop: 2 },
   sectionLabel: { fontSize: 13, color: '#888', marginBottom: 12 },
   colorSectionLabel: { fontSize: 20, fontWeight: '700', marginBottom: 12 },
