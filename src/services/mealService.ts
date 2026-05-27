@@ -151,6 +151,7 @@ export async function updateMeal(
   const setClauses: string[] = ['updated_at = ?'];
   const params: (string | number | null)[] = [updatedAt];
 
+  if (updates.mealType !== undefined) { setClauses.push('meal_type = ?'); params.push(updates.mealType); }
   if (updates.photoId !== undefined) { setClauses.push('photo_id = ?'); params.push(updates.photoId ?? null); }
   if (updates.mood !== undefined) { setClauses.push('mood = ?'); params.push(updates.mood ?? null); }
   if (updates.event !== undefined) { setClauses.push('event = ?'); params.push(updates.event ?? null); }
