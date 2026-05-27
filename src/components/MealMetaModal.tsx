@@ -88,7 +88,10 @@ export function MealMetaModal({ visible, onConfirm, onCancel }: MealMetaModalPro
           </View>
 
           {/* ── 心情 ── */}
-          <AppText style={styles.sectionLabel}>心情</AppText>
+          <View style={styles.optionalRow}>
+            <AppText style={styles.sectionLabel}>心情</AppText>
+            <Text style={styles.optionalBadge}>選填</Text>
+          </View>
           <View style={styles.moodRow}>
             {MOOD_LIST.map((m) => {
               const active = mood === m;
@@ -110,7 +113,10 @@ export function MealMetaModal({ visible, onConfirm, onCancel }: MealMetaModalPro
           </View>
 
           {/* ── 等級 ── */}
-          <AppText style={styles.sectionLabel}>等級</AppText>
+          <View style={styles.optionalRow}>
+            <AppText style={styles.sectionLabel}>等級</AppText>
+            <Text style={styles.optionalBadge}>選填</Text>
+          </View>
           {GRADE_LIST.map((g) => {
             const info = GRADE_CONFIG[g];
             const active = grade === g;
@@ -131,7 +137,10 @@ export function MealMetaModal({ visible, onConfirm, onCancel }: MealMetaModalPro
           })}
 
           {/* ── 事件 ── */}
-          <AppText style={styles.sectionLabel}>事件</AppText>
+          <View style={styles.optionalRow}>
+            <AppText style={styles.sectionLabel}>事件</AppText>
+            <Text style={styles.optionalBadge}>選填</Text>
+          </View>
           <TextInput
             testID="event-input"
             style={styles.input}
@@ -173,7 +182,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: '700', marginBottom: 20, textAlign: 'center' },
   requiredRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 4, gap: 6 },
   requiredBadge: { fontSize: 11, color: '#fff', backgroundColor: '#E85D5D', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
-  sectionLabel: { fontSize: 13, color: '#888', marginBottom: 10, marginTop: 16 },
+  optionalRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 16, gap: 6 },
+  optionalBadge: { fontSize: 11, color: '#aaa', backgroundColor: '#f0f0f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
+  sectionLabel: { fontSize: 13, color: '#888', marginBottom: 0 },
 
   // Meal type chips
   mealTypeRow: { flexDirection: 'row', gap: 10 },

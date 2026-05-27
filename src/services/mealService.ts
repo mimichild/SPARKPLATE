@@ -122,7 +122,7 @@ export async function getMealsByDateRange(
   endDate: string
 ): Promise<DayRecord[]> {
   const rows = await db.getAllAsync<MealRow>(
-    `${MEAL_SELECT} WHERE m.date >= ? AND m.date <= ? ORDER BY m.date DESC, m.meal_type ASC`,
+    `${MEAL_SELECT} WHERE m.date >= ? AND m.date <= ? ORDER BY m.date DESC, m.meal_type ASC, m.created_at DESC`,
     [startDate, endDate]
   );
 
@@ -133,9 +133,10 @@ export async function getMealsByDateRange(
     }
     const record = dayMap.get(row.date)!;
     const meal = rowToMeal(row);
-    if (row.meal_type === 'breakfast') record.breakfast = meal;
-    else if (row.meal_type === 'lunch') record.lunch = meal;
-    else if (row.meal_type === 'dinner') record.dinner = meal;
+    // Only set the first (newest, due to created_at DESC) per slot — skip duplicates
+    if (row.meal_type === 'breakfast' && !record.breakfast) record.breakfast = meal;
+    else if (row.meal_type === 'lunch' && !record.lunch) record.lunch = meal;
+    else if (row.meal_type === 'dinner' && !record.dinner) record.dinner = meal;
   }
 
   return Array.from(dayMap.values());
@@ -203,8 +204,19 @@ export async function filterMeals(
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-  const sql = `${MEAL_SELECT} ${where} ORDER BY m.date DESC, m.meal_type ASC`;
+  const sql = `${MEAL_SELECT} ${where} ORDER BY m.date DESC, m.meal_type ASC, m.created_at DESC`;
 
   const rows = await db.getAllAsync<MealRow>(sql, params);
-  return rows.map(rowToMeal);
+
+  // Deduplicate: keep only the newest record per (date, meal_type)
+  const seen = new Set<string>();
+  const deduped: MealRow[] = [];
+  for (const row of rows) {
+    const key = `${row.date}:${row.meal_type}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(row);
+    }
+  }
+  return deduped.map(rowToMeal);
 }
