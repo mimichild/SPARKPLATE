@@ -1,8 +1,8 @@
 export type MealType = 'breakfast' | 'lunch' | 'dinner';
 
-export type Mood = 'great' | 'good' | 'neutral' | 'bad' | 'terrible';
+export type Mood = 'happy' | 'sad' | 'angry' | 'neutral';
 
-export type MealGrade = 1 | 2 | 3 | 4 | 5;
+export type MealGrade = 'S' | 'A' | 'B';
 
 export type PhotoSize = 'thumb' | 'grid' | 'detail' | 'backup-lite';
 
