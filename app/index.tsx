@@ -37,7 +37,7 @@ export default function SplashScreen() {
 
       <TouchableOpacity
         testID="start-btn"
-        onPress={() => router.push('/(tabs)/today')}
+        onPress={() => router.push('/(tabs)/gallery')}
         activeOpacity={0.85}
       >
         <View style={{ backgroundColor: fontColor, borderRadius: 14, paddingVertical: 18, alignItems: 'center', marginBottom: 48 }}>

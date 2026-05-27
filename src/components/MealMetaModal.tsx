@@ -3,43 +3,89 @@ import {
   Modal, View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView,
 } from 'react-native';
 import { Mood, MealGrade, MealType } from '@/types';
-import { MOOD_CONFIG, MOOD_LIST, MEAL_LABELS } from '@/constants/moodConfig';
+import { MOOD_CONFIG, MOOD_LIST } from '@/constants/moodConfig';
 import { GRADE_CONFIG, GRADE_LIST } from '@/constants/gradeConfig';
 import { FaceIcon } from '@/components/FaceIcon';
 import { AppText } from '@/components/AppText';
 import { useSettingsStore } from '@/stores/settingsStore';
 
+const MEAL_OPTIONS: { type: MealType; label: string; icon: string }[] = [
+  { type: 'breakfast', label: '早餐', icon: '🌅' },
+  { type: 'lunch',     label: '午餐', icon: '☀️' },
+  { type: 'dinner',    label: '晚餐', icon: '🌙' },
+];
+
 interface MealMetaModalProps {
   visible: boolean;
-  mealType: MealType;
-  onConfirm: (meta: { mood?: Mood; event?: string; grade?: MealGrade; note?: string }) => void;
+  onConfirm: (meta: {
+    mealType: MealType;
+    mood?: Mood;
+    event?: string;
+    grade?: MealGrade;
+    note?: string;
+  }) => void;
   onCancel: () => void;
 }
 
-export function MealMetaModal({ visible, mealType, onConfirm, onCancel }: MealMetaModalProps) {
+export function MealMetaModal({ visible, onConfirm, onCancel }: MealMetaModalProps) {
   const { fontColor } = useSettingsStore();
-  const [mood, setMood] = useState<Mood | undefined>();
-  const [event, setEvent] = useState('');
-  const [grade, setGrade] = useState<MealGrade | undefined>();
-  const [note, setNote] = useState('');
+  const [mealType, setMealType] = useState<MealType | undefined>();
+  const [mood,     setMood]     = useState<Mood | undefined>();
+  const [event,    setEvent]    = useState('');
+  const [grade,    setGrade]    = useState<MealGrade | undefined>();
+  const [note,     setNote]     = useState('');
 
   function handleConfirm() {
-    onConfirm({ mood, event: event || undefined, grade, note: note || undefined });
+    if (!mealType) return;
+    onConfirm({ mealType, mood, event: event || undefined, grade, note: note || undefined });
+    setMealType(undefined);
     setMood(undefined);
     setEvent('');
     setGrade(undefined);
     setNote('');
   }
 
+  function handleCancel() {
+    setMealType(undefined);
+    setMood(undefined);
+    setEvent('');
+    setGrade(undefined);
+    setNote('');
+    onCancel();
+  }
+
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onCancel}>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={handleCancel}>
       <View style={styles.overlay}>
         <ScrollView
           contentContainerStyle={styles.sheet}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <AppText style={styles.title}>{MEAL_LABELS[mealType] ?? mealType}</AppText>
+          <AppText style={styles.title}>新增餐點</AppText>
+
+          {/* ── 餐別（必填） ── */}
+          <View style={styles.requiredRow}>
+            <AppText style={styles.sectionLabel}>餐別</AppText>
+            <Text style={styles.requiredBadge}>必填</Text>
+          </View>
+          <View style={styles.mealTypeRow}>
+            {MEAL_OPTIONS.map(({ type, label, icon }) => {
+              const active = mealType === type;
+              return (
+                <TouchableOpacity
+                  key={type}
+                  testID={`meal-type-${type}`}
+                  style={[styles.mealTypeChip, active && { backgroundColor: fontColor, borderColor: fontColor }]}
+                  onPress={() => setMealType(active ? undefined : type)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.mealTypeIcon}>{icon}</Text>
+                  <Text style={[styles.mealTypeLabel, active && styles.mealTypeLabelActive]}>{label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
           {/* ── 心情 ── */}
           <AppText style={styles.sectionLabel}>心情</AppText>
@@ -91,17 +137,22 @@ export function MealMetaModal({ visible, mealType, onConfirm, onCancel }: MealMe
             style={styles.input}
             value={event}
             onChangeText={setEvent}
-            placeholder="記錄今天發生了什麼…"
+            placeholder="記錄今天發生了什麼…（如：工作壓力大、姨媽來、聚餐）"
             placeholderTextColor="#bbb"
           />
 
           {/* ── 按鈕 ── */}
           <View style={styles.actions}>
-            <TouchableOpacity testID="cancel-btn" style={styles.cancelBtn} onPress={onCancel}>
+            <TouchableOpacity testID="cancel-btn" style={styles.cancelBtn} onPress={handleCancel}>
               <Text style={styles.cancelText}>取消</Text>
             </TouchableOpacity>
-            <TouchableOpacity testID="confirm-btn" style={styles.confirmBtnWrap} onPress={handleConfirm}>
-              <View style={[styles.confirmBtn, { backgroundColor: fontColor }]}>
+            <TouchableOpacity
+              testID="confirm-btn"
+              style={styles.confirmBtnWrap}
+              onPress={handleConfirm}
+              disabled={!mealType}
+            >
+              <View style={[styles.confirmBtn, { backgroundColor: mealType ? fontColor : '#ccc' }]}>
                 <Text style={styles.confirmText}>完成</Text>
               </View>
             </TouchableOpacity>
@@ -120,7 +171,20 @@ const styles = StyleSheet.create({
     padding: 24, paddingBottom: 40,
   },
   title: { fontSize: 18, fontWeight: '700', marginBottom: 20, textAlign: 'center' },
+  requiredRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 4, gap: 6 },
+  requiredBadge: { fontSize: 11, color: '#fff', backgroundColor: '#E85D5D', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
   sectionLabel: { fontSize: 13, color: '#888', marginBottom: 10, marginTop: 16 },
+
+  // Meal type chips
+  mealTypeRow: { flexDirection: 'row', gap: 10 },
+  mealTypeChip: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 4, paddingVertical: 12, borderRadius: 14,
+    backgroundColor: '#f5f5f5', borderWidth: 1.5, borderColor: '#f5f5f5',
+  },
+  mealTypeIcon: { fontSize: 16 },
+  mealTypeLabel: { fontSize: 14, fontWeight: '600', color: '#666' },
+  mealTypeLabelActive: { color: '#fff' },
 
   // Mood row
   moodRow: { flexDirection: 'row', gap: 8, justifyContent: 'space-between' },

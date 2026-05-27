@@ -1,16 +1,17 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FilterCriteria, Mood, MealGrade, MealType } from '@/types';
-import { MOOD_CONFIG, MEAL_LABELS } from '@/constants/moodConfig';
+import { MOOD_CONFIG, MOOD_LIST, MEAL_LABELS } from '@/constants/moodConfig';
+import { GRADE_CONFIG, GRADE_LIST } from '@/constants/gradeConfig';
+import { FaceIcon } from '@/components/FaceIcon';
 import { AppText } from '@/components/AppText';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 interface FilterPanelProps {
   criteria: FilterCriteria;
   onChange: (partial: Partial<FilterCriteria>) => void;
 }
 
-const MOODS: Mood[] = ['great', 'good', 'neutral', 'bad', 'terrible'];
-const GRADES: MealGrade[] = [1, 2, 3, 4, 5];
 const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner'];
 
 function toggle<T>(arr: T[] | undefined, item: T): T[] {
@@ -19,48 +20,72 @@ function toggle<T>(arr: T[] | undefined, item: T): T[] {
 }
 
 export function FilterPanel({ criteria, onChange }: FilterPanelProps) {
+  const { fontColor } = useSettingsStore();
+
   return (
     <View style={styles.container} testID="filter-panel">
+
+      {/* ── 心情 ── */}
       <AppText style={styles.sectionLabel}>心情</AppText>
       <View style={styles.row}>
-        {MOODS.map((m) => (
-          <TouchableOpacity
-            key={m}
-            testID={`filter-mood-${m}`}
-            style={[styles.chip, criteria.moods?.includes(m) ? styles.chipActive : null]}
-            onPress={() => onChange({ moods: toggle(criteria.moods, m) })}
-          >
-            <AppText style={styles.chipText}>{MOOD_CONFIG[m].emoji}</AppText>
-          </TouchableOpacity>
-        ))}
+        {MOOD_LIST.map((m) => {
+          const active = criteria.moods?.includes(m) ?? false;
+          return (
+            <TouchableOpacity
+              key={m}
+              testID={`filter-mood-${m}`}
+              style={[styles.moodChip, active && { backgroundColor: fontColor }]}
+              onPress={() => onChange({ moods: toggle(criteria.moods, m) })}
+              activeOpacity={0.75}
+            >
+              <FaceIcon mood={m} size={32} />
+              <Text style={[styles.moodLabel, active && styles.moodLabelActive]}>
+                {MOOD_CONFIG[m].label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
+      {/* ── 等級 ── */}
       <AppText style={styles.sectionLabel}>等級</AppText>
-      <View style={styles.row}>
-        {GRADES.map((g) => (
-          <TouchableOpacity
-            key={g}
-            testID={`filter-grade-${g}`}
-            style={[styles.chip, criteria.grades?.includes(g) ? styles.chipActive : null]}
-            onPress={() => onChange({ grades: toggle(criteria.grades, g) })}
-          >
-            <AppText style={styles.chipText}>{'⭐'.repeat(g)}</AppText>
-          </TouchableOpacity>
-        ))}
+      <View style={styles.gradeRow}>
+        {GRADE_LIST.map((g) => {
+          const info = GRADE_CONFIG[g];
+          const active = criteria.grades?.includes(g) ?? false;
+          return (
+            <TouchableOpacity
+              key={g}
+              testID={`filter-grade-${g}`}
+              style={[styles.gradeChip, active && { backgroundColor: info.color, borderColor: info.color }]}
+              onPress={() => onChange({ grades: toggle(criteria.grades, g) })}
+              activeOpacity={0.75}
+            >
+              <Text style={[styles.gradeLabel, active && styles.gradeLabelActive]}>{info.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
+      {/* ── 餐別 ── */}
       <AppText style={styles.sectionLabel}>餐別</AppText>
       <View style={styles.row}>
-        {MEAL_TYPES.map((t) => (
-          <TouchableOpacity
-            key={t}
-            testID={`filter-mealtype-${t}`}
-            style={[styles.chip, criteria.mealTypes?.includes(t) ? styles.chipActive : null]}
-            onPress={() => onChange({ mealTypes: toggle(criteria.mealTypes, t) })}
-          >
-            <AppText style={styles.chipText}>{MEAL_LABELS[t]}</AppText>
-          </TouchableOpacity>
-        ))}
+        {MEAL_TYPES.map((t) => {
+          const active = criteria.mealTypes?.includes(t) ?? false;
+          return (
+            <TouchableOpacity
+              key={t}
+              testID={`filter-mealtype-${t}`}
+              style={[styles.chip, active && { backgroundColor: fontColor }]}
+              onPress={() => onChange({ mealTypes: toggle(criteria.mealTypes, t) })}
+              activeOpacity={0.75}
+            >
+              <AppText style={[styles.chipText, active && styles.chipTextActive]}>
+                {MEAL_LABELS[t]}
+              </AppText>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -70,7 +95,27 @@ const styles = StyleSheet.create({
   container: { paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff' },
   sectionLabel: { fontSize: 13, color: '#888', marginBottom: 8, marginTop: 12 },
   row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: '#f0f0f0' },
-  chipActive: { backgroundColor: '#333' },
-  chipText: { fontSize: 14 },
+
+  // Mood chips
+  moodChip: {
+    alignItems: 'center', paddingVertical: 10, paddingHorizontal: 12,
+    borderRadius: 14, backgroundColor: '#f5f5f5', minWidth: 60,
+  },
+  moodLabel: { fontSize: 11, color: '#888', marginTop: 5 },
+  moodLabelActive: { color: '#fff' },
+
+  // Grade chips
+  gradeRow: { flexDirection: 'row', gap: 10 },
+  gradeChip: {
+    width: 48, height: 48, borderRadius: 24,
+    justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#f5f5f5', borderWidth: 2, borderColor: '#eee',
+  },
+  gradeLabel: { fontSize: 18, fontWeight: '800', color: '#aaa' },
+  gradeLabelActive: { color: '#fff' },
+
+  // Meal type chips
+  chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: '#f0f0f0' },
+  chipText: { fontSize: 14, color: '#555' },
+  chipTextActive: { color: '#fff' },
 });

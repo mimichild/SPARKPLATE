@@ -55,9 +55,9 @@ export default function TabLayout() {
           tabBarLabelStyle: { fontSize: 16, fontWeight: '600' },
         }}
       >
-        <Tabs.Screen name="today" options={{ title: '今日紀錄', tabBarLabel: '今日', tabBarIcon: () => null }} />
         <Tabs.Screen name="gallery" options={{ title: '照片牆', tabBarLabel: '照片', tabBarIcon: () => null }} />
         <Tabs.Screen name="filter" options={{ title: '標籤', tabBarLabel: '標籤', tabBarIcon: () => null }} />
+        <Tabs.Screen name="today" options={{ href: null }} />
       </Tabs>
     </View>
   );
