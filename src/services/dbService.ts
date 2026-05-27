@@ -3,7 +3,7 @@ import * as SQLite from 'expo-sqlite';
 export type SQLiteDatabase = SQLite.SQLiteDatabase;
 
 const DB_NAME = 'sparkplate.db';
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 4;
 
 export async function initDB(): Promise<SQLiteDatabase> {
   const db = await SQLite.openDatabaseAsync(DB_NAME);
@@ -74,6 +74,27 @@ export async function migrateDB(db: SQLiteDatabase): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_meals_mood      ON meals(mood);
       CREATE INDEX IF NOT EXISTS idx_meals_grade     ON meals(grade);
     `);
-    await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+    await db.execAsync(`PRAGMA user_version = 2`);
+  }
+
+  if (version < 3) {
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS daily_health (
+        date         TEXT PRIMARY KEY,
+        water_ml     INTEGER,
+        sleep_hours  REAL,
+        created_at   TEXT NOT NULL,
+        updated_at   TEXT NOT NULL
+      );
+    `);
+    await db.execAsync(`PRAGMA user_version = 3`);
+  }
+
+  if (version < 4) {
+    await db.execAsync(`
+      ALTER TABLE daily_health ADD COLUMN snack      TEXT;
+      ALTER TABLE daily_health ADD COLUMN late_night TEXT;
+    `);
+    await db.execAsync(`PRAGMA user_version = 4`);
   }
 }

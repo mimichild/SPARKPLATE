@@ -202,9 +202,36 @@ export async function filterMeals(
     conditions.push(`m.meal_type IN (${criteria.mealTypes.map(() => '?').join(', ')})`);
     params.push(...criteria.mealTypes);
   }
+  if (criteria.minWaterMl != null) {
+    conditions.push('dh.water_ml >= ?');
+    params.push(criteria.minWaterMl);
+  }
+  if (criteria.minSleepHours != null) {
+    conditions.push('dh.sleep_hours >= ?');
+    params.push(criteria.minSleepHours);
+  }
+  if (criteria.hasSnack) {
+    conditions.push('dh.snack IS NOT NULL');
+  }
+  if (criteria.hasLateNight) {
+    conditions.push('dh.late_night IS NOT NULL');
+  }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-  const sql = `${MEAL_SELECT} ${where} ORDER BY m.date DESC, m.meal_type ASC, m.created_at DESC`;
+  const filterSelect = `
+    SELECT
+      m.id, m.date, m.meal_type, m.photo_id, m.mood, m.event, m.grade, m.note,
+      m.created_at, m.updated_at,
+      p.thumb_uri       AS photo_thumb_uri,
+      p.grid_uri        AS photo_grid_uri,
+      p.detail_uri      AS photo_detail_uri,
+      p.backup_lite_uri AS photo_backup_lite_uri,
+      p.created_at      AS photo_created_at
+    FROM meals m
+    LEFT JOIN photos p ON p.id = m.photo_id
+    LEFT JOIN daily_health dh ON dh.date = m.date
+  `;
+  const sql = `${filterSelect} ${where} ORDER BY m.date DESC, m.meal_type ASC, m.created_at DESC`;
 
   const rows = await db.getAllAsync<MealRow>(sql, params);
 

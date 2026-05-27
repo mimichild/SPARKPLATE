@@ -3,15 +3,17 @@ import {
   View, Text, StyleSheet, Modal, TouchableOpacity,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { GalleryCell } from '@/components/GalleryCell';
+import { GalleryCell, GALLERY_CELL_HEIGHT } from '@/components/GalleryCell';
 import { PhotoViewer } from '@/components/PhotoViewer';
 import { FAB } from '@/components/FAB';
 import { ImageEditModal } from '@/components/ImageEditModal';
 import { MealMetaModal } from '@/components/MealMetaModal';
+import { DailyHealthModal } from '@/components/DailyHealthModal';
 import { AppText } from '@/components/AppText';
 import { useGallery } from '@/hooks/useGallery';
 import { useTodayMeals } from '@/hooks/useTodayMeals';
 import { usePhoto } from '@/hooks/usePhoto';
+import { useDailyHealth } from '@/hooks/useDailyHealth';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { DayRecord, Meal, MealType, Mood, MealGrade } from '@/types';
 
@@ -22,16 +24,38 @@ function mealsFromDay(day: DayRecord): Meal[] {
   return [day.breakfast, day.lunch, day.dinner].filter(Boolean) as Meal[];
 }
 
+function WaterDropIcon() {
+  return (
+    <View style={{ width: 22, height: 26, alignItems: 'center' }}>
+      <View style={{
+        width: 0, height: 0,
+        borderLeftWidth: 6, borderRightWidth: 6, borderBottomWidth: 10,
+        borderLeftColor: 'transparent', borderRightColor: 'transparent',
+        borderBottomColor: '#fff',
+      }} />
+      <View style={{
+        width: 16, height: 16, borderRadius: 8,
+        borderWidth: 2.5, borderColor: '#fff', marginTop: -2,
+      }} />
+    </View>
+  );
+}
+
+function todayDate() { return new Date().toISOString().slice(0, 10); }
+
 export default function GalleryScreen() {
   const { days, loading, hasMore, loadMore, reload } = useGallery();
   const { addMealWithPhoto } = useTodayMeals();
   const { takePicture, pickFromLibrary } = usePhoto();
-  const { pendingCameraOpen, clearPendingCameraOpen } = useSettingsStore();
+  const { fontColor, pendingCameraOpen, clearPendingCameraOpen } = useSettingsStore();
+  const today = todayDate();
+  const { health: todayHealth, save: saveHealth } = useDailyHealth(today);
 
-  const [selectedMeal,  setSelectedMeal]  = useState<Meal | null>(null);
-  const [sheetVisible,  setSheetVisible]  = useState(false);
-  const [editModal,     setEditModal]     = useState<EditState | null>(null);
-  const [metaModal,     setMetaModal]     = useState<MetaState | null>(null);
+  const [selectedMeal,    setSelectedMeal]    = useState<Meal | null>(null);
+  const [sheetVisible,    setSheetVisible]    = useState(false);
+  const [editModal,       setEditModal]       = useState<EditState | null>(null);
+  const [metaModal,       setMetaModal]       = useState<MetaState | null>(null);
+  const [healthModal,     setHealthModal]     = useState(false);
 
   useEffect(() => {
     if (pendingCameraOpen) {
@@ -85,9 +109,18 @@ export default function GalleryScreen() {
           )}
           onEndReached={hasMore ? loadMore : undefined}
           onEndReachedThreshold={0.3}
-          estimatedItemSize={120}
+          estimatedItemSize={GALLERY_CELL_HEIGHT}
         />
       )}
+
+      {/* Water drop FAB */}
+      <TouchableOpacity
+        style={[styles.waterFab, { backgroundColor: fontColor }]}
+        onPress={() => setHealthModal(true)}
+        activeOpacity={0.8}
+      >
+        <WaterDropIcon />
+      </TouchableOpacity>
 
       <FAB onPress={() => setSheetVisible(true)} />
 
@@ -148,6 +181,15 @@ export default function GalleryScreen() {
           onCancel={() => setMetaModal(null)}
         />
       )}
+
+      {/* ── Daily health modal ── */}
+      <DailyHealthModal
+        visible={healthModal}
+        date={today}
+        existing={todayHealth}
+        onConfirm={async (data) => { await saveHealth(data); setHealthModal(false); }}
+        onCancel={() => setHealthModal(false)}
+      />
     </View>
   );
 }
@@ -164,4 +206,12 @@ const styles = StyleSheet.create({
   action: { paddingVertical: 16, paddingHorizontal: 24, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#eee' },
   actionText: { fontSize: 16 },
   cancelText: { color: '#999' },
+  waterFab: {
+    position: 'absolute', bottom: 100, right: 24,
+    width: 56, height: 56, borderRadius: 28,
+    justifyContent: 'center', alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 6,
+  },
 });
