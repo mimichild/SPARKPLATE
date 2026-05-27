@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Modal, View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { THEME_COLORS } from '@/constants/themeColors';
 import { AppText } from '@/components/AppText';
@@ -14,6 +15,7 @@ interface SettingsModalProps {
 export function SettingsModal({ visible, onClose }: SettingsModalProps) {
   const { fontColor, volumeQuickCapture, setFontColor, setVolumeQuickCapture } = useSettingsStore();
   const [pendingColor, setPendingColor] = useState(fontColor);
+  const insets = useSafeAreaInsets();
 
   function handleOpen() {
     setPendingColor(fontColor); // reset to current on open
@@ -33,7 +35,7 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
       onShow={handleOpen}
     >
       <View style={styles.overlay}>
-        <ScrollView contentContainerStyle={styles.sheet} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.sheet, { paddingTop: insets.top + 24 }]} showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>設定</Text>
 
           {/* Volume quick capture */}
@@ -103,7 +105,7 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
-  sheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 48 },
+  sheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 24, paddingBottom: 48 },
   title: { fontSize: 18, fontWeight: '700', marginBottom: 24, textAlign: 'center', color: '#111' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 },
   labelGroup: { flex: 1, marginRight: 12 },
