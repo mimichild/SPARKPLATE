@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 interface FABProps {
   onPress: () => void;
@@ -7,8 +8,14 @@ interface FABProps {
 }
 
 export function FAB({ onPress, testID = 'fab' }: FABProps) {
+  const { fontColor } = useSettingsStore();
   return (
-    <TouchableOpacity testID={testID} style={styles.fab} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity
+      testID={testID}
+      style={[styles.fab, { backgroundColor: fontColor }]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
       <Text style={styles.icon}>＋</Text>
     </TouchableOpacity>
   );
@@ -22,7 +29,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',

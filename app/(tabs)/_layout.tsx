@@ -1,36 +1,71 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
+import React, { useRef } from 'react';
+import { View, TouchableOpacity, StyleSheet, PanResponder, Text } from 'react-native';
+import { Tabs, router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSettingsStore } from '@/stores/settingsStore';
 
-export default function TabLayout() {
+function BackHeader() {
+  const insets = useSafeAreaInsets();
+  const { fontColor } = useSettingsStore();
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: '#111',
-        tabBarInactiveTintColor: '#aaa',
-        headerShown: false,
-      }}
-    >
-      <Tabs.Screen
-        name="today"
-        options={{
-          title: '今日紀錄',
-          tabBarLabel: '今日',
-        }}
-      />
-      <Tabs.Screen
-        name="gallery"
-        options={{
-          title: '照片牆',
-          tabBarLabel: '照片牆',
-        }}
-      />
-      <Tabs.Screen
-        name="filter"
-        options={{
-          title: '標籤',
-          tabBarLabel: '標籤',
-        }}
-      />
-    </Tabs>
+    <View style={[styles.header, { paddingTop: insets.top, backgroundColor: fontColor }]}>
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={() => router.back()}
+        activeOpacity={0.7}
+        hitSlop={{ top: 12, bottom: 12, left: 8, right: 24 }}
+      >
+        <Text style={styles.backText}>← 返回</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
+
+export default function TabLayout() {
+  const { fontColor } = useSettingsStore();
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gs) =>
+        gs.dx > 20 && Math.abs(gs.dy) < Math.abs(gs.dx) && gs.moveX < 80,
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dx > 80 && gs.vx > 0.3) {
+          router.back();
+        }
+      },
+    })
+  ).current;
+
+  return (
+    <View style={styles.container} {...panResponder.panHandlers}>
+      <BackHeader />
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: '#fff',
+          tabBarInactiveTintColor: 'rgba(255,255,255,0.55)',
+          tabBarStyle: { backgroundColor: fontColor, borderTopWidth: 0 },
+        }}
+      >
+        <Tabs.Screen name="today" options={{ title: '今日紀錄', tabBarLabel: '今日' }} />
+        <Tabs.Screen name="gallery" options={{ title: '照片牆', tabBarLabel: '照片牆' }} />
+        <Tabs.Screen name="filter" options={{ title: '標籤', tabBarLabel: '標籤' }} />
+      </Tabs>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#fff' },
+  header: {
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  backBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+  },
+  backText: { fontSize: 16, fontWeight: '600', color: '#fff' },
+});
