@@ -4,6 +4,14 @@ import { Tabs, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSettingsStore } from '@/stores/settingsStore';
 
+function goBack() {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    router.replace('/');
+  }
+}
+
 function BackHeader() {
   const insets = useSafeAreaInsets();
   const { fontColor } = useSettingsStore();
@@ -11,7 +19,7 @@ function BackHeader() {
     <View style={[styles.header, { paddingTop: insets.top, backgroundColor: fontColor }]}>
       <TouchableOpacity
         style={styles.backBtn}
-        onPress={() => router.back()}
+        onPress={goBack}
         activeOpacity={0.7}
         hitSlop={{ top: 12, bottom: 12, left: 8, right: 24 }}
       >
@@ -31,7 +39,7 @@ export default function TabLayout() {
         gs.dx > 20 && Math.abs(gs.dy) < Math.abs(gs.dx) && gs.moveX < 80,
       onPanResponderRelease: (_, gs) => {
         if (gs.dx > 80 && gs.vx > 0.3) {
-          router.back();
+          goBack();
         }
       },
     })

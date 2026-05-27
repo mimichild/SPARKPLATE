@@ -9,15 +9,16 @@ import { useSettingsStore } from '@/stores/settingsStore';
 
 export default function SplashScreen() {
   const [showSettings, setShowSettings] = useState(false);
-  const { fontColor, openCameraOnStart, hydrated, triggerCameraOpen } = useSettingsStore();
+  const { fontColor, openCameraOnStart, hydrated, autoOpenFired, triggerCameraOpen, markAutoOpenFired } = useSettingsStore();
 
   useEffect(() => {
     if (!hydrated) return;
-    if (openCameraOnStart) {
+    if (openCameraOnStart && !autoOpenFired) {
+      markAutoOpenFired();
       triggerCameraOpen();
       router.replace('/(tabs)/gallery');
     }
-  }, [hydrated, openCameraOnStart]);
+  }, [hydrated, openCameraOnStart, autoOpenFired]);
 
   return (
     <SafeAreaView style={styles.container}>
