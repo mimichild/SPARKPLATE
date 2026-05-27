@@ -58,6 +58,13 @@ export function useTodayMeals(): UseTodayMealsReturn {
       sourceUri: string,
       meta?: { mood?: Mood; event?: string; grade?: MealGrade; note?: string }
     ) => {
+      // Remove any existing meal for the same date+type before inserting
+      const existing = await getMealsByDate(db, today);
+      const duplicate = existing.find((m) => m.mealType === mealType);
+      if (duplicate) {
+        await deleteMeal(db, duplicate.id);
+        if (duplicate.photoId) await deletePhoto(db, duplicate.photoId);
+      }
       const photo = await savePhoto(db, sourceUri);
       await createMeal(db, { date: today, mealType, photoId: photo.id, ...meta });
       reload();

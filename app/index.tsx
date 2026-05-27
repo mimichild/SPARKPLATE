@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Linking,
 } from 'react-native';
@@ -9,7 +9,15 @@ import { useSettingsStore } from '@/stores/settingsStore';
 
 export default function SplashScreen() {
   const [showSettings, setShowSettings] = useState(false);
-  const { fontColor } = useSettingsStore();
+  const { fontColor, openCameraOnStart, hydrated, triggerCameraOpen } = useSettingsStore();
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (openCameraOnStart) {
+      triggerCameraOpen();
+      router.replace('/(tabs)/gallery');
+    }
+  }, [hydrated, openCameraOnStart]);
 
   return (
     <SafeAreaView style={styles.container}>

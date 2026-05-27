@@ -91,17 +91,20 @@ export default function TodayScreen() {
           onPress={() => setSheetVisible(false)}
         >
           <View style={styles.sheet}>
+            <View style={styles.sheetHeader}>
+              <TouchableOpacity
+                style={styles.closeBtn}
+                onPress={() => setSheetVisible(false)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Text style={styles.closeText}>✕</Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity style={styles.action} onPress={handleCamera}>
               <AppText style={styles.actionText}>📷 拍照</AppText>
             </TouchableOpacity>
             <TouchableOpacity style={styles.action} onPress={handleLibrary}>
               <AppText style={styles.actionText}>🖼️ 從相簿選取</AppText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.action, styles.cancelAction]}
-              onPress={() => setSheetVisible(false)}
-            >
-              <AppText style={styles.cancelText}>取消</AppText>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -135,8 +138,10 @@ const styles = StyleSheet.create({
   scroll: { paddingBottom: 100 },
   overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 40 },
+  sheetHeader: { alignItems: 'flex-end', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4 },
+  closeBtn: { padding: 4 },
+  closeText: { fontSize: 18, color: '#aaa', fontWeight: '600' },
   action: { paddingVertical: 16, paddingHorizontal: 24, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#eee' },
-  cancelAction: { marginTop: 8 },
   actionText: { fontSize: 16 },
   cancelText: { color: '#999' },
 });

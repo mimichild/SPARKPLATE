@@ -13,7 +13,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ visible, onClose }: SettingsModalProps) {
-  const { fontColor, volumeQuickCapture, setFontColor, setVolumeQuickCapture } = useSettingsStore();
+  const { fontColor, openCameraOnStart, setFontColor, setOpenCameraOnStart } = useSettingsStore();
   const [pendingColor, setPendingColor] = useState(fontColor);
   const insets = useSafeAreaInsets();
 
@@ -38,16 +38,16 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
         <ScrollView contentContainerStyle={[styles.sheet, { paddingTop: insets.top + 24 }]} showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>設定</Text>
 
-          {/* Volume quick capture */}
+          {/* Open camera on start */}
           <View style={styles.row}>
             <View style={styles.labelGroup}>
-              <AppText style={styles.label}>音量鍵快速拍照</AppText>
-              <Text style={styles.hint}>連按兩次音量減少鍵即開啟相機</Text>
+              <AppText style={styles.label}>開啟時直接用照片打開</AppText>
+              <Text style={styles.hint}>開啟 APP 後自動跳過首頁，直接開啟相機</Text>
             </View>
             <Switch
-              testID="volume-quick-capture-switch"
-              value={volumeQuickCapture}
-              onValueChange={setVolumeQuickCapture}
+              testID="open-camera-on-start-switch"
+              value={openCameraOnStart}
+              onValueChange={setOpenCameraOnStart}
             />
           </View>
 

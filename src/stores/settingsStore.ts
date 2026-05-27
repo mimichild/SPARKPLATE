@@ -5,30 +5,30 @@ import { DEFAULT_FONT_COLOR } from '@/constants/themeColors';
 
 interface SettingsState {
   fontColor: string;
-  volumeQuickCapture: boolean;
+  openCameraOnStart: boolean;
   pendingCameraOpen: boolean;
   hydrated: boolean;
   hydrate: () => Promise<void>;
   setFontColor: (color: string) => Promise<void>;
-  setVolumeQuickCapture: (v: boolean) => Promise<void>;
+  setOpenCameraOnStart: (v: boolean) => Promise<void>;
   triggerCameraOpen: () => void;
   clearPendingCameraOpen: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
   fontColor: DEFAULT_FONT_COLOR,
-  volumeQuickCapture: false,
+  openCameraOnStart: false,
   pendingCameraOpen: false,
   hydrated: false,
 
   hydrate: async () => {
-    const [fontColor, volumeQuickCapture] = await Promise.all([
+    const [fontColor, openCameraOnStart] = await Promise.all([
       AsyncStorage.getItem(STORAGE_KEYS.FONT_COLOR),
-      AsyncStorage.getItem(STORAGE_KEYS.VOLUME_QUICK_CAPTURE),
+      AsyncStorage.getItem(STORAGE_KEYS.OPEN_CAMERA_ON_START),
     ]);
     set({
       fontColor: fontColor ?? DEFAULT_FONT_COLOR,
-      volumeQuickCapture: volumeQuickCapture === 'true',
+      openCameraOnStart: openCameraOnStart === 'true',
       hydrated: true,
     });
   },
@@ -38,9 +38,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     await AsyncStorage.setItem(STORAGE_KEYS.FONT_COLOR, color);
   },
 
-  setVolumeQuickCapture: async (v: boolean) => {
-    set({ volumeQuickCapture: v });
-    await AsyncStorage.setItem(STORAGE_KEYS.VOLUME_QUICK_CAPTURE, String(v));
+  setOpenCameraOnStart: async (v: boolean) => {
+    set({ openCameraOnStart: v });
+    await AsyncStorage.setItem(STORAGE_KEYS.OPEN_CAMERA_ON_START, String(v));
   },
 
   triggerCameraOpen: () => set({ pendingCameraOpen: true }),

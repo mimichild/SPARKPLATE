@@ -1,4 +1,4 @@
 export const STORAGE_KEYS = {
-  VOLUME_QUICK_CAPTURE: 'settings:volumeQuickCapture',
+  OPEN_CAMERA_ON_START: 'settings:openCameraOnStart',
   FONT_COLOR: 'settings:fontColor',
 } as const;
