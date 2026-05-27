@@ -15,7 +15,7 @@ function BackHeader() {
         activeOpacity={0.7}
         hitSlop={{ top: 12, bottom: 12, left: 8, right: 24 }}
       >
-        <Text style={styles.backText}>← 返回</Text>
+        <Text style={styles.backText}>返回</Text>
       </TouchableOpacity>
     </View>
   );
@@ -23,6 +23,7 @@ function BackHeader() {
 
 export default function TabLayout() {
   const { fontColor } = useSettingsStore();
+  const insets = useSafeAreaInsets();
 
   const panResponder = useRef(
     PanResponder.create({
@@ -44,12 +45,19 @@ export default function TabLayout() {
           headerShown: false,
           tabBarActiveTintColor: '#fff',
           tabBarInactiveTintColor: 'rgba(255,255,255,0.55)',
-          tabBarStyle: { backgroundColor: fontColor, borderTopWidth: 0 },
+          tabBarStyle: {
+            backgroundColor: fontColor,
+            borderTopWidth: 0,
+            height: 56 + insets.bottom,
+            paddingBottom: insets.bottom,
+          },
+          tabBarItemStyle: { justifyContent: 'center', paddingBottom: 12 },
+          tabBarLabelStyle: { fontSize: 16, fontWeight: '600' },
         }}
       >
-        <Tabs.Screen name="today" options={{ title: '今日紀錄', tabBarLabel: '今日' }} />
-        <Tabs.Screen name="gallery" options={{ title: '照片牆', tabBarLabel: '照片牆' }} />
-        <Tabs.Screen name="filter" options={{ title: '標籤', tabBarLabel: '標籤' }} />
+        <Tabs.Screen name="today" options={{ title: '今日紀錄', tabBarLabel: '今日', tabBarIcon: () => null }} />
+        <Tabs.Screen name="gallery" options={{ title: '照片牆', tabBarLabel: '照片', tabBarIcon: () => null }} />
+        <Tabs.Screen name="filter" options={{ title: '標籤', tabBarLabel: '標籤', tabBarIcon: () => null }} />
       </Tabs>
     </View>
   );
