@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import { FilterCriteria, Mood, MealGrade, MealType } from '@/types';
 import { MOOD_CONFIG, MOOD_LIST, MEAL_LABELS } from '@/constants/moodConfig';
 import { GRADE_CONFIG, GRADE_LIST } from '@/constants/gradeConfig';
@@ -87,6 +87,73 @@ export function FilterPanel({ criteria, onChange }: FilterPanelProps) {
           );
         })}
       </View>
+
+      {/* ── 飲水量 ── */}
+      <AppText style={styles.sectionLabel}>💧 飲水量（至少）</AppText>
+      <View style={styles.inputRow}>
+        <TextInput
+          style={styles.filterInput}
+          value={criteria.minWaterMl != null ? String(criteria.minWaterMl) : ''}
+          onChangeText={(t) => {
+            const v = t.replace(/[^0-9]/g, '');
+            onChange({ minWaterMl: v ? parseInt(v, 10) : undefined });
+          }}
+          placeholder="ml"
+          placeholderTextColor="#bbb"
+          keyboardType="numeric"
+        />
+        <Text style={styles.inputUnit}>ml</Text>
+        {criteria.minWaterMl != null && (
+          <TouchableOpacity onPress={() => onChange({ minWaterMl: undefined })}>
+            <Text style={styles.clearBtn}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* ── 睡眠時長 ── */}
+      <AppText style={styles.sectionLabel}>😴 睡眠時長（至少）</AppText>
+      <View style={styles.inputRow}>
+        <TextInput
+          style={styles.filterInput}
+          value={criteria.minSleepHours != null ? String(criteria.minSleepHours) : ''}
+          onChangeText={(t) => {
+            const v = t.replace(/[^0-9.]/g, '');
+            onChange({ minSleepHours: v ? parseFloat(v) : undefined });
+          }}
+          placeholder="小時"
+          placeholderTextColor="#bbb"
+          keyboardType="decimal-pad"
+        />
+        <Text style={styles.inputUnit}>小時</Text>
+        {criteria.minSleepHours != null && (
+          <TouchableOpacity onPress={() => onChange({ minSleepHours: undefined })}>
+            <Text style={styles.clearBtn}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* ── 飲料或點心 / 宵夜 ── */}
+      <AppText style={styles.sectionLabel}>其他篩選</AppText>
+      <View style={styles.row}>
+        <TouchableOpacity
+          style={[styles.chip, criteria.hasSnack && { backgroundColor: fontColor }]}
+          onPress={() => onChange({ hasSnack: criteria.hasSnack ? undefined : true })}
+          activeOpacity={0.75}
+        >
+          <AppText style={[styles.chipText, criteria.hasSnack && styles.chipTextActive]}>
+            🧃 有飲料或點心
+          </AppText>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.chip, criteria.hasLateNight && { backgroundColor: fontColor }]}
+          onPress={() => onChange({ hasLateNight: criteria.hasLateNight ? undefined : true })}
+          activeOpacity={0.75}
+        >
+          <AppText style={[styles.chipText, criteria.hasLateNight && styles.chipTextActive]}>
+            🌙 有宵夜
+          </AppText>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -118,4 +185,13 @@ const styles = StyleSheet.create({
   chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: '#f0f0f0' },
   chipText: { fontSize: 14, color: '#555' },
   chipTextActive: { color: '#fff' },
+
+  // Health filters
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  filterInput: {
+    width: 100, borderWidth: 1, borderColor: '#eee', borderRadius: 10,
+    paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#333',
+  },
+  inputUnit: { fontSize: 13, color: '#888' },
+  clearBtn: { fontSize: 14, color: '#aaa', paddingHorizontal: 4 },
 });

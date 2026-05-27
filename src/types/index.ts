@@ -39,12 +39,26 @@ export interface DayRecord {
   dinner?: Meal;
 }
 
+export interface DailyHealth {
+  date: string;
+  waterMl?: number;
+  sleepHours?: number;
+  snack?: string;
+  lateNight?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface FilterCriteria {
   startDate?: string;
   endDate?: string;
   moods?: Mood[];
   grades?: MealGrade[];
   mealTypes?: MealType[];
+  minWaterMl?: number;
+  minSleepHours?: number;
+  hasSnack?: boolean;
+  hasLateNight?: boolean;
 }
 
 export interface AppSettings {
