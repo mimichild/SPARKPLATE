@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "SPARK PLATE",
+    "slug": "sparkplate",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "sparkplate",
+    "newArchEnabled": true,
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.sparkplate.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.sparkplate.app",
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "讓 SPARK PLATE 存取您的照片以紀錄餐點",
+          "cameraPermission": "讓 SPARK PLATE 使用相機拍攝餐點照片"
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "讓 SPARK PLATE 儲存照片到您的相簿"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
