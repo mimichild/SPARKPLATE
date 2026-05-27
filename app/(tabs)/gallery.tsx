@@ -129,6 +129,7 @@ export default function GalleryScreen() {
         visible={selectedMeal !== null}
         meal={selectedMeal}
         onClose={() => setSelectedMeal(null)}
+        onMealUpdated={(updated) => { setSelectedMeal(updated); reload(); }}
       />
 
       {/* ── Source action sheet ── */}

@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Modal, View, Image, TouchableOpacity, Text, StyleSheet,
   Dimensions, ScrollView,
 } from 'react-native';
-import { Meal } from '@/types';
+import { Meal, DailyHealth } from '@/types';
 import { MEAL_LABELS, MOOD_CONFIG } from '@/constants/moodConfig';
 import { GRADE_CONFIG } from '@/constants/gradeConfig';
 import { FaceIcon } from '@/components/FaceIcon';
 import { AppText } from '@/components/AppText';
+import { EditMealModal, EditMealData } from '@/components/EditMealModal';
+import { useDB } from '@/hooks/useDB';
 import { useDailyHealth } from '@/hooks/useDailyHealth';
+import { updateMeal } from '@/services/mealService';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 const { width, height } = Dimensions.get('window');
 const PHOTO_HEIGHT = Math.round(height * 0.52);
@@ -22,6 +26,7 @@ interface PhotoViewerProps {
   visible: boolean;
   meal: Meal | null;
   onClose: () => void;
+  onMealUpdated?: (meal: Meal) => void;
 }
 
 function HealthRow({ label, value, unit }: { label: string; value?: number; unit: string }) {
@@ -35,8 +40,14 @@ function HealthRow({ label, value, unit }: { label: string; value?: number; unit
   );
 }
 
-function DetailPanel({ meal }: { meal: Meal }) {
-  const { health } = useDailyHealth(meal.date);
+interface DetailPanelProps {
+  meal: Meal;
+  health: DailyHealth | null;
+  onEditPress: () => void;
+}
+
+function DetailPanel({ meal, health, onEditPress }: DetailPanelProps) {
+  const { fontColor } = useSettingsStore();
 
   return (
     <ScrollView style={detail.panel} contentContainerStyle={detail.panelContent} showsVerticalScrollIndicator={false}>
@@ -86,11 +97,42 @@ function DetailPanel({ meal }: { meal: Meal }) {
           <Text style={[detail.healthValue, { flex: 1, textAlign: 'right', marginLeft: 8 }]} numberOfLines={2}>{health.lateNight}</Text>
         </View>
       ) : null}
+
+      {/* Edit button */}
+      <TouchableOpacity
+        style={[detail.editBtn, { borderColor: fontColor }]}
+        onPress={onEditPress}
+        activeOpacity={0.75}
+      >
+        <Text style={[detail.editBtnText, { color: fontColor }]}>✏️ 編輯紀錄</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
 
-export function PhotoViewer({ visible, meal, onClose }: PhotoViewerProps) {
+export function PhotoViewer({ visible, meal, onClose, onMealUpdated }: PhotoViewerProps) {
+  const [editVisible, setEditVisible] = useState(false);
+  const db = useDB();
+  const { health, save: saveHealth } = useDailyHealth(meal?.date ?? '');
+
+  async function handleEditConfirm(data: EditMealData) {
+    if (!meal) return;
+    const updated = await updateMeal(db, meal.id, {
+      mealType: data.mealType,
+      mood:     data.mood,
+      grade:    data.grade,
+      event:    data.event,
+    });
+    await saveHealth({
+      waterMl:    data.waterMl,
+      sleepHours: data.sleepHours,
+      snack:      data.snack,
+      lateNight:  data.lateNight,
+    });
+    setEditVisible(false);
+    onMealUpdated?.(updated);
+  }
+
   if (!meal?.photo) return null;
 
   return (
@@ -109,7 +151,22 @@ export function PhotoViewer({ visible, meal, onClose }: PhotoViewerProps) {
         </TouchableOpacity>
 
         {/* Detail panel */}
-        <DetailPanel meal={meal} />
+        <DetailPanel
+          meal={meal}
+          health={health}
+          onEditPress={() => setEditVisible(true)}
+        />
+
+        {/* Edit modal */}
+        {editVisible && (
+          <EditMealModal
+            visible={editVisible}
+            meal={meal}
+            health={health}
+            onConfirm={handleEditConfirm}
+            onCancel={() => setEditVisible(false)}
+          />
+        )}
       </View>
     </Modal>
   );
@@ -145,4 +202,9 @@ const detail = StyleSheet.create({
   healthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
   healthLabel: { fontSize: 14, color: '#555' },
   healthValue: { fontSize: 14, color: '#111', fontWeight: '600' },
+  editBtn: {
+    marginTop: 20, paddingVertical: 13, borderRadius: 12,
+    borderWidth: 1.5, alignItems: 'center',
+  },
+  editBtnText: { fontSize: 15, fontWeight: '600' },
 });
