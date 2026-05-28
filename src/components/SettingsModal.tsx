@@ -13,7 +13,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ visible, onClose }: SettingsModalProps) {
-  const { fontColor, openCameraOnStart, setFontColor, setOpenCameraOnStart } = useSettingsStore();
+  const { fontColor, openCameraOnStart, autoSavePhoto, setFontColor, setOpenCameraOnStart, setAutoSavePhoto } = useSettingsStore();
   const [pendingColor, setPendingColor] = useState(fontColor);
   const insets = useSafeAreaInsets();
 
@@ -48,6 +48,19 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
               testID="open-camera-on-start-switch"
               value={openCameraOnStart}
               onValueChange={setOpenCameraOnStart}
+            />
+          </View>
+
+          {/* Auto save photo */}
+          <View style={styles.row}>
+            <View style={styles.labelGroup}>
+              <AppText style={styles.label}>拍照時自動下載照片</AppText>
+              <Text style={styles.hint}>每次拍照後自動將照片儲存到手機相簿</Text>
+            </View>
+            <Switch
+              testID="auto-save-photo-switch"
+              value={autoSavePhoto}
+              onValueChange={setAutoSavePhoto}
             />
           </View>
 
