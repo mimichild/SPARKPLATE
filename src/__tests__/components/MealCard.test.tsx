@@ -1,15 +1,15 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { MealCard } from '@/components/MealCard';
-import { Meal } from '@/types';
+import { Meal, MealGrade, Mood } from '@/types';
 
 const MOCK_MEAL: Meal = {
   id: 'meal-1',
   date: '2026-05-26',
   mealType: 'lunch',
-  mood: 'good',
+  mood: 'happy' as Mood,
   event: '工作午餐',
-  grade: 4,
+  grade: 'S' as MealGrade,
   photo: {
     id: 'photo-1',
     thumbUri: '/thumb.jpg',
@@ -46,11 +46,11 @@ describe('MealCard', () => {
     expect(onAdd).toHaveBeenCalledWith('breakfast');
   });
 
-  it('displays mood emoji when meal has mood', () => {
-    const { getByText } = render(
+  it('displays mood icon when meal has mood', () => {
+    const { getByTestId } = render(
       <MealCard mealType="lunch" meal={MOCK_MEAL} onAdd={jest.fn()} />
     );
-    expect(getByText('🙂')).toBeTruthy();
+    expect(getByTestId('meal-mood-icon')).toBeTruthy();
   });
 
   it('calls onLongPress when card is long-pressed', () => {

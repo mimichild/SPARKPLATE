@@ -29,10 +29,10 @@ describe('SplashScreen', () => {
     expect(getByTestId('start-btn')).toBeTruthy();
   });
 
-  it('navigates to tabs on start button press', () => {
+  it('navigates to gallery on start button press', () => {
     const { getByTestId } = render(<SplashScreen />);
     fireEvent.press(getByTestId('start-btn'));
-    expect(router.replace).toHaveBeenCalledWith('/(tabs)/today');
+    expect(router.push).toHaveBeenCalledWith('/(tabs)/gallery');
   });
 
   it('renders settings button', () => {

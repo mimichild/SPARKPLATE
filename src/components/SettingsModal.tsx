@@ -41,7 +41,7 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
           {/* Open camera on start */}
           <View style={styles.row}>
             <View style={styles.labelGroup}>
-              <AppText style={styles.label}>開啟時直接用照片打開</AppText>
+              <AppText style={styles.label}>開啟時直接用相機打開</AppText>
               <Text style={styles.hint}>開啟 APP 後自動跳過首頁，直接開啟相機</Text>
             </View>
             <Switch

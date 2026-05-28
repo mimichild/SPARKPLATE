@@ -43,6 +43,7 @@ function makePhoto(overrides = {}) {
 
 function makeSettings(overrides = {}) {
   return {
+    fontColor: '#4A90E2',
     pendingCameraOpen: false,
     clearPendingCameraOpen: jest.fn(),
     ...overrides,

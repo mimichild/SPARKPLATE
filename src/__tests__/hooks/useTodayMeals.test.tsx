@@ -100,7 +100,8 @@ describe('useTodayMeals', () => {
       await result.current.addMealWithPhoto('dinner', '/photo.jpg');
     });
 
-    expect(mockGetMealsByDate).toHaveBeenCalledTimes(1);
+    // addMealWithPhoto calls getMealsByDate once for duplicate check + once for reload
+    expect(mockGetMealsByDate).toHaveBeenCalledTimes(2);
   });
 
   it('deleteMealWithPhoto removes meal and photo', async () => {

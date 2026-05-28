@@ -1,51 +1,53 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { FilterPanel } from '@/components/FilterPanel';
-import { FilterCriteria } from '@/types';
+import { FilterCriteria, Mood } from '@/types';
+
+function renderPanel(criteria: Partial<FilterCriteria> = {}, onChange = jest.fn()) {
+  return render(
+    <FilterPanel
+      visible={true}
+      criteria={criteria}
+      totalCount={0}
+      onChange={onChange}
+      onClear={jest.fn()}
+      onClose={jest.fn()}
+    />
+  );
+}
 
 describe('FilterPanel', () => {
   it('renders mood chips', () => {
-    const { getByTestId } = render(
-      <FilterPanel criteria={{}} onChange={jest.fn()} />
-    );
-    expect(getByTestId('filter-mood-good')).toBeTruthy();
-    expect(getByTestId('filter-mood-great')).toBeTruthy();
+    const { getByTestId } = renderPanel();
+    expect(getByTestId('filter-mood-happy')).toBeTruthy();
+    expect(getByTestId('filter-mood-sad')).toBeTruthy();
   });
 
   it('calls onChange with selected mood', () => {
     const onChange = jest.fn();
-    const { getByTestId } = render(
-      <FilterPanel criteria={{}} onChange={onChange} />
-    );
-    fireEvent.press(getByTestId('filter-mood-good'));
-    expect(onChange).toHaveBeenCalledWith({ moods: ['good'] });
+    const { getByTestId } = renderPanel({}, onChange);
+    fireEvent.press(getByTestId('filter-mood-happy'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ moods: ['happy'] }));
   });
 
   it('toggles mood off when already selected', () => {
-    const criteria: FilterCriteria = { moods: ['good'] };
     const onChange = jest.fn();
-    const { getByTestId } = render(
-      <FilterPanel criteria={criteria} onChange={onChange} />
-    );
-    fireEvent.press(getByTestId('filter-mood-good'));
-    expect(onChange).toHaveBeenCalledWith({ moods: [] });
+    const { getByTestId } = renderPanel({ moods: ['happy' as Mood] }, onChange);
+    fireEvent.press(getByTestId('filter-mood-happy'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ moods: [] }));
   });
 
   it('calls onChange with selected grade', () => {
     const onChange = jest.fn();
-    const { getByTestId } = render(
-      <FilterPanel criteria={{}} onChange={onChange} />
-    );
-    fireEvent.press(getByTestId('filter-grade-5'));
-    expect(onChange).toHaveBeenCalledWith({ grades: [5] });
+    const { getByTestId } = renderPanel({}, onChange);
+    fireEvent.press(getByTestId('filter-grade-S'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ grades: ['S'] }));
   });
 
   it('calls onChange with selected mealType', () => {
     const onChange = jest.fn();
-    const { getByTestId } = render(
-      <FilterPanel criteria={{}} onChange={onChange} />
-    );
+    const { getByTestId } = renderPanel({}, onChange);
     fireEvent.press(getByTestId('filter-mealtype-breakfast'));
-    expect(onChange).toHaveBeenCalledWith({ mealTypes: ['breakfast'] });
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ mealTypes: ['breakfast'] }));
   });
 });
