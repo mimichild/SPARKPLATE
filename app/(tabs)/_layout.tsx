@@ -14,9 +14,10 @@ function goBack() {
 
 function BackHeader() {
   const insets = useSafeAreaInsets();
-  const { fontColor, triggerExportOpen } = useSettingsStore();
+  const { fontColor, triggerExportOpen, triggerFilterOpen, triggerScreenshot } = useSettingsStore();
   const pathname = usePathname();
   const isGallery = pathname.includes('gallery');
+  const isFilter = pathname.includes('filter');
 
   return (
     <View style={[styles.header, { paddingTop: insets.top, backgroundColor: fontColor }]}>
@@ -29,13 +30,31 @@ function BackHeader() {
         <Text style={styles.backText}>返回</Text>
       </TouchableOpacity>
       {isGallery && (
+        <View style={styles.rightBtns}>
+          <TouchableOpacity
+            onPress={triggerScreenshot}
+            activeOpacity={0.7}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Text style={styles.backText}>截圖</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={triggerExportOpen}
+            activeOpacity={0.7}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 8 }}
+          >
+            <Text style={styles.backText}>分享</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {isFilter && (
         <TouchableOpacity
           style={styles.shareBtn}
-          onPress={triggerExportOpen}
+          onPress={triggerFilterOpen}
           activeOpacity={0.7}
           hitSlop={{ top: 12, bottom: 12, left: 24, right: 8 }}
         >
-          <Text style={styles.backText}>分享</Text>
+          <Text style={styles.backText}>篩選 ▼</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -100,6 +119,11 @@ const styles = StyleSheet.create({
   shareBtn: {
     paddingVertical: 4,
     paddingHorizontal: 4,
+  },
+  rightBtns: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
   },
   backText: { fontSize: 16, fontWeight: '600', color: '#fff' },
 });

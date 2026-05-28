@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, Modal, TouchableOpacity, Image,
+  View, Text, StyleSheet, Modal, TouchableOpacity, Image, ToastAndroid,
 } from 'react-native';
-import { captureRef } from 'react-native-view-shot';
+import { captureRef, captureScreen } from 'react-native-view-shot';
+import * as MediaLibrary from 'expo-media-library';
 import { FlashList } from '@shopify/flash-list';
 import { GalleryCell, GALLERY_CELL_HEIGHT } from '@/components/GalleryCell';
 import { PhotoViewer } from '@/components/PhotoViewer';
@@ -50,7 +51,7 @@ export default function GalleryScreen() {
   const { days, loading, hasMore, loadMore, reload } = useGallery();
   const { addMealWithPhoto } = useTodayMeals();
   const { takePicture, pickFromLibrary } = usePhoto();
-  const { fontColor, pendingCameraOpen, clearPendingCameraOpen, pendingExportOpen, clearPendingExportOpen } = useSettingsStore();
+  const { fontColor, pendingCameraOpen, clearPendingCameraOpen, pendingExportOpen, clearPendingExportOpen, pendingScreenshot, clearPendingScreenshot } = useSettingsStore();
   const db = useDB();
   const today = todayDate();
 
@@ -61,7 +62,40 @@ export default function GalleryScreen() {
   const [healthModal,   setHealthModal]   = useState(false);
   const [exportVisible, setExportVisible] = useState(false);
   const [gridDays,      setGridDays]      = useState<DayRecord[]>([]);
-  const gridRef = useRef<View | null>(null);
+  const [fabsHidden,    setFabsHidden]    = useState(false);
+  const gridRef    = useRef<View | null>(null);
+  const hideTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleFabLongPress() {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    setFabsHidden(true);
+    ToastAndroid.show('按鈕已隱藏，8秒後自動恢復', ToastAndroid.SHORT);
+    hideTimer.current = setTimeout(() => setFabsHidden(false), 8000);
+  }
+
+  async function handleScreenshotCapture() {
+    // 1. 請求相簿寫入權限
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      ToastAndroid.show('請允許存取相簿權限', ToastAndroid.SHORT);
+      return;
+    }
+    // 2. 隱藏按鈕
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    setFabsHidden(true);
+    // 3. 等待畫面更新（200ms 確保按鈕消失後再截圖）
+    await new Promise(r => setTimeout(r, 200));
+    try {
+      const uri = await captureScreen({ format: 'jpg', quality: 0.95 });
+      await MediaLibrary.saveToLibraryAsync(uri);
+      ToastAndroid.show('截圖已儲存到相簿', ToastAndroid.SHORT);
+    } catch {
+      ToastAndroid.show('截圖失敗，請重試', ToastAndroid.SHORT);
+    } finally {
+      // 4. 3 秒後恢復按鈕
+      hideTimer.current = setTimeout(() => setFabsHidden(false), 3000);
+    }
+  }
 
   useEffect(() => {
     if (pendingCameraOpen) {
@@ -76,6 +110,13 @@ export default function GalleryScreen() {
       clearPendingExportOpen();
     }
   }, [pendingExportOpen, clearPendingExportOpen]);
+
+  useEffect(() => {
+    if (pendingScreenshot) {
+      clearPendingScreenshot();
+      handleScreenshotCapture();
+    }
+  }, [pendingScreenshot]);
 
   async function handleCamera() {
     setSheetVisible(false);
@@ -164,14 +205,20 @@ export default function GalleryScreen() {
 
       {/* Water drop FAB */}
       <TouchableOpacity
-        style={[styles.waterFab, { backgroundColor: fontColor }]}
+        style={[styles.waterFab, { backgroundColor: fontColor, opacity: fabsHidden ? 0 : 1 }]}
         onPress={() => setHealthModal(true)}
+        onLongPress={handleFabLongPress}
         activeOpacity={0.8}
+        disabled={fabsHidden}
       >
         <WaterDropIcon />
       </TouchableOpacity>
 
-      <FAB onPress={() => setSheetVisible(true)} />
+      <FAB
+        onPress={() => setSheetVisible(true)}
+        onLongPress={handleFabLongPress}
+        hidden={fabsHidden}
+      />
 
       {/* ── Photo viewer ── */}
       <PhotoViewer

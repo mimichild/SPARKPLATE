@@ -4,6 +4,8 @@ import { useSettingsStore } from '@/stores/settingsStore';
 
 interface FABProps {
   onPress: () => void;
+  onLongPress?: () => void;
+  hidden?: boolean;
   testID?: string;
 }
 
@@ -48,14 +50,16 @@ const cam = StyleSheet.create({
   },
 });
 
-export function FAB({ onPress, testID = 'fab' }: FABProps) {
+export function FAB({ onPress, onLongPress, hidden, testID = 'fab' }: FABProps) {
   const { fontColor } = useSettingsStore();
   return (
     <TouchableOpacity
       testID={testID}
-      style={[styles.fab, { backgroundColor: fontColor }]}
+      style={[styles.fab, { backgroundColor: fontColor, opacity: hidden ? 0 : 1 }]}
       onPress={onPress}
+      onLongPress={onLongPress}
       activeOpacity={0.8}
+      disabled={hidden}
     >
       <CameraIcon />
     </TouchableOpacity>

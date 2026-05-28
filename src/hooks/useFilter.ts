@@ -10,6 +10,7 @@ interface UseFilterReturn {
   totalCount: number;
   setCriteria: (partial: Partial<FilterCriteria>) => void;
   clearCriteria: () => void;
+  reload: () => void;
 }
 
 export function useFilter(): UseFilterReturn {
@@ -17,13 +18,14 @@ export function useFilter(): UseFilterReturn {
   const [criteria, setCriteriaState] = useState<FilterCriteria>({});
   const [results, setResults] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     setLoading(true);
     filterMeals(db, criteria)
       .then(setResults)
       .finally(() => setLoading(false));
-  }, [db, criteria]);
+  }, [db, criteria, version]);
 
   const setCriteria = useCallback((partial: Partial<FilterCriteria>) => {
     setCriteriaState((prev) => ({ ...prev, ...partial }));
@@ -33,5 +35,9 @@ export function useFilter(): UseFilterReturn {
     setCriteriaState({});
   }, []);
 
-  return { criteria, results, loading, totalCount: results.length, setCriteria, clearCriteria };
+  const reload = useCallback(() => {
+    setVersion((v) => v + 1);
+  }, []);
+
+  return { criteria, results, loading, totalCount: results.length, setCriteria, clearCriteria, reload };
 }
