@@ -3,53 +3,53 @@ import {
   Modal, View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView,
 } from 'react-native';
 import { AppText } from '@/components/AppText';
+import { DateSelector } from '@/components/DateSelector';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { DailyHealth } from '@/types';
+import { useDailyHealth } from '@/hooks/useDailyHealth';
 
 const WATER_PRESETS = [500, 1000, 1500, 2000];
 const SLEEP_PRESETS = [5, 6, 7, 8];
 
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+
 interface DailyHealthModalProps {
   visible: boolean;
-  date: string;
-  existing?: DailyHealth | null;
-  onConfirm: (data: {
-    waterMl?: number;
-    sleepHours?: number;
-    snack?: string;
-    lateNight?: string;
-  }) => void;
-  onCancel: () => void;
+  defaultDate?: string;
+  onClose: () => void;
 }
 
-export function DailyHealthModal({ visible, date, existing, onConfirm, onCancel }: DailyHealthModalProps) {
+export function DailyHealthModal({ visible, defaultDate, onClose }: DailyHealthModalProps) {
   const { fontColor } = useSettingsStore();
-  const [waterText,  setWaterText]  = useState('');
-  const [sleepText,  setSleepText]  = useState('');
-  const [snackText,  setSnackText]  = useState('');
+  const [selectedDate, setSelectedDate] = useState(defaultDate ?? todayStr());
+
+  // Reset selected date each time modal opens
+  useEffect(() => {
+    if (visible) setSelectedDate(defaultDate ?? todayStr());
+  }, [visible, defaultDate]);
+
+  const { health, save } = useDailyHealth(selectedDate);
+
+  const [waterText,     setWaterText]     = useState('');
+  const [sleepText,     setSleepText]     = useState('');
+  const [snackText,     setSnackText]     = useState('');
   const [lateNightText, setLateNightText] = useState('');
 
+  // Populate fields from loaded health record whenever health or date changes
   useEffect(() => {
-    if (visible) {
-      setWaterText(existing?.waterMl != null ? String(existing.waterMl) : '');
-      setSleepText(existing?.sleepHours != null ? String(existing.sleepHours) : '');
-      setSnackText(existing?.snack ?? '');
-      setLateNightText(existing?.lateNight ?? '');
-    }
-  }, [visible, existing]);
+    setWaterText(health?.waterMl != null ? String(health.waterMl) : '');
+    setSleepText(health?.sleepHours != null ? String(health.sleepHours) : '');
+    setSnackText(health?.snack ?? '');
+    setLateNightText(health?.lateNight ?? '');
+  }, [health, selectedDate]);
 
-  function formatDate(d: string) {
-    const parts = d.split('-');
-    return `${parseInt(parts[1])}/${parseInt(parts[2])}`;
-  }
-
-  function handleConfirm() {
-    onConfirm({
+  async function handleConfirm() {
+    await save({
       waterMl:    waterText    ? parseInt(waterText, 10)   : undefined,
       sleepHours: sleepText    ? parseFloat(sleepText)     : undefined,
       snack:      snackText.trim()     || undefined,
       lateNight:  lateNightText.trim() || undefined,
     });
+    onClose();
   }
 
   function OptionalLabel({ label }: { label: string }) {
@@ -62,14 +62,17 @@ export function DailyHealthModal({ visible, date, existing, onConfirm, onCancel 
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onCancel}>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
         <ScrollView
           contentContainerStyle={styles.sheet}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <AppText style={styles.title}>{formatDate(date)} 健康紀錄</AppText>
+          <AppText style={styles.title}>健康紀錄</AppText>
+
+          {/* ── 日期 ── */}
+          <DateSelector value={selectedDate} onChange={setSelectedDate} />
 
           {/* ── 飲水量 ── */}
           <OptionalLabel label="💧 今日飲水量" />
@@ -132,7 +135,7 @@ export function DailyHealthModal({ visible, date, existing, onConfirm, onCancel 
           </View>
 
           {/* ── 飲料或點心 ── */}
-          <OptionalLabel label="🧃 飲料或點心" />
+          <OptionalLabel label="🧋 飲料或點心" />
           <TextInput
             style={styles.textArea}
             value={snackText}
@@ -155,7 +158,7 @@ export function DailyHealthModal({ visible, date, existing, onConfirm, onCancel 
 
           {/* ── 按鈕 ── */}
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
+            <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
               <Text style={styles.cancelText}>取消</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.confirmBtnWrap} onPress={handleConfirm}>

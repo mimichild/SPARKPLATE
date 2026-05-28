@@ -141,7 +141,7 @@ export function FilterPanel({ criteria, onChange }: FilterPanelProps) {
           activeOpacity={0.75}
         >
           <AppText style={[styles.chipText, criteria.hasSnack && styles.chipTextActive]}>
-            🧃 有飲料或點心
+            🧋 有飲料或點心
           </AppText>
         </TouchableOpacity>
         <TouchableOpacity

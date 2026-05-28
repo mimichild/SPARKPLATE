@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet, PanResponder, Text } from 'react-native';
-import { Tabs, router } from 'expo-router';
+import { Tabs, router, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSettingsStore } from '@/stores/settingsStore';
 
@@ -14,7 +14,10 @@ function goBack() {
 
 function BackHeader() {
   const insets = useSafeAreaInsets();
-  const { fontColor } = useSettingsStore();
+  const { fontColor, triggerExportOpen } = useSettingsStore();
+  const pathname = usePathname();
+  const isGallery = pathname.includes('gallery');
+
   return (
     <View style={[styles.header, { paddingTop: insets.top, backgroundColor: fontColor }]}>
       <TouchableOpacity
@@ -25,6 +28,16 @@ function BackHeader() {
       >
         <Text style={styles.backText}>返回</Text>
       </TouchableOpacity>
+      {isGallery && (
+        <TouchableOpacity
+          style={styles.shareBtn}
+          onPress={triggerExportOpen}
+          activeOpacity={0.7}
+          hitSlop={{ top: 12, bottom: 12, left: 24, right: 8 }}
+        >
+          <Text style={styles.backText}>分享</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -78,8 +91,13 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     flexDirection: 'row',
     alignItems: 'flex-end',
+    justifyContent: 'space-between',
   },
   backBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+  },
+  shareBtn: {
     paddingVertical: 4,
     paddingHorizontal: 4,
   },

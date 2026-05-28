@@ -9,12 +9,15 @@ interface SettingsState {
   pendingCameraOpen: boolean;
   hydrated: boolean;
   autoOpenFired: boolean; // session-only, not persisted
+  pendingExportOpen: boolean; // session-only, not persisted
   hydrate: () => Promise<void>;
   setFontColor: (color: string) => Promise<void>;
   setOpenCameraOnStart: (v: boolean) => Promise<void>;
   triggerCameraOpen: () => void;
   clearPendingCameraOpen: () => void;
   markAutoOpenFired: () => void;
+  triggerExportOpen: () => void;
+  clearPendingExportOpen: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -23,6 +26,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   pendingCameraOpen: false,
   hydrated: false,
   autoOpenFired: false,
+  pendingExportOpen: false,
 
   hydrate: async () => {
     const [fontColor, openCameraOnStart] = await Promise.all([
@@ -51,4 +55,6 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   clearPendingCameraOpen: () => set({ pendingCameraOpen: false }),
 
   markAutoOpenFired: () => set({ autoOpenFired: true }),
+  triggerExportOpen: () => set({ pendingExportOpen: true }),
+  clearPendingExportOpen: () => set({ pendingExportOpen: false }),
 }));

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Modal, View, Image, TouchableOpacity, Text, StyleSheet,
-  Dimensions, ScrollView,
+  Dimensions, ScrollView, Alert,
 } from 'react-native';
 import { Meal, DailyHealth } from '@/types';
 import { MEAL_LABELS, MOOD_CONFIG } from '@/constants/moodConfig';
@@ -11,7 +11,8 @@ import { AppText } from '@/components/AppText';
 import { EditMealModal, EditMealData } from '@/components/EditMealModal';
 import { useDB } from '@/hooks/useDB';
 import { useDailyHealth } from '@/hooks/useDailyHealth';
-import { updateMeal } from '@/services/mealService';
+import { updateMeal, deleteMeal } from '@/services/mealService';
+import { deletePhoto } from '@/services/photoService';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 const { width, height } = Dimensions.get('window');
@@ -27,6 +28,7 @@ interface PhotoViewerProps {
   meal: Meal | null;
   onClose: () => void;
   onMealUpdated?: (meal: Meal) => void;
+  onMealDeleted?: () => void;
 }
 
 function HealthRow({ label, value, unit }: { label: string; value?: number; unit: string }) {
@@ -44,9 +46,10 @@ interface DetailPanelProps {
   meal: Meal;
   health: DailyHealth | null;
   onEditPress: () => void;
+  onDeletePress: () => void;
 }
 
-function DetailPanel({ meal, health, onEditPress }: DetailPanelProps) {
+function DetailPanel({ meal, health, onEditPress, onDeletePress }: DetailPanelProps) {
   const { fontColor } = useSettingsStore();
 
   return (
@@ -57,26 +60,24 @@ function DetailPanel({ meal, health, onEditPress }: DetailPanelProps) {
         <AppText style={detail.mealType}>{MEAL_LABELS[meal.mealType]}</AppText>
       </View>
 
-      {/* Mood + grade */}
-      {(meal.mood || meal.grade) ? (
-        <View style={detail.row}>
+      {/* Mood + Grade + Event — single row */}
+      {(meal.mood || meal.grade || meal.event) ? (
+        <View style={detail.infoRow}>
           {meal.mood && (
             <View style={detail.moodWrap}>
-              <FaceIcon mood={meal.mood} size={28} />
+              <FaceIcon mood={meal.mood} size={26} />
               <Text style={detail.moodLabel}>{MOOD_CONFIG[meal.mood].label}</Text>
             </View>
           )}
           {meal.grade && (
             <View style={[detail.gradeBadge, { backgroundColor: GRADE_CONFIG[meal.grade].color }]}>
-              <Text style={detail.gradeText}>{meal.grade}</Text>
+              <Text style={detail.gradeText}>{meal.grade}級</Text>
             </View>
           )}
+          {meal.event && (
+            <Text style={detail.eventText} numberOfLines={1}>事件：{meal.event}</Text>
+          )}
         </View>
-      ) : null}
-
-      {/* Event */}
-      {meal.event ? (
-        <Text style={detail.event}>{meal.event}</Text>
       ) : null}
 
       {/* Divider */}
@@ -87,7 +88,7 @@ function DetailPanel({ meal, health, onEditPress }: DetailPanelProps) {
       <HealthRow label="😴 昨晚睡眠" value={health?.sleepHours} unit=" 小時" />
       {health?.snack ? (
         <View style={detail.healthRow}>
-          <Text style={detail.healthLabel}>🧃 飲料或點心</Text>
+          <Text style={detail.healthLabel}>🧋 飲料或點心</Text>
           <Text style={[detail.healthValue, { flex: 1, textAlign: 'right', marginLeft: 8 }]} numberOfLines={2}>{health.snack}</Text>
         </View>
       ) : null}
@@ -106,11 +107,20 @@ function DetailPanel({ meal, health, onEditPress }: DetailPanelProps) {
       >
         <Text style={[detail.editBtnText, { color: fontColor }]}>✏️ 編輯紀錄</Text>
       </TouchableOpacity>
+
+      {/* Delete button */}
+      <TouchableOpacity
+        style={detail.deleteBtn}
+        onPress={onDeletePress}
+        activeOpacity={0.75}
+      >
+        <Text style={detail.deleteBtnText}>🗑️ 刪除此餐</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
 
-export function PhotoViewer({ visible, meal, onClose, onMealUpdated }: PhotoViewerProps) {
+export function PhotoViewer({ visible, meal, onClose, onMealUpdated, onMealDeleted }: PhotoViewerProps) {
   const [editVisible, setEditVisible] = useState(false);
   const db = useDB();
   const { health, save: saveHealth } = useDailyHealth(meal?.date ?? '');
@@ -131,6 +141,27 @@ export function PhotoViewer({ visible, meal, onClose, onMealUpdated }: PhotoView
     });
     setEditVisible(false);
     onMealUpdated?.(updated);
+  }
+
+  function handleDeletePress() {
+    if (!meal) return;
+    Alert.alert(
+      '刪除此餐',
+      '確定要刪除這筆餐點紀錄嗎？此操作無法復原。',
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '刪除',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteMeal(db, meal.id);
+            if (meal.photoId) await deletePhoto(db, meal.photoId);
+            onClose();
+            onMealDeleted?.();
+          },
+        },
+      ]
+    );
   }
 
   if (!meal?.photo) return null;
@@ -155,6 +186,7 @@ export function PhotoViewer({ visible, meal, onClose, onMealUpdated }: PhotoView
           meal={meal}
           health={health}
           onEditPress={() => setEditVisible(true)}
+          onDeletePress={handleDeletePress}
         />
 
         {/* Edit modal */}
@@ -190,14 +222,12 @@ const detail = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
   date: { fontSize: 18, fontWeight: '700', color: '#111' },
   mealType: { fontSize: 16, color: '#777' },
-  moodWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  moodLabel: { fontSize: 14, color: '#555' },
-  gradeBadge: {
-    width: 32, height: 32, borderRadius: 16,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  gradeText: { color: '#fff', fontSize: 14, fontWeight: '800' },
-  event: { fontSize: 14, color: '#444', marginBottom: 10, lineHeight: 20 },
+  infoRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 10 },
+  moodWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  moodLabel: { fontSize: 13, color: '#555' },
+  gradeBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  gradeText: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  eventText: { fontSize: 13, color: '#555', flex: 1 },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: '#eee', marginVertical: 14 },
   healthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
   healthLabel: { fontSize: 14, color: '#555' },
@@ -207,4 +237,9 @@ const detail = StyleSheet.create({
     borderWidth: 1.5, alignItems: 'center',
   },
   editBtnText: { fontSize: 15, fontWeight: '600' },
+  deleteBtn: {
+    marginTop: 10, paddingVertical: 13, borderRadius: 12,
+    borderWidth: 1.5, borderColor: '#E85D5D', alignItems: 'center',
+  },
+  deleteBtnText: { fontSize: 15, fontWeight: '600', color: '#E85D5D' },
 });

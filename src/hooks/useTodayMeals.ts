@@ -26,7 +26,7 @@ interface UseTodayMealsReturn {
   addMealWithPhoto: (
     mealType: MealType,
     sourceUri: string,
-    meta?: { mood?: Mood; event?: string; grade?: MealGrade; note?: string }
+    meta?: { mood?: Mood; event?: string; grade?: MealGrade; note?: string; date?: string }
   ) => Promise<void>;
   updateMeal: (id: string, updates: Partial<Meal>) => Promise<void>;
   deleteMealWithPhoto: (id: string, photoId?: string) => Promise<void>;
@@ -56,17 +56,18 @@ export function useTodayMeals(): UseTodayMealsReturn {
     async (
       mealType: MealType,
       sourceUri: string,
-      meta?: { mood?: Mood; event?: string; grade?: MealGrade; note?: string }
+      meta?: { mood?: Mood; event?: string; grade?: MealGrade; note?: string; date?: string }
     ) => {
+      const { date: targetDate = today, ...restMeta } = meta ?? {};
       // Remove any existing meal for the same date+type before inserting
-      const existing = await getMealsByDate(db, today);
+      const existing = await getMealsByDate(db, targetDate);
       const duplicate = existing.find((m) => m.mealType === mealType);
       if (duplicate) {
         await deleteMeal(db, duplicate.id);
         if (duplicate.photoId) await deletePhoto(db, duplicate.photoId);
       }
       const photo = await savePhoto(db, sourceUri);
-      await createMeal(db, { date: today, mealType, photoId: photo.id, ...meta });
+      await createMeal(db, { date: targetDate, mealType, photoId: photo.id, ...restMeta });
       reload();
     },
     [db, today, reload]

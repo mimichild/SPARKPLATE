@@ -131,7 +131,7 @@ export function ImageEditModal({ visible, sourceUri, onConfirm, onSkip }: Props)
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: () => { sliderStart.current = brightnessRef.current; },
     onPanResponderMove: (_, gs) => {
-      const delta = (gs.dx / (DS - 48)) * 2;
+      const delta = (gs.dx / (DS - 48)) * 4;
       sliderOnChange.current(clamp(sliderStart.current + delta, -1, 1));
     },
   })).current;
@@ -144,7 +144,7 @@ export function ImageEditModal({ visible, sourceUri, onConfirm, onSkip }: Props)
       Math.abs(imgTransform.x) < 1 &&
       Math.abs(imgTransform.y) < 1;
 
-    if (noBrightness && (mode !== 'crop' || noTransform)) {
+    if (noBrightness && noTransform) {
       onConfirm(sourceUri); return;
     }
 
@@ -192,10 +192,10 @@ export function ImageEditModal({ visible, sourceUri, onConfirm, onSkip }: Props)
           collapsable={false}
           style={styles.imageContainer}
         >
-          {/* Transformable layer */}
+          {/* Transformable layer — always apply transform so crop persists when switching modes */}
           <View style={[
             styles.imageLayer,
-            mode === 'crop' && {
+            {
               transform: [
                 { scale: imgTransform.scale },
                 { translateX: imgTransform.x },
@@ -252,7 +252,7 @@ export function ImageEditModal({ visible, sourceUri, onConfirm, onSkip }: Props)
 
         {/* Brightness slider */}
         {mode === 'adjust' && (
-          <View style={styles.sliderArea}>
+          <View style={styles.sliderArea} {...sliderPan.panHandlers}>
             <Text style={styles.sliderLabel}>
               {brightness > 0.01
                 ? `+${Math.round(brightness * 100)}%`
@@ -263,7 +263,6 @@ export function ImageEditModal({ visible, sourceUri, onConfirm, onSkip }: Props)
             <View style={styles.sliderTrack}>
               <View style={[styles.sliderFill, { width: Math.max(0, thumbLeft), backgroundColor: fontColor }]} />
               <View style={[styles.sliderThumb, { left: thumbLeft - 12, borderColor: fontColor }]} />
-              <View style={StyleSheet.absoluteFill} {...sliderPan.panHandlers} />
             </View>
           </View>
         )}
@@ -301,7 +300,7 @@ const styles = StyleSheet.create({
   modeBtnText: { color: '#888', fontSize: 14, fontWeight: '600' },
   modeBtnActive: { color: '#fff' },
 
-  sliderArea: { paddingHorizontal: 24, paddingTop: 20 },
+  sliderArea: { paddingHorizontal: 24, paddingTop: 32, paddingBottom: 16 },
   sliderLabel: { color: '#aaa', fontSize: 12, textAlign: 'center', marginBottom: 8 },
   sliderTrack: { height: 4, backgroundColor: '#444', borderRadius: 2, position: 'relative' },
   sliderFill: { height: 4, borderRadius: 2 },

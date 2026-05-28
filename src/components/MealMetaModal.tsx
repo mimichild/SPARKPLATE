@@ -7,7 +7,10 @@ import { MOOD_CONFIG, MOOD_LIST } from '@/constants/moodConfig';
 import { GRADE_CONFIG, GRADE_LIST } from '@/constants/gradeConfig';
 import { FaceIcon } from '@/components/FaceIcon';
 import { AppText } from '@/components/AppText';
+import { DateSelector } from '@/components/DateSelector';
 import { useSettingsStore } from '@/stores/settingsStore';
+
+function todayStr() { return new Date().toISOString().slice(0, 10); }
 
 const MEAL_OPTIONS: { type: MealType; label: string; icon: string }[] = [
   { type: 'breakfast', label: '早餐', icon: '🌅' },
@@ -18,6 +21,7 @@ const MEAL_OPTIONS: { type: MealType; label: string; icon: string }[] = [
 interface MealMetaModalProps {
   visible: boolean;
   onConfirm: (meta: {
+    date: string;
     mealType: MealType;
     mood?: Mood;
     event?: string;
@@ -29,15 +33,15 @@ interface MealMetaModalProps {
 
 export function MealMetaModal({ visible, onConfirm, onCancel }: MealMetaModalProps) {
   const { fontColor } = useSettingsStore();
+  const [date,     setDate]     = useState(todayStr());
   const [mealType, setMealType] = useState<MealType | undefined>();
   const [mood,     setMood]     = useState<Mood | undefined>();
   const [event,    setEvent]    = useState('');
   const [grade,    setGrade]    = useState<MealGrade | undefined>();
   const [note,     setNote]     = useState('');
 
-  function handleConfirm() {
-    if (!mealType) return;
-    onConfirm({ mealType, mood, event: event || undefined, grade, note: note || undefined });
+  function reset() {
+    setDate(todayStr());
     setMealType(undefined);
     setMood(undefined);
     setEvent('');
@@ -45,12 +49,14 @@ export function MealMetaModal({ visible, onConfirm, onCancel }: MealMetaModalPro
     setNote('');
   }
 
+  function handleConfirm() {
+    if (!mealType) return;
+    onConfirm({ date, mealType, mood, event: event || undefined, grade, note: note || undefined });
+    reset();
+  }
+
   function handleCancel() {
-    setMealType(undefined);
-    setMood(undefined);
-    setEvent('');
-    setGrade(undefined);
-    setNote('');
+    reset();
     onCancel();
   }
 
@@ -58,11 +64,15 @@ export function MealMetaModal({ visible, onConfirm, onCancel }: MealMetaModalPro
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleCancel}>
       <View style={styles.overlay}>
         <ScrollView
+          style={styles.scrollWrap}
           contentContainerStyle={styles.sheet}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           <AppText style={styles.title}>新增餐點</AppText>
+
+          {/* ── 日期 ── */}
+          <DateSelector value={date} onChange={setDate} />
 
           {/* ── 餐別（必填） ── */}
           <View style={styles.requiredRow}>
@@ -174,10 +184,11 @@ export function MealMetaModal({ visible, onConfirm, onCancel }: MealMetaModalPro
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
+  scrollWrap: { maxHeight: '88%' },
   sheet: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    padding: 24, paddingBottom: 40,
+    padding: 24, paddingTop: 28, paddingBottom: 40,
   },
   title: { fontSize: 18, fontWeight: '700', marginBottom: 20, textAlign: 'center' },
   requiredRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 4, gap: 6 },
