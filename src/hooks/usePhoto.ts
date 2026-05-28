@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 interface UsePhotoReturn {
   takePicture: () => Promise<string | null>;
@@ -11,6 +12,8 @@ interface UsePhotoReturn {
 }
 
 export function usePhoto(): UsePhotoReturn {
+  const autoSavePhoto = useSettingsStore((s) => s.autoSavePhoto);
+
   const takePicture = useCallback(async (): Promise<string | null> => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') return null;
@@ -22,8 +25,17 @@ export function usePhoto(): UsePhotoReturn {
     });
 
     if (result.canceled || !result.assets[0]) return null;
-    return result.assets[0].uri;
-  }, []);
+    const uri = result.assets[0].uri;
+
+    if (autoSavePhoto) {
+      const { status: libStatus } = await MediaLibrary.requestPermissionsAsync();
+      if (libStatus === 'granted') {
+        await MediaLibrary.saveToLibraryAsync(uri);
+      }
+    }
+
+    return uri;
+  }, [autoSavePhoto]);
 
   const pickFromLibrary = useCallback(async (): Promise<string | null> => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();

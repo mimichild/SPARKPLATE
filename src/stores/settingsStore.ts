@@ -6,6 +6,7 @@ import { DEFAULT_FONT_COLOR } from '@/constants/themeColors';
 interface SettingsState {
   fontColor: string;
   openCameraOnStart: boolean;
+  autoSavePhoto: boolean;
   pendingCameraOpen: boolean;
   hydrated: boolean;
   autoOpenFired: boolean; // session-only, not persisted
@@ -15,6 +16,7 @@ interface SettingsState {
   hydrate: () => Promise<void>;
   setFontColor: (color: string) => Promise<void>;
   setOpenCameraOnStart: (v: boolean) => Promise<void>;
+  setAutoSavePhoto: (v: boolean) => Promise<void>;
   triggerCameraOpen: () => void;
   clearPendingCameraOpen: () => void;
   markAutoOpenFired: () => void;
@@ -29,6 +31,7 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>((set) => ({
   fontColor: DEFAULT_FONT_COLOR,
   openCameraOnStart: false,
+  autoSavePhoto: false,
   pendingCameraOpen: false,
   hydrated: false,
   autoOpenFired: false,
@@ -37,13 +40,15 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   pendingScreenshot: false,
 
   hydrate: async () => {
-    const [fontColor, openCameraOnStart] = await Promise.all([
+    const [fontColor, openCameraOnStart, autoSavePhoto] = await Promise.all([
       AsyncStorage.getItem(STORAGE_KEYS.FONT_COLOR),
       AsyncStorage.getItem(STORAGE_KEYS.OPEN_CAMERA_ON_START),
+      AsyncStorage.getItem(STORAGE_KEYS.AUTO_SAVE_PHOTO),
     ]);
     set({
       fontColor: fontColor ?? DEFAULT_FONT_COLOR,
       openCameraOnStart: openCameraOnStart === 'true',
+      autoSavePhoto: autoSavePhoto === 'true',
       hydrated: true,
     });
   },
@@ -56,6 +61,11 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   setOpenCameraOnStart: async (v: boolean) => {
     set({ openCameraOnStart: v });
     await AsyncStorage.setItem(STORAGE_KEYS.OPEN_CAMERA_ON_START, String(v));
+  },
+
+  setAutoSavePhoto: async (v: boolean) => {
+    set({ autoSavePhoto: v });
+    await AsyncStorage.setItem(STORAGE_KEYS.AUTO_SAVE_PHOTO, String(v));
   },
 
   triggerCameraOpen: () => set({ pendingCameraOpen: true }),
