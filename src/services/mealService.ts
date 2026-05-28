@@ -16,7 +16,7 @@ interface MealRow {
   photo_id: string | null;
   mood: string | null;
   event: string | null;
-  grade: number | null;
+  grade: string | null;
   note: string | null;
   created_at: string;
   updated_at: string;

@@ -79,6 +79,7 @@ export function EditMealModal({ visible, meal, health, onConfirm, onCancel }: Ed
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onCancel}>
       <View style={styles.overlay}>
         <ScrollView
+          style={styles.scrollWrap}
           contentContainerStyle={styles.sheet}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -219,7 +220,7 @@ export function EditMealModal({ visible, meal, health, onConfirm, onCancel }: Ed
           </View>
 
           {/* ── 飲料或點心 ── */}
-          <AppText style={[styles.sectionLabel, styles.sectionTop]}>🧃 飲料或點心</AppText>
+          <AppText style={[styles.sectionLabel, styles.sectionTop]}>🧋 飲料或點心</AppText>
           <TextInput
             style={styles.textArea}
             value={snackText}
@@ -259,10 +260,11 @@ export function EditMealModal({ visible, meal, health, onConfirm, onCancel }: Ed
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
+  scrollWrap: { maxHeight: '88%' },
   sheet: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    padding: 24, paddingBottom: 40,
+    padding: 24, paddingTop: 28, paddingBottom: 40,
   },
   title: { fontSize: 18, fontWeight: '700', marginBottom: 20, textAlign: 'center' },
   sectionLabel: { fontSize: 13, color: '#888', marginBottom: 10 },

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, Modal, TouchableOpacity,
+  View, Text, StyleSheet, Modal, TouchableOpacity, Image,
 } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
 import { FlashList } from '@shopify/flash-list';
 import { GalleryCell, GALLERY_CELL_HEIGHT } from '@/components/GalleryCell';
 import { PhotoViewer } from '@/components/PhotoViewer';
@@ -9,12 +10,14 @@ import { FAB } from '@/components/FAB';
 import { ImageEditModal } from '@/components/ImageEditModal';
 import { MealMetaModal } from '@/components/MealMetaModal';
 import { DailyHealthModal } from '@/components/DailyHealthModal';
+import { ExportModal, CollageGrid } from '@/components/ExportModal';
 import { AppText } from '@/components/AppText';
 import { useGallery } from '@/hooks/useGallery';
 import { useTodayMeals } from '@/hooks/useTodayMeals';
 import { usePhoto } from '@/hooks/usePhoto';
-import { useDailyHealth } from '@/hooks/useDailyHealth';
+import { useDB } from '@/hooks/useDB';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { getMealsByDateRange } from '@/services/mealService';
 import { DayRecord, Meal, MealType, Mood, MealGrade } from '@/types';
 
 type EditState = { visible: boolean; sourceUri: string };
@@ -35,7 +38,7 @@ function WaterDropIcon() {
       }} />
       <View style={{
         width: 16, height: 16, borderRadius: 8,
-        borderWidth: 2.5, borderColor: '#fff', marginTop: -2,
+        backgroundColor: '#fff', marginTop: -2,
       }} />
     </View>
   );
@@ -47,15 +50,18 @@ export default function GalleryScreen() {
   const { days, loading, hasMore, loadMore, reload } = useGallery();
   const { addMealWithPhoto } = useTodayMeals();
   const { takePicture, pickFromLibrary } = usePhoto();
-  const { fontColor, pendingCameraOpen, clearPendingCameraOpen } = useSettingsStore();
+  const { fontColor, pendingCameraOpen, clearPendingCameraOpen, pendingExportOpen, clearPendingExportOpen } = useSettingsStore();
+  const db = useDB();
   const today = todayDate();
-  const { health: todayHealth, save: saveHealth } = useDailyHealth(today);
 
-  const [selectedMeal,    setSelectedMeal]    = useState<Meal | null>(null);
-  const [sheetVisible,    setSheetVisible]    = useState(false);
-  const [editModal,       setEditModal]       = useState<EditState | null>(null);
-  const [metaModal,       setMetaModal]       = useState<MetaState | null>(null);
-  const [healthModal,     setHealthModal]     = useState(false);
+  const [selectedMeal,  setSelectedMeal]  = useState<Meal | null>(null);
+  const [sheetVisible,  setSheetVisible]  = useState(false);
+  const [editModal,     setEditModal]     = useState<EditState | null>(null);
+  const [metaModal,     setMetaModal]     = useState<MetaState | null>(null);
+  const [healthModal,   setHealthModal]   = useState(false);
+  const [exportVisible, setExportVisible] = useState(false);
+  const [gridDays,      setGridDays]      = useState<DayRecord[]>([]);
+  const gridRef = useRef<View | null>(null);
 
   useEffect(() => {
     if (pendingCameraOpen) {
@@ -63,6 +69,13 @@ export default function GalleryScreen() {
       clearPendingCameraOpen();
     }
   }, [pendingCameraOpen, clearPendingCameraOpen]);
+
+  useEffect(() => {
+    if (pendingExportOpen) {
+      setExportVisible(true);
+      clearPendingExportOpen();
+    }
+  }, [pendingExportOpen, clearPendingExportOpen]);
 
   async function handleCamera() {
     setSheetVisible(false);
@@ -82,13 +95,49 @@ export default function GalleryScreen() {
   }
 
   async function handleMetaConfirm(meta: {
-    mealType: MealType; mood?: Mood; event?: string; grade?: MealGrade; note?: string;
+    date: string; mealType: MealType; mood?: Mood; event?: string; grade?: MealGrade; note?: string;
   }) {
     if (!metaModal) return;
-    const { mealType, ...rest } = meta;
+    const { mealType, ...rest } = meta; // rest includes date
     await addMealWithPhoto(mealType, metaModal.sourceUri, rest);
     setMetaModal(null);
     reload();
+  }
+
+  async function handleCollageGenerate(
+    startDate: string,
+    endDate: string,
+    onProgress: (p: number) => void,
+  ): Promise<string> {
+    onProgress(5);
+
+    // Fetch meals in range
+    const fetchedDays = await getMealsByDateRange(db, startDate, endDate);
+    setGridDays(fetchedDays);
+    onProgress(25);
+
+    // Prefetch all images so they load instantly when CollageGrid renders
+    const uris = fetchedDays.flatMap(d =>
+      (['breakfast', 'lunch', 'dinner'] as const)
+        .map(t => d[t]?.photo?.gridUri)
+        .filter((u): u is string => !!u)
+    );
+    if (uris.length === 0) throw new Error('所選日期範圍內沒有任何餐點照片');
+    await Promise.all(uris.map(u => Image.prefetch(u)));
+    onProgress(55);
+
+    // Wait for React to render CollageGrid with pre-fetched images
+    await new Promise(r => setTimeout(r, 1500));
+    onProgress(80);
+
+    // Capture the off-screen grid
+    if (!gridRef.current) throw new Error('組圖視圖尚未就緒，請重試');
+    const uri = await captureRef(gridRef, { format: 'jpg', quality: 0.92 });
+    onProgress(100);
+
+    // Clear grid after capture
+    setGridDays([]);
+    return uri;
   }
 
   const meals = days.flatMap(mealsFromDay).filter((m) => m.photo);
@@ -130,6 +179,7 @@ export default function GalleryScreen() {
         meal={selectedMeal}
         onClose={() => setSelectedMeal(null)}
         onMealUpdated={(updated) => { setSelectedMeal(updated); reload(); }}
+        onMealDeleted={() => { setSelectedMeal(null); reload(); }}
       />
 
       {/* ── Source action sheet ── */}
@@ -186,11 +236,19 @@ export default function GalleryScreen() {
       {/* ── Daily health modal ── */}
       <DailyHealthModal
         visible={healthModal}
-        date={today}
-        existing={todayHealth}
-        onConfirm={async (data) => { await saveHealth(data); setHealthModal(false); }}
-        onCancel={() => setHealthModal(false)}
+        defaultDate={today}
+        onClose={() => setHealthModal(false)}
       />
+
+      {/* ── Export collage modal ── */}
+      <ExportModal
+        visible={exportVisible}
+        onClose={() => setExportVisible(false)}
+        onGenerate={handleCollageGenerate}
+      />
+
+      {/* ── Hidden collage grid for capture (rendered outside any Modal) ── */}
+      <CollageGrid days={gridDays} gridRef={gridRef} />
     </View>
   );
 }
@@ -206,7 +264,6 @@ const styles = StyleSheet.create({
   closeText: { fontSize: 18, color: '#aaa', fontWeight: '600' },
   action: { paddingVertical: 16, paddingHorizontal: 24, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#eee' },
   actionText: { fontSize: 16 },
-  cancelText: { color: '#999' },
   waterFab: {
     position: 'absolute', bottom: 100, right: 24,
     width: 56, height: 56, borderRadius: 28,
