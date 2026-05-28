@@ -12,7 +12,7 @@ describe('settingsStore', () => {
     mockStorage.getItem.mockResolvedValue(null);
     await act(async () => {
       useSettingsStore.setState({
-        volumeQuickCapture: false,
+        autoSavePhoto: false,
         pendingCameraOpen: false,
         hydrated: false,
       });
@@ -23,27 +23,27 @@ describe('settingsStore', () => {
     it('defaults to false when AsyncStorage has no value', async () => {
       const { result } = renderHook(() => useSettingsStore());
       await act(async () => { await result.current.hydrate(); });
-      expect(result.current.volumeQuickCapture).toBe(false);
+      expect(result.current.autoSavePhoto).toBe(false);
       expect(result.current.hydrated).toBe(true);
     });
 
-    it('loads volumeQuickCapture from AsyncStorage', async () => {
+    it('loads autoSavePhoto from AsyncStorage', async () => {
       mockStorage.getItem.mockImplementation(async (key) => {
-        if (key === 'settings:volumeQuickCapture') return 'true';
+        if (key === 'settings:autoSavePhoto') return 'true';
         return null;
       });
       const { result } = renderHook(() => useSettingsStore());
       await act(async () => { await result.current.hydrate(); });
-      expect(result.current.volumeQuickCapture).toBe(true);
+      expect(result.current.autoSavePhoto).toBe(true);
     });
   });
 
-  describe('setVolumeQuickCapture', () => {
+  describe('setAutoSavePhoto', () => {
     it('updates state and persists to AsyncStorage', async () => {
       const { result } = renderHook(() => useSettingsStore());
-      await act(async () => { await result.current.setVolumeQuickCapture(true); });
-      expect(result.current.volumeQuickCapture).toBe(true);
-      expect(mockStorage.setItem).toHaveBeenCalledWith('settings:volumeQuickCapture', 'true');
+      await act(async () => { await result.current.setAutoSavePhoto(true); });
+      expect(result.current.autoSavePhoto).toBe(true);
+      expect(mockStorage.setItem).toHaveBeenCalledWith('settings:autoSavePhoto', 'true');
     });
   });
 

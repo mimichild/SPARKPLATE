@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { FilterPanel, buildActiveChips } from '@/components/FilterPanel';
@@ -11,8 +11,26 @@ import { useFilter } from '@/hooks/useFilter';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { Meal } from '@/types';
 
+const CELL_SIZE = Math.floor(Dimensions.get('window').width / 3);
+
+function groupMealsByDate(meals: Meal[]): (Meal | null)[] {
+  const byDate: Record<string, { breakfast?: Meal; lunch?: Meal; dinner?: Meal }> = {};
+  for (const meal of meals) {
+    if (!byDate[meal.date]) byDate[meal.date] = {};
+    byDate[meal.date][meal.mealType] = meal;
+  }
+  const sortedDates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
+  const cells: (Meal | null)[] = [];
+  for (const date of sortedDates) {
+    const day = byDate[date];
+    cells.push(day.breakfast ?? null, day.lunch ?? null, day.dinner ?? null);
+  }
+  return cells;
+}
+
 export default function FilterScreen() {
   const { criteria, results, loading, totalCount, setCriteria, clearCriteria, reload } = useFilter();
+  const groupedData = groupMealsByDate(results);
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const { fontColor, pendingFilterOpen, clearPendingFilterOpen } = useSettingsStore();
@@ -68,12 +86,16 @@ export default function FilterScreen() {
         </View>
       ) : (
         <FlashList
-          data={results}
+          data={groupedData}
           numColumns={3}
-          keyExtractor={(m) => m.id}
-          renderItem={({ item }) => (
-            <GalleryCell meal={item} onPress={setSelectedMeal} />
-          )}
+          keyExtractor={(item, index) => item ? item.id : `empty-${index}`}
+          renderItem={({ item }) =>
+            item ? (
+              <GalleryCell meal={item} onPress={setSelectedMeal} />
+            ) : (
+              <View style={styles.emptyCell} />
+            )
+          }
           estimatedItemSize={GALLERY_CELL_HEIGHT}
         />
       )}
@@ -130,4 +152,5 @@ const styles = StyleSheet.create({
 
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   empty: { fontSize: 16, color: '#aaa' },
+  emptyCell: { width: CELL_SIZE, height: GALLERY_CELL_HEIGHT },
 });

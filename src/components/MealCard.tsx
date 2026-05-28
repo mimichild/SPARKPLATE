@@ -22,7 +22,7 @@ function formatDate(dateStr?: string): string {
   return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export function MealCard({ mealType, meal, onLongPress }: MealCardProps) {
+export function MealCard({ mealType, meal, onAdd, onLongPress }: MealCardProps) {
   const label = MEAL_LABELS[mealType] ?? mealType;
   const dateStr = formatDate(meal?.date);
   const { fontColor } = useSettingsStore();
@@ -48,14 +48,19 @@ export function MealCard({ mealType, meal, onLongPress }: MealCardProps) {
           />
         </TouchableOpacity>
       ) : (
-        <View testID="meal-card-placeholder" style={[styles.thumb, styles.placeholder]} />
+        <TouchableOpacity
+          testID="meal-card-placeholder"
+          activeOpacity={0.9}
+          onPress={() => onAdd(mealType)}
+          style={[styles.thumb, styles.placeholder]}
+        />
       )}
 
       {/* Right: date + meta info */}
       <View style={styles.infoCol}>
         <AppText style={styles.date}>{dateStr}</AppText>
         <View style={styles.metaRow}>
-          {meal?.mood ? <FaceIcon mood={meal.mood} size={20} /> : null}
+          {meal?.mood ? <View testID="meal-mood-icon"><FaceIcon mood={meal.mood} size={20} /></View> : null}
           {meal?.grade ? (
             <Text style={styles.grade}>{meal.grade}</Text>
           ) : null}

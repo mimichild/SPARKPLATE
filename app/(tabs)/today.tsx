@@ -93,6 +93,7 @@ export default function TodayScreen() {
           <View style={styles.sheet}>
             <View style={styles.sheetHeader}>
               <TouchableOpacity
+                testID="action-cancel"
                 style={styles.closeBtn}
                 onPress={() => setSheetVisible(false)}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -100,10 +101,10 @@ export default function TodayScreen() {
                 <Text style={styles.closeText}>✕</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.action} onPress={handleCamera}>
+            <TouchableOpacity testID="action-camera" style={styles.action} onPress={handleCamera}>
               <AppText style={styles.actionText}>📷 拍照</AppText>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.action} onPress={handleLibrary}>
+            <TouchableOpacity testID="action-library" style={styles.action} onPress={handleLibrary}>
               <AppText style={styles.actionText}>🖼️ 從相簿選取</AppText>
             </TouchableOpacity>
           </View>

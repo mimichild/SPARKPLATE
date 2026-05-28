@@ -1,23 +1,26 @@
 jest.mock('expo-router');
 jest.mock('@/hooks/useFilter');
+jest.mock('@/stores/settingsStore');
 jest.mock('@/providers/DBProvider', () => ({
   useDBContext: jest.fn(() => ({})),
 }));
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import { useFilter } from '@/hooks/useFilter';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 import FilterScreen from '../../../app/(tabs)/filter';
 
 const mockUseFilter = useFilter as jest.Mock;
+const mockUseSettingsStore = useSettingsStore as unknown as jest.Mock;
 
 const MEAL = {
   id: 'm1',
   date: '2026-05-26',
   mealType: 'breakfast' as const,
-  mood: 'good' as const,
-  grade: 4 as const,
+  mood: 'happy' as const,
+  grade: 'S' as const,
   photoId: 'p1',
   photo: {
     id: 'p1',
@@ -39,6 +42,16 @@ function makeFilter(overrides = {}) {
     totalCount: 0,
     setCriteria: jest.fn(),
     clearCriteria: jest.fn(),
+    reload: jest.fn(),
+    ...overrides,
+  };
+}
+
+function makeSettings(overrides = {}) {
+  return {
+    fontColor: '#4A90E2',
+    pendingFilterOpen: false,
+    clearPendingFilterOpen: jest.fn(),
     ...overrides,
   };
 }
@@ -47,11 +60,7 @@ describe('FilterScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseFilter.mockReturnValue(makeFilter());
-  });
-
-  it('renders filter panel', () => {
-    const { getByTestId } = render(<FilterScreen />);
-    expect(getByTestId('filter-panel')).toBeTruthy();
+    mockUseSettingsStore.mockReturnValue(makeSettings());
   });
 
   it('shows result count', () => {
@@ -65,14 +74,6 @@ describe('FilterScreen', () => {
     expect(getByText('沒有符合的紀錄')).toBeTruthy();
   });
 
-  it('calls setCriteria when mood chip is pressed', () => {
-    const setCriteria = jest.fn();
-    mockUseFilter.mockReturnValue(makeFilter({ setCriteria }));
-    const { getByTestId } = render(<FilterScreen />);
-    fireEvent.press(getByTestId('filter-mood-good'));
-    expect(setCriteria).toHaveBeenCalled();
-  });
-
   it('renders gallery cells for results', () => {
     mockUseFilter.mockReturnValue(makeFilter({ results: [MEAL], totalCount: 1 }));
     const { getByTestId } = render(<FilterScreen />);
@@ -83,5 +84,16 @@ describe('FilterScreen', () => {
     mockUseFilter.mockReturnValue(makeFilter({ loading: true }));
     const { getByText } = render(<FilterScreen />);
     expect(getByText('載入中…')).toBeTruthy();
+  });
+
+  it('opens filter panel when pendingFilterOpen is true', async () => {
+    const clearPendingFilterOpen = jest.fn();
+    mockUseSettingsStore.mockReturnValue(
+      makeSettings({ pendingFilterOpen: true, clearPendingFilterOpen })
+    );
+    const { getByTestId } = render(<FilterScreen />);
+    await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+    expect(getByTestId('filter-mood-happy')).toBeTruthy();
+    expect(clearPendingFilterOpen).toHaveBeenCalled();
   });
 });

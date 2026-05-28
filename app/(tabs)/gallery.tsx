@@ -12,6 +12,7 @@ import { ImageEditModal } from '@/components/ImageEditModal';
 import { MealMetaModal } from '@/components/MealMetaModal';
 import { DailyHealthModal } from '@/components/DailyHealthModal';
 import { ExportModal, CollageGrid } from '@/components/ExportModal';
+import { CameraLaunchModal } from '@/components/CameraLaunchModal';
 import { AppText } from '@/components/AppText';
 import { useGallery } from '@/hooks/useGallery';
 import { useTodayMeals } from '@/hooks/useTodayMeals';
@@ -55,9 +56,10 @@ export default function GalleryScreen() {
   const db = useDB();
   const today = todayDate();
 
-  const [selectedMeal,  setSelectedMeal]  = useState<Meal | null>(null);
-  const [sheetVisible,  setSheetVisible]  = useState(false);
-  const [editModal,     setEditModal]     = useState<EditState | null>(null);
+  const [selectedMeal,     setSelectedMeal]     = useState<Meal | null>(null);
+  const [sheetVisible,     setSheetVisible]     = useState(false);
+  const [cameraLaunch,     setCameraLaunch]     = useState(false);
+  const [editModal,        setEditModal]        = useState<EditState | null>(null);
   const [metaModal,     setMetaModal]     = useState<MetaState | null>(null);
   const [healthModal,   setHealthModal]   = useState(false);
   const [exportVisible, setExportVisible] = useState(false);
@@ -99,7 +101,7 @@ export default function GalleryScreen() {
 
   useEffect(() => {
     if (pendingCameraOpen) {
-      setSheetVisible(true);
+      setCameraLaunch(true);
       clearPendingCameraOpen();
     }
   }, [pendingCameraOpen, clearPendingCameraOpen]);
@@ -120,12 +122,14 @@ export default function GalleryScreen() {
 
   async function handleCamera() {
     setSheetVisible(false);
+    setCameraLaunch(false);
     const uri = await takePicture();
     if (uri) setEditModal({ visible: true, sourceUri: uri });
   }
 
   async function handleLibrary() {
     setSheetVisible(false);
+    setCameraLaunch(false);
     const uri = await pickFromLibrary();
     if (uri) setEditModal({ visible: true, sourceUri: uri });
   }
@@ -292,6 +296,13 @@ export default function GalleryScreen() {
         visible={exportVisible}
         onClose={() => setExportVisible(false)}
         onGenerate={handleCollageGenerate}
+      />
+
+      {/* ── Camera launch modal (from openCameraOnStart setting) ── */}
+      <CameraLaunchModal
+        visible={cameraLaunch}
+        onPhotoTaken={(uri) => { setCameraLaunch(false); setEditModal({ visible: true, sourceUri: uri }); }}
+        onClose={() => setCameraLaunch(false)}
       />
 
       {/* ── Hidden collage grid for capture (rendered outside any Modal) ── */}
