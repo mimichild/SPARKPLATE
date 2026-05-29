@@ -8,6 +8,7 @@ import * as Sharing from 'expo-sharing';
 import { DayRecord } from '@/types';
 import { AppText } from '@/components/AppText';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { MEAL_LABELS } from '@/constants/moodConfig';
 
 export const COLLAGE_CELL_SIZE = 300;
 
@@ -167,11 +168,17 @@ export function CollageGrid({ days, gridRef }: CollageGridProps) {
                 style={{ width: COLLAGE_CELL_SIZE, height: COLLAGE_CELL_SIZE, backgroundColor: '#ebebeb' }}
               >
                 {meal?.photo ? (
-                  <Image
-                    source={{ uri: meal.photo.gridUri }}
-                    style={{ width: COLLAGE_CELL_SIZE, height: COLLAGE_CELL_SIZE }}
-                    resizeMode="cover"
-                  />
+                  <>
+                    <Image
+                      source={{ uri: meal.photo.gridUri }}
+                      style={{ width: COLLAGE_CELL_SIZE, height: COLLAGE_CELL_SIZE }}
+                      resizeMode="cover"
+                    />
+                    <View style={grid.label}>
+                      <Text style={grid.labelDate}>{fmtDate(day.date)}</Text>
+                      <Text style={grid.labelMeal}>{MEAL_LABELS[type]}</Text>
+                    </View>
+                  </>
                 ) : null}
               </View>
             );
@@ -441,6 +448,21 @@ const cal = StyleSheet.create({
   cell: { flex: 1, alignItems: 'center', paddingVertical: 2 },
   dayInner: { width: 34, height: 34, borderRadius: 17, justifyContent: 'center', alignItems: 'center' },
   dayNum: { fontSize: 13, color: '#333' },
+});
+
+const grid = StyleSheet.create({
+  label: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(0,0,0,0.42)',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  labelDate: { color: '#fff', fontSize: 30, fontWeight: '700' },
+  labelMeal: { color: '#fff', fontSize: 28, fontWeight: '600' },
 });
 
 const prog = StyleSheet.create({
