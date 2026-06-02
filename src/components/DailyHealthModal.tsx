@@ -7,8 +7,8 @@ import { DateSelector } from '@/components/DateSelector';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useDailyHealth } from '@/hooks/useDailyHealth';
 
-const WATER_PRESETS = [500, 1000, 1500, 2000];
-const SLEEP_PRESETS = [5, 6, 7, 8];
+const WATER_PRESETS = [500, 1000, 1500, 2000, 2500, 3000];
+const SLEEP_PRESETS = [5, 6, 7, 8, 9];
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 
@@ -31,6 +31,7 @@ export function DailyHealthModal({ visible, defaultDate, onClose }: DailyHealthM
 
   const [waterText,     setWaterText]     = useState('');
   const [sleepText,     setSleepText]     = useState('');
+  const [drinkText,     setDrinkText]     = useState('');
   const [snackText,     setSnackText]     = useState('');
   const [lateNightText, setLateNightText] = useState('');
 
@@ -38,6 +39,7 @@ export function DailyHealthModal({ visible, defaultDate, onClose }: DailyHealthM
   useEffect(() => {
     setWaterText(health?.waterMl != null ? String(health.waterMl) : '');
     setSleepText(health?.sleepHours != null ? String(health.sleepHours) : '');
+    setDrinkText(health?.drink ?? '');
     setSnackText(health?.snack ?? '');
     setLateNightText(health?.lateNight ?? '');
   }, [health, selectedDate]);
@@ -46,6 +48,7 @@ export function DailyHealthModal({ visible, defaultDate, onClose }: DailyHealthM
     await save({
       waterMl:    waterText    ? parseInt(waterText, 10)   : undefined,
       sleepHours: sleepText    ? parseFloat(sleepText)     : undefined,
+      drink:      drinkText.trim()     || undefined,
       snack:      snackText.trim()     || undefined,
       lateNight:  lateNightText.trim() || undefined,
     });
@@ -134,13 +137,24 @@ export function DailyHealthModal({ visible, defaultDate, onClose }: DailyHealthM
             <Text style={styles.unit}>小時</Text>
           </View>
 
-          {/* ── 飲料或點心 ── */}
-          <OptionalLabel label="🧋 飲料或點心" />
+          {/* ── 飲料 ── */}
+          <OptionalLabel label="🧋 飲料" />
+          <TextInput
+            style={styles.textArea}
+            value={drinkText}
+            onChangeText={setDrinkText}
+            placeholder="記錄今天喝的飲料…"
+            placeholderTextColor="#bbb"
+            multiline
+          />
+
+          {/* ── 點心 ── */}
+          <OptionalLabel label="🍪 點心" />
           <TextInput
             style={styles.textArea}
             value={snackText}
             onChangeText={setSnackText}
-            placeholder="記錄今天喝的飲料或吃的點心…"
+            placeholder="記錄今天吃的點心…"
             placeholderTextColor="#bbb"
             multiline
           />
@@ -184,7 +198,7 @@ const styles = StyleSheet.create({
   optionalRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 16, gap: 6 },
   optionalBadge: { fontSize: 11, color: '#aaa', backgroundColor: '#f0f0f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, overflow: 'hidden' },
   sectionLabel: { fontSize: 13, color: '#888', marginBottom: 0 },
-  presetRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
   preset: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
     backgroundColor: '#f5f5f5', borderWidth: 1.5, borderColor: '#f5f5f5',

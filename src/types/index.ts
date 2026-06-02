@@ -43,6 +43,7 @@ export interface DailyHealth {
   date: string;
   waterMl?: number;
   sleepHours?: number;
+  drink?: string;
   snack?: string;
   lateNight?: string;
   createdAt: string;
