@@ -27,7 +27,8 @@ function touchDist(ax: number, ay: number, bx: number, by: number) {
 export function ImageEditModal({ visible, sourceUri, onConfirm, onSkip }: Props) {
   const { fontColor } = useSettingsStore();
   const [brightness, setBrightness] = useState(0);
-  const [mode, setMode] = useState<'adjust' | 'crop'>('adjust');
+  const [rotation, setRotation] = useState(0);
+  const [mode, setMode] = useState<'adjust' | 'rotate' | 'crop'>('adjust');
   const [imgTransform, setImgTransform] = useState<Transform>(DEFAULT_TRANSFORM);
   const [saving, setSaving] = useState(false);
   const imageRef = useRef<View>(null);
@@ -40,12 +41,18 @@ export function ImageEditModal({ visible, sourceUri, onConfirm, onSkip }: Props)
   useEffect(() => { brightnessRef.current = brightness; }, [brightness]);
   const sliderStart = useRef(0);
 
+  const rotationRef = useRef(0);
+  useEffect(() => { rotationRef.current = rotation; }, [rotation]);
+  const rotSliderStart = useRef(0);
+
   // Gesture state for pinch+pan (crop mode)
   const g = useRef({ prevDist: 0, prevCX: 0, prevCY: 0 });
 
   useEffect(() => {
     if (visible) {
       setBrightness(0);
+      setRotation(0);
+      rotationRef.current = 0;
       setMode('adjust');
       const def = { ...DEFAULT_TRANSFORM };
       setImgTransform(def);
@@ -136,15 +143,30 @@ export function ImageEditModal({ visible, sourceUri, onConfirm, onSkip }: Props)
     },
   })).current;
 
+  // ── Rotation slider ───────────────────────────────────────────────
+  const rotSliderOnChange = useRef((v: number) => setRotation(v));
+  useEffect(() => { rotSliderOnChange.current = (v) => setRotation(v); }, []);
+
+  const rotSliderPan = useRef(PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: () => { rotSliderStart.current = rotationRef.current; },
+    onPanResponderMove: (_, gs) => {
+      const delta = (gs.dx / (DS - 48)) * 180;
+      rotSliderOnChange.current(clamp(rotSliderStart.current + delta, -90, 90));
+    },
+  })).current;
+
   // ── Confirm ───────────────────────────────────────────────────────
   async function handleConfirm() {
     const noBrightness = Math.abs(brightness) < 0.01;
+    const noRotation   = Math.abs(rotation) < 0.5;
     const noTransform  =
       Math.abs(imgTransform.scale - 1) < 0.01 &&
       Math.abs(imgTransform.x) < 1 &&
       Math.abs(imgTransform.y) < 1;
 
-    if (noBrightness && noTransform) {
+    if (noBrightness && noRotation && noTransform) {
       onConfirm(sourceUri); return;
     }
 
@@ -197,6 +219,7 @@ export function ImageEditModal({ visible, sourceUri, onConfirm, onSkip }: Props)
             styles.imageLayer,
             {
               transform: [
+                { rotate: `${rotation}deg` },
                 { scale: imgTransform.scale },
                 { translateX: imgTransform.x },
                 { translateY: imgTransform.y },
@@ -243,6 +266,12 @@ export function ImageEditModal({ visible, sourceUri, onConfirm, onSkip }: Props)
             <Text style={[styles.modeBtnText, mode === 'adjust' && styles.modeBtnActive]}>☀️ 亮度</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            style={[styles.modeBtn, mode === 'rotate' && { backgroundColor: fontColor }]}
+            onPress={() => setMode('rotate')}
+          >
+            <Text style={[styles.modeBtnText, mode === 'rotate' && styles.modeBtnActive]}>🔄 旋轉</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[styles.modeBtn, mode === 'crop' && { backgroundColor: fontColor }]}
             onPress={() => setMode('crop')}
           >
@@ -263,6 +292,47 @@ export function ImageEditModal({ visible, sourceUri, onConfirm, onSkip }: Props)
             <View style={styles.sliderTrack}>
               <View style={[styles.sliderFill, { width: Math.max(0, thumbLeft), backgroundColor: fontColor }]} />
               <View style={[styles.sliderThumb, { left: thumbLeft - 12, borderColor: fontColor }]} />
+            </View>
+          </View>
+        )}
+
+        {/* Rotation controls */}
+        {mode === 'rotate' && (
+          <View style={styles.rotateArea}>
+            <View style={styles.rotateQuickRow}>
+              <TouchableOpacity
+                style={styles.rotateQuickBtn}
+                onPress={() => setRotation(r => clamp(r - 90, -90, 90))}
+              >
+                <Text style={styles.rotateQuickIcon}>↺</Text>
+                <Text style={styles.rotateQuickLabel}>左轉 90°</Text>
+              </TouchableOpacity>
+              <Text style={styles.rotateDegreeLabel}>
+                {rotation > 0.5
+                  ? `+${Math.round(rotation)}°`
+                  : rotation < -0.5
+                    ? `${Math.round(rotation)}°`
+                    : '0°'}
+              </Text>
+              <TouchableOpacity
+                style={styles.rotateQuickBtn}
+                onPress={() => setRotation(r => clamp(r + 90, -90, 90))}
+              >
+                <Text style={styles.rotateQuickIcon}>↻</Text>
+                <Text style={styles.rotateQuickLabel}>右轉 90°</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.sliderArea} {...rotSliderPan.panHandlers}>
+              <Text style={styles.sliderLabel}>自由旋轉（−90° ⟷ +90°）</Text>
+              {(() => {
+                const rotThumb = ((rotation + 90) / 180) * (DS - 48);
+                return (
+                  <View style={styles.sliderTrack}>
+                    <View style={[styles.sliderFill, { width: Math.max(0, rotThumb), backgroundColor: fontColor }]} />
+                    <View style={[styles.sliderThumb, { left: rotThumb - 12, borderColor: fontColor }]} />
+                  </View>
+                );
+              })()}
             </View>
           </View>
         )}
@@ -309,4 +379,14 @@ const styles = StyleSheet.create({
     borderRadius: 12, backgroundColor: '#fff', borderWidth: 2, elevation: 3,
   },
   cropHint: { color: '#888', fontSize: 12, textAlign: 'center', marginTop: 20 },
+
+  rotateArea: { paddingTop: 20 },
+  rotateQuickRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 24, marginBottom: 4,
+  },
+  rotateQuickBtn: { alignItems: 'center', padding: 8 },
+  rotateQuickIcon: { color: '#fff', fontSize: 28, lineHeight: 32 },
+  rotateQuickLabel: { color: '#aaa', fontSize: 11, marginTop: 2 },
+  rotateDegreeLabel: { color: '#fff', fontSize: 20, fontWeight: '600', minWidth: 60, textAlign: 'center' },
 });

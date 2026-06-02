@@ -21,7 +21,8 @@ export function usePhoto(): UsePhotoReturn {
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 1,
-      allowsEditing: false,
+      allowsEditing: true,
+      aspect: [1, 1],
     });
 
     if (result.canceled || !result.assets[0]) return null;

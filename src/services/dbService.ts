@@ -3,7 +3,7 @@ import * as SQLite from 'expo-sqlite';
 export type SQLiteDatabase = SQLite.SQLiteDatabase;
 
 const DB_NAME = 'sparkplate.db';
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 export async function initDB(): Promise<SQLiteDatabase> {
   const db = await SQLite.openDatabaseAsync(DB_NAME);
@@ -96,5 +96,12 @@ export async function migrateDB(db: SQLiteDatabase): Promise<void> {
       ALTER TABLE daily_health ADD COLUMN late_night TEXT;
     `);
     await db.execAsync(`PRAGMA user_version = 4`);
+  }
+
+  if (version < 5) {
+    await db.execAsync(`
+      ALTER TABLE daily_health ADD COLUMN drink TEXT;
+    `);
+    await db.execAsync(`PRAGMA user_version = 5`);
   }
 }

@@ -17,7 +17,7 @@ export function useDailyHealth(date: string) {
   }, [db, date]);
 
   const save = useCallback(
-    async (data: { waterMl?: number; sleepHours?: number; snack?: string; lateNight?: string }) => {
+    async (data: { waterMl?: number; sleepHours?: number; drink?: string; snack?: string; lateNight?: string }) => {
       const result = await upsertDailyHealth(db, date, data);
       setHealth(result);
     },

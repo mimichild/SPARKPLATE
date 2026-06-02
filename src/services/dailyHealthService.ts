@@ -9,6 +9,7 @@ interface HealthRow {
   date: string;
   water_ml: number | null;
   sleep_hours: number | null;
+  drink: string | null;
   snack: string | null;
   late_night: string | null;
   created_at: string;
@@ -20,6 +21,7 @@ function rowToHealth(row: HealthRow): DailyHealth {
     date: row.date,
     waterMl: row.water_ml ?? undefined,
     sleepHours: row.sleep_hours ?? undefined,
+    drink: row.drink ?? undefined,
     snack: row.snack ?? undefined,
     lateNight: row.late_night ?? undefined,
     createdAt: row.created_at,
@@ -42,15 +44,16 @@ export async function getDailyHealth(
 export async function upsertDailyHealth(
   db: SQLiteDatabase,
   date: string,
-  data: { waterMl?: number; sleepHours?: number; snack?: string; lateNight?: string }
+  data: { waterMl?: number; sleepHours?: number; drink?: string; snack?: string; lateNight?: string }
 ): Promise<DailyHealth> {
   const ts = now();
   await db.runAsync(
-    `INSERT INTO daily_health (date, water_ml, sleep_hours, snack, late_night, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO daily_health (date, water_ml, sleep_hours, drink, snack, late_night, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(date) DO UPDATE SET
        water_ml    = excluded.water_ml,
        sleep_hours = excluded.sleep_hours,
+       drink       = excluded.drink,
        snack       = excluded.snack,
        late_night  = excluded.late_night,
        updated_at  = excluded.updated_at`,
@@ -58,6 +61,7 @@ export async function upsertDailyHealth(
       date,
       data.waterMl ?? null,
       data.sleepHours ?? null,
+      data.drink ?? null,
       data.snack ?? null,
       data.lateNight ?? null,
       ts,
