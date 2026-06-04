@@ -6,6 +6,7 @@ import { MealCard } from '@/components/MealCard';
 import { FAB } from '@/components/FAB';
 import { MealMetaModal } from '@/components/MealMetaModal';
 import { ImageEditModal } from '@/components/ImageEditModal';
+import { CameraLaunchModal } from '@/components/CameraLaunchModal';
 import { AppText } from '@/components/AppText';
 import { useTodayMeals } from '@/hooks/useTodayMeals';
 import { usePhoto } from '@/hooks/usePhoto';
@@ -17,11 +18,12 @@ type MetaState = { visible: boolean; sourceUri: string };
 
 export default function TodayScreen() {
   const { dayRecord, loading, addMealWithPhoto, deleteMealWithPhoto } = useTodayMeals();
-  const { takePicture, pickFromLibrary } = usePhoto();
+  const { pickFromLibrary } = usePhoto();
   const { pendingCameraOpen, clearPendingCameraOpen } = useSettingsStore();
-  const [sheetVisible, setSheetVisible] = useState(false);
-  const [editModal,    setEditModal]    = useState<EditState | null>(null);
-  const [metaModal,    setMetaModal]    = useState<MetaState | null>(null);
+  const [sheetVisible,  setSheetVisible]  = useState(false);
+  const [cameraVisible, setCameraVisible] = useState(false);
+  const [editModal,     setEditModal]     = useState<EditState | null>(null);
+  const [metaModal,     setMetaModal]     = useState<MetaState | null>(null);
 
   useEffect(() => {
     if (pendingCameraOpen) {
@@ -30,10 +32,14 @@ export default function TodayScreen() {
     }
   }, [pendingCameraOpen, clearPendingCameraOpen]);
 
-  async function handleCamera() {
+  function handleCamera() {
     setSheetVisible(false);
-    const uri = await takePicture();
-    if (uri) setEditModal({ visible: true, sourceUri: uri });
+    setCameraVisible(true);
+  }
+
+  function handlePhotoFromCamera(uri: string) {
+    setCameraVisible(false);
+    setEditModal({ visible: true, sourceUri: uri });
   }
 
   async function handleLibrary() {
@@ -110,6 +116,13 @@ export default function TodayScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* ── 1:1 Camera modal ── */}
+      <CameraLaunchModal
+        visible={cameraVisible}
+        onPhotoTaken={handlePhotoFromCamera}
+        onClose={() => setCameraVisible(false)}
+      />
 
       {/* ── Image edit modal ── */}
       {editModal && (
