@@ -86,9 +86,15 @@ function DetailPanel({ meal, health, onEditPress, onDeletePress }: DetailPanelPr
       {/* Health */}
       <HealthRow label="💧 今日飲水" value={health?.waterMl} unit=" ml" />
       <HealthRow label="😴 昨晚睡眠" value={health?.sleepHours} unit=" 小時" />
+      {health?.drink ? (
+        <View style={detail.healthRow}>
+          <Text style={detail.healthLabel}>🧋 飲料</Text>
+          <Text style={[detail.healthValue, { flex: 1, textAlign: 'right', marginLeft: 8 }]} numberOfLines={2}>{health.drink}</Text>
+        </View>
+      ) : null}
       {health?.snack ? (
         <View style={detail.healthRow}>
-          <Text style={detail.healthLabel}>🧋 飲料或點心</Text>
+          <Text style={detail.healthLabel}>🍪 點心</Text>
           <Text style={[detail.healthValue, { flex: 1, textAlign: 'right', marginLeft: 8 }]} numberOfLines={2}>{health.snack}</Text>
         </View>
       ) : null}
@@ -136,6 +142,7 @@ export function PhotoViewer({ visible, meal, onClose, onMealUpdated, onMealDelet
     await saveHealth({
       waterMl:    data.waterMl,
       sleepHours: data.sleepHours,
+      drink:      data.drink,
       snack:      data.snack,
       lateNight:  data.lateNight,
     });
