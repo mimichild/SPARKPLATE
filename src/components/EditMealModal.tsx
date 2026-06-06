@@ -15,8 +15,8 @@ const MEAL_OPTIONS: { type: MealType; label: string; icon: string }[] = [
   { type: 'dinner',    label: '晚餐', icon: '🌙' },
 ];
 
-const WATER_PRESETS = [500, 1000, 1500, 2000];
-const SLEEP_PRESETS = [5, 6, 7, 8];
+const WATER_PRESETS = [500, 1000, 1500, 2000, 2500, 3000];
+const SLEEP_PRESETS = [5, 6, 7, 8, 8.5, 9];
 
 export interface EditMealData {
   mealType: MealType;
@@ -25,6 +25,7 @@ export interface EditMealData {
   event?: string;
   waterMl?: number;
   sleepHours?: number;
+  drink?: string;
   snack?: string;
   lateNight?: string;
 }
@@ -46,6 +47,7 @@ export function EditMealModal({ visible, meal, health, onConfirm, onCancel }: Ed
   const [event,         setEvent]         = useState(meal.event ?? '');
   const [waterText,     setWaterText]     = useState('');
   const [sleepText,     setSleepText]     = useState('');
+  const [drinkText,     setDrinkText]     = useState('');
   const [snackText,     setSnackText]     = useState('');
   const [lateNightText, setLateNightText] = useState('');
 
@@ -57,6 +59,7 @@ export function EditMealModal({ visible, meal, health, onConfirm, onCancel }: Ed
       setEvent(meal.event ?? '');
       setWaterText(health?.waterMl != null ? String(health.waterMl) : '');
       setSleepText(health?.sleepHours != null ? String(health.sleepHours) : '');
+      setDrinkText(health?.drink ?? '');
       setSnackText(health?.snack ?? '');
       setLateNightText(health?.lateNight ?? '');
     }
@@ -70,6 +73,7 @@ export function EditMealModal({ visible, meal, health, onConfirm, onCancel }: Ed
       event: event.trim() || undefined,
       waterMl:    waterText    ? parseInt(waterText, 10) : undefined,
       sleepHours: sleepText    ? parseFloat(sleepText)   : undefined,
+      drink:      drinkText.trim()     || undefined,
       snack:      snackText.trim()     || undefined,
       lateNight:  lateNightText.trim() || undefined,
     });
@@ -219,13 +223,24 @@ export function EditMealModal({ visible, meal, health, onConfirm, onCancel }: Ed
             <Text style={styles.unit}>小時</Text>
           </View>
 
-          {/* ── 飲料或點心 ── */}
-          <AppText style={[styles.sectionLabel, styles.sectionTop]}>🧋 飲料或點心</AppText>
+          {/* ── 飲料 ── */}
+          <AppText style={[styles.sectionLabel, styles.sectionTop]}>🧋 飲料</AppText>
+          <TextInput
+            style={styles.textArea}
+            value={drinkText}
+            onChangeText={setDrinkText}
+            placeholder="記錄今天喝的飲料…"
+            placeholderTextColor="#bbb"
+            multiline
+          />
+
+          {/* ── 點心 ── */}
+          <AppText style={[styles.sectionLabel, styles.sectionTop]}>🍪 點心</AppText>
           <TextInput
             style={styles.textArea}
             value={snackText}
             onChangeText={setSnackText}
-            placeholder="記錄今天喝的飲料或吃的點心…"
+            placeholder="記錄今天吃的點心…"
             placeholderTextColor="#bbb"
             multiline
           />
