@@ -16,7 +16,7 @@ const MEAL_OPTIONS: { type: MealType; label: string; icon: string }[] = [
 ];
 
 const WATER_PRESETS = [500, 1000, 1500, 2000, 2500, 3000];
-const SLEEP_PRESETS = [5, 6, 7, 8, 8.5, 9];
+const SLEEP_PRESETS = [5, 6, 7, 8, 9];
 
 export interface EditMealData {
   mealType: MealType;
