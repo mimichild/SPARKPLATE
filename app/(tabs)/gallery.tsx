@@ -51,7 +51,7 @@ function todayDate() { return new Date().toISOString().slice(0, 10); }
 export default function GalleryScreen() {
   const { days, loading, hasMore, loadMore, reload } = useGallery();
   const { addMealWithPhoto } = useTodayMeals();
-  const { takePicture, pickFromLibrary } = usePhoto();
+  const { pickFromLibrary } = usePhoto();
   const { fontColor, pendingCameraOpen, clearPendingCameraOpen, pendingExportOpen, clearPendingExportOpen, pendingScreenshot, clearPendingScreenshot } = useSettingsStore();
   const db = useDB();
   const today = todayDate();
@@ -120,11 +120,9 @@ export default function GalleryScreen() {
     }
   }, [pendingScreenshot]);
 
-  async function handleCamera() {
+  function handleCamera() {
     setSheetVisible(false);
-    setCameraLaunch(false);
-    const uri = await takePicture();
-    if (uri) setEditModal({ visible: true, sourceUri: uri });
+    setCameraLaunch(true);
   }
 
   async function handleLibrary() {
