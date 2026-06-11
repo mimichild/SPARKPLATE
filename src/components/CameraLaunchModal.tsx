@@ -29,8 +29,7 @@ export function CameraLaunchModal({ visible, onPhotoTaken, onClose }: Props) {
       const photo = await cameraRef.current.takePictureAsync({ quality: 1 });
       if (!photo?.uri) return;
       if (autoSavePhoto) {
-        const { status } = await MediaLibrary.requestPermissionsAsync();
-        if (status === 'granted') await MediaLibrary.saveToLibraryAsync(photo.uri);
+        try { await MediaLibrary.saveToLibraryAsync(photo.uri); } catch { /* silent */ }
       }
       onPhotoTaken(photo.uri);
     } finally {
