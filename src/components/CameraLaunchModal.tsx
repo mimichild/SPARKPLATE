@@ -5,6 +5,8 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -18,13 +20,19 @@ export function CameraLaunchModal({ visible, onPhotoTaken, onClose }: Props) {
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [taking, setTaking] = useState(false);
+  const autoSavePhoto = useSettingsStore((s) => s.autoSavePhoto);
 
   async function handleCapture() {
     if (taking || !cameraRef.current) return;
     setTaking(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 1 });
-      if (photo?.uri) onPhotoTaken(photo.uri);
+      if (!photo?.uri) return;
+      if (autoSavePhoto) {
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        if (status === 'granted') await MediaLibrary.saveToLibraryAsync(photo.uri);
+      }
+      onPhotoTaken(photo.uri);
     } finally {
       setTaking(false);
     }
