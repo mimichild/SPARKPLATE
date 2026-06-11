@@ -6,6 +6,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -28,10 +29,21 @@ export function CameraLaunchModal({ visible, onPhotoTaken, onClose }: Props) {
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 1 });
       if (!photo?.uri) return;
+
+      // 裁切成 1:1 正方形（中心裁切）
+      const size = Math.min(photo.width, photo.height);
+      const originX = Math.floor((photo.width - size) / 2);
+      const originY = Math.floor((photo.height - size) / 2);
+      const cropped = await ImageManipulator.manipulateAsync(
+        photo.uri,
+        [{ crop: { originX, originY, width: size, height: size } }],
+        { compress: 1, format: ImageManipulator.SaveFormat.JPEG }
+      );
+
       if (autoSavePhoto) {
-        try { await MediaLibrary.saveToLibraryAsync(photo.uri); } catch { /* silent */ }
+        try { await MediaLibrary.saveToLibraryAsync(cropped.uri); } catch { /* silent */ }
       }
-      onPhotoTaken(photo.uri);
+      onPhotoTaken(cropped.uri);
     } finally {
       setTaking(false);
     }
