@@ -13,9 +13,21 @@ export async function compressAndSave(
   destPath: string
 ): Promise<string> {
   const config = PHOTO_SIZE_CONFIG[size];
+
+  // 先取得來源尺寸，做中心裁切成正方形後再 resize，避免非 1:1 來源被拉伸
+  const info = await ImageManipulator.manipulateAsync(sourceUri, []);
+  const srcW = info.width;
+  const srcH = info.height;
+  const squareSize = Math.min(srcW, srcH);
+  const originX = Math.floor((srcW - squareSize) / 2);
+  const originY = Math.floor((srcH - squareSize) / 2);
+
   const result = await ImageManipulator.manipulateAsync(
     sourceUri,
-    [{ resize: { width: config.width, height: config.height } }],
+    [
+      { crop: { originX, originY, width: squareSize, height: squareSize } },
+      { resize: { width: config.width } },
+    ],
     { compress: config.quality, format: ImageManipulator.SaveFormat.JPEG }
   );
   await FileSystem.copyAsync({ from: result.uri, to: destPath });
