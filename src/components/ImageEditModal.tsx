@@ -5,6 +5,7 @@ import {
   GestureResponderEvent,
 } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 const DS = Math.round(Dimensions.get('window').width);
@@ -172,8 +173,23 @@ export function ImageEditModal({ visible, sourceUri, onConfirm, onSkip }: Props)
 
     setSaving(true);
     try {
-      const uri = await captureRef(imageRef, { format: 'jpg', quality: 0.95 });
-      onConfirm(uri);
+      const captured = await captureRef(imageRef, { format: 'jpg', quality: 0.95 });
+      // captureRef 在某些裝置上因像素密度會輸出微小非正方形，補一步裁正
+      const info = await ImageManipulator.manipulateAsync(captured, []);
+      let finalUri = captured;
+      if (info.width !== info.height) {
+        const sq = Math.min(info.width, info.height);
+        const r = await ImageManipulator.manipulateAsync(captured, [{
+          crop: {
+            originX: Math.floor((info.width - sq) / 2),
+            originY: Math.floor((info.height - sq) / 2),
+            width: sq,
+            height: sq,
+          },
+        }], { compress: 0.95, format: ImageManipulator.SaveFormat.JPEG });
+        finalUri = r.uri;
+      }
+      onConfirm(finalUri);
     } catch {
       onConfirm(sourceUri);
     } finally {
