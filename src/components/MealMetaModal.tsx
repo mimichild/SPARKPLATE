@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Modal, View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Mood, MealGrade, MealType } from '@/types';
 import { MOOD_CONFIG, MOOD_LIST } from '@/constants/moodConfig';
@@ -62,7 +63,10 @@ export function MealMetaModal({ visible, onConfirm, onCancel }: MealMetaModalPro
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleCancel}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.overlay}
+      >
         <ScrollView
           style={styles.scrollWrap}
           contentContainerStyle={styles.sheet}
@@ -177,7 +181,7 @@ export function MealMetaModal({ visible, onConfirm, onCancel }: MealMetaModalPro
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

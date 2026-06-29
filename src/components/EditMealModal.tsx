@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Modal, View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Mood, MealGrade, MealType, Meal, DailyHealth } from '@/types';
 import { MOOD_CONFIG, MOOD_LIST } from '@/constants/moodConfig';
@@ -81,7 +82,10 @@ export function EditMealModal({ visible, meal, health, onConfirm, onCancel }: Ed
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onCancel}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.overlay}
+      >
         <ScrollView
           style={styles.scrollWrap}
           contentContainerStyle={styles.sheet}
@@ -268,7 +272,7 @@ export function EditMealModal({ visible, meal, health, onConfirm, onCancel }: Ed
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
