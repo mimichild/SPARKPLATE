@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { THEME_COLORS } from '@/constants/themeColors';
 import { AppText } from '@/components/AppText';
+import { BackupRestoreModal } from '@/components/BackupRestoreModal';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -15,6 +16,7 @@ interface SettingsModalProps {
 export function SettingsModal({ visible, onClose }: SettingsModalProps) {
   const { fontColor, openCameraOnStart, autoSavePhoto, setFontColor, setOpenCameraOnStart, setAutoSavePhoto } = useSettingsStore();
   const [pendingColor, setPendingColor] = useState(fontColor);
+  const [backupMode, setBackupMode]     = useState<'export' | 'import' | null>(null);
   const insets = useSafeAreaInsets();
 
   function handleOpen() {
@@ -107,9 +109,40 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity testID="settings-close-btn" style={styles.closeBtn} onPress={onClose}>
+          {/* Backup & Restore */}
+          <AppText style={styles.backupSectionLabel}>備份與還原</AppText>
+          <TouchableOpacity
+            testID="backup-export-btn"
+            onPress={() => setBackupMode('export')}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.backupBtnFill, { backgroundColor: fontColor }]}>
+              <Text style={styles.confirmBtnText}>匯出備份（ZIP）</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="backup-import-btn"
+            onPress={() => setBackupMode('import')}
+            activeOpacity={0.8}
+            style={{ marginTop: 10 }}
+          >
+            <View style={[styles.backupBtnOutline, { borderColor: fontColor }]}>
+              <Text style={[styles.backupBtnOutlineText, { color: fontColor }]}>匯入備份（ZIP）</Text>
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.backupHint}>覆蓋：清除現有資料後還原</Text>
+
+          <TouchableOpacity testID="settings-close-btn" style={[styles.closeBtn, { marginTop: 20 }]} onPress={onClose}>
             <Text style={styles.closeBtnText}>關閉</Text>
           </TouchableOpacity>
+
+          {backupMode && (
+            <BackupRestoreModal
+              visible={!!backupMode}
+              mode={backupMode}
+              onClose={() => setBackupMode(null)}
+            />
+          )}
         </ScrollView>
       </View>
     </Modal>
@@ -130,4 +163,9 @@ const styles = StyleSheet.create({
   confirmBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   closeBtn: { backgroundColor: '#f0f0f0', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   closeBtnText: { fontSize: 15, fontWeight: '600', color: '#333' },
+  backupSectionLabel: { fontSize: 20, fontWeight: '700', marginTop: 24, marginBottom: 12 },
+  backupBtnFill: { borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  backupBtnOutline: { borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1.5, backgroundColor: '#fff' },
+  backupBtnOutlineText: { fontSize: 15, fontWeight: '700' },
+  backupHint: { fontSize: 12, color: '#aaa', textAlign: 'center', marginTop: 8, marginBottom: 4 },
 });
