@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Modal, View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { AppText } from '@/components/AppText';
 import { DateSelector } from '@/components/DateSelector';
@@ -66,7 +67,10 @@ export function DailyHealthModal({ visible, defaultDate, onClose }: DailyHealthM
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.overlay}
+      >
         <ScrollView
           contentContainerStyle={styles.sheet}
           keyboardShouldPersistTaps="handled"
@@ -182,7 +186,7 @@ export function DailyHealthModal({ visible, defaultDate, onClose }: DailyHealthM
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
