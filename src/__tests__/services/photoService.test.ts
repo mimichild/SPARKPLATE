@@ -80,10 +80,11 @@ describe('photoService', () => {
   describe('compressAndSave', () => {
     it('calls manipulateAsync with correct resize dimensions', async () => {
       await compressAndSave('/source.jpg', 'grid', '/dest/grid.jpg');
+      // 等比例縮放：只指定 width，height 交給原始比例（ecf502d 移除自動裁切）
       expect(manipulateAsync).toHaveBeenCalledWith(
         '/source.jpg',
         expect.arrayContaining([
-          expect.objectContaining({ resize: { width: 400, height: 400 } }),
+          expect.objectContaining({ resize: { width: 400 } }),
         ]),
         expect.objectContaining({ compress: 0.85 })
       );
