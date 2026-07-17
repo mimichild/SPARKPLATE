@@ -13,6 +13,11 @@ expo-env.d.ts
 android/app/build/
 android/.gradle/
 android/build/
+dist/
+dist-android/
+
+# generated native folder（android/ 是刻意有追蹤在 git 裡的，用於本機 APK build，不排除）
+/ios
 
 # Expo
 .expo/
