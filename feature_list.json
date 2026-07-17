@@ -1,0 +1,107 @@
+{
+  "project": "SPARKPLATE",
+  "last_updated": "2026-07-17",
+  "rules": {
+    "single_active_feature": true,
+    "passing_requires_evidence": true,
+    "do_not_skip_verification": true,
+    "evidence_format": "YYYY-MM-DD | 實際執行的指令 | 關鍵輸出摘要",
+    "details": "狀態機、證據判準與範例見 docs/harness/PLAYBOOK.md"
+  },
+  "status_legend": {
+    "not_started": "尚未開始。",
+    "in_progress": "目前唯一正在進行的功能。",
+    "blocked": "因已記錄的問題無法繼續；notes 必須寫明現象、已嘗試方法、建議解法。",
+    "passing": "verification 全部實際執行過，且 evidence 已依格式記錄。"
+  },
+  "features": [
+    {
+      "id": "ios-001",
+      "priority": 1,
+      "area": "ios",
+      "title": "iOS 模擬器啟動 App 並截圖存證",
+      "user_visible_behavior": "在 iOS 模擬器上可以看到 SPARKPLATE 啟動並顯示今日頁。",
+      "status": "not_started",
+      "verification": [
+        "執行 npx expo run:ios（或 pnpm ios）。",
+        "確認建置成功且模擬器開啟 App、今日頁正常渲染無紅屏。",
+        "擷取模擬器截圖存入 docs/ 作為證據。"
+      ],
+      "evidence": [],
+      "notes": "2026-07-17 已成功 build 過一次（AppDelegate 的 RCTBridge 修復在本機 ios/，該資料夾已被 gitignore；勿跑 expo prebuild --clean）。仍需實跑並留證據。"
+    },
+    {
+      "id": "ios-002",
+      "priority": 2,
+      "area": "ios",
+      "title": "模擬器驗證核心流程：資料庫讀寫、1:1 相機 modal 與相簿",
+      "user_visible_behavior": "使用者在 iOS 模擬器上能新增餐點（相簿選圖）、開啟 1:1 CameraLaunchModal、重啟後資料仍在。",
+      "status": "not_started",
+      "verification": [
+        "在模擬器新增一筆餐點並從相簿選照片。",
+        "點拍照確認 CameraLaunchModal 開啟、權限彈窗正常、不閃退。",
+        "完全關閉 App 再重開，確認資料仍存在。"
+      ],
+      "evidence": [],
+      "notes": "模擬器無實體相機；真實拍照與音量鍵快門（react-native-volume-manager）留到實機驗證。"
+    },
+    {
+      "id": "ios-003",
+      "priority": 3,
+      "area": "ios",
+      "title": "模擬器驗證 ZIP 匯出/匯入",
+      "user_visible_behavior": "使用者在 iOS 上能匯出 ZIP 備份並成功匯入還原。",
+      "status": "not_started",
+      "verification": [
+        "建立測試資料後執行匯出，確認 ZIP 產生且分享面板出現。",
+        "清空資料後匯入，確認資料與照片完整還原。"
+      ],
+      "evidence": [],
+      "notes": ""
+    },
+    {
+      "id": "native-001",
+      "priority": 4,
+      "area": "native",
+      "title": "把 RCTBridge 原生修復轉成 Expo config plugin",
+      "user_visible_behavior": "expo prebuild --clean 或 EAS 雲端建置重新產生 ios/ 後，不需手動修改也能編譯成功。",
+      "status": "not_started",
+      "verification": [
+        "把修復寫成 config plugin：AppDelegate.swift 移除 sourceURL(for bridge:) override（本專案未踩 fmt 問題，不需要那部分）。",
+        "備份本機 ios/ 後執行 npx expo prebuild --clean。",
+        "確認重新產生的 ios/ 含有修復、npx expo run:ios 建置成功。"
+      ],
+      "evidence": [],
+      "notes": "ios-004 的硬前置。可與 SPARKSHAPE 的 native-001 共用同一個 plugin 寫法。icon 需確認已移除 alpha 透明通道（roadmap 指出 SPARKPLATE icon 有此問題）。"
+    },
+    {
+      "id": "ios-004",
+      "priority": 5,
+      "area": "ios",
+      "title": "EAS iOS 雲端建置成功",
+      "user_visible_behavior": "EAS Build 產出可安裝的 iOS build。",
+      "status": "not_started",
+      "verification": [
+        "確認 Apple Developer 帳號可用、建立 eas.json（參考 SPARKWEAR）。",
+        "執行 eas build --platform ios。",
+        "確認 expo.dev 建置狀態 finished，記錄 build URL。"
+      ],
+      "evidence": [],
+      "notes": "前置：Apple Developer Program ＋ native-001。本專案目前沒有 eas.json。"
+    },
+    {
+      "id": "ios-005",
+      "priority": 6,
+      "area": "ios",
+      "title": "TestFlight 內部測試",
+      "user_visible_behavior": "使用者的 iPhone 能從 TestFlight 安裝並正常使用核心功能（含真實拍照與音量鍵快門）。",
+      "status": "not_started",
+      "verification": [
+        "eas submit --platform ios 並加入內部測試群組。",
+        "實機安裝啟動，重跑 ios-002（含真實相機、音量鍵快門）。"
+      ],
+      "evidence": [],
+      "notes": "依賴 ios-004。"
+    }
+  ]
+}

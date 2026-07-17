@@ -83,16 +83,15 @@ describe('TodayScreen', () => {
     expect(queryByTestId('action-camera')).toBeNull();
   });
 
-  it('calls takePicture when camera is selected', async () => {
-    const takePicture = jest.fn().mockResolvedValue(null);
-    mockUsePhoto.mockReturnValue(makePhoto({ takePicture }));
+  it('opens the 1:1 camera modal when camera is selected', async () => {
+    // 拍照改為開啟 App 內 CameraLaunchModal，不再直接呼叫 usePhoto().takePicture
     const { getAllByTestId, getByTestId } = render(<TodayScreen />);
     fireEvent.press(getAllByTestId('meal-card-placeholder')[0]);
     await act(async () => {
       fireEvent.press(getByTestId('action-camera'));
       await new Promise((r) => setTimeout(r, 0));
     });
-    expect(takePicture).toHaveBeenCalled();
+    expect(getByTestId('camera-launch-close')).toBeTruthy();
   });
 
   it('calls pickFromLibrary when library is selected', async () => {
