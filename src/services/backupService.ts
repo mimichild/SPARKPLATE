@@ -50,9 +50,13 @@ export async function exportBackup(onProgress: (p: number) => void): Promise<str
     (meta) => onProgress(80 + Math.round(meta.percent * 0.1)),
   );
 
-  // 4. Write to cache
+  // 4. Write to Documents（而非 cacheDirectory）：搭配 app.json 的
+  // UIFileSharingEnabled + LSSupportsOpeningDocumentsInPlace，讓 iOS 版
+  // 備份檔案直接出現在「檔案」App 的「我的 iPhone / SPARKPLATE」，不必
+  // 依賴分享面板「儲存到檔案」是否真的操作成功。Android 流程會在存到
+  // 使用者選擇的資料夾後清掉這個暫存檔，位置改變不影響其行為。
   const date = new Date().toISOString().slice(0, 10);
-  const dest = `${FileSystem.cacheDirectory}sparkplate_backup_${date}.zip`;
+  const dest = `${FileSystem.documentDirectory}sparkplate_backup_${date}.zip`;
   await FileSystem.writeAsStringAsync(dest, zipBase64, { encoding: FileSystem.EncodingType.Base64 });
   onProgress(100);
   return dest;
@@ -68,6 +72,12 @@ export async function importBackup(
 
   onProgress(15);
   const zip = await JSZip.loadAsync(zipBase64, { base64: true });
+
+  // 清掉殘留的 -wal / -shm 檔案：若備份沒有附上 -wal（代表匯出當下沒有
+  // 未 checkpoint 的資料），但硬碟上還留著舊的 -wal/-shm，這些殘留檔案
+  // 的內容會跟即將寫入的新主檔案對不起來，讓 SQLite 之後拒絕寫入。
+  await FileSystem.deleteAsync(`${DB_DIR}${DB_NAME}-wal`, { idempotent: true });
+  await FileSystem.deleteAsync(`${DB_DIR}${DB_NAME}-shm`, { idempotent: true });
 
   const entries = Object.values(zip.files).filter((f) => !f.dir);
   const total = entries.length;

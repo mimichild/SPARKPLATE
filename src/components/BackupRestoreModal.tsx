@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Modal, View, Text, TouchableOpacity, StyleSheet, Animated, Platform,
+  View, Text, TouchableOpacity, StyleSheet, Animated, Platform,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import { AppText } from '@/components/AppText';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useDBContext } from '@/providers/DBProvider';
 import { exportBackup, importBackup } from '@/services/backupService';
 
 // ── Progress Bar ──────────────────────────────────────────────────────────────
@@ -43,6 +44,7 @@ interface Props {
 
 export function BackupRestoreModal({ visible, mode, onClose }: Props) {
   const { fontColor } = useSettingsStore();
+  const db = useDBContext();
   const [step, setStep]         = useState<Step>('idle');
   const [progress, setProgress] = useState(0);
   const [savedName, setSavedName] = useState('');
@@ -133,6 +135,11 @@ export function BackupRestoreModal({ visible, mode, onClose }: Props) {
       const file = result.assets[0];
       setStep('running');
       setProgress(0);
+      // 匯入是直接在硬碟上覆蓋 SQLite 檔案，若 App 當下開著的資料庫連線
+      // （WAL 模式）沒有先關閉，SQLite 會偵測到檔案在自己不知情的狀況下被
+      // 換掉，之後整個連線會被判定為不安全而拒絕寫入（即使之後重開 App
+      // 也不會恢復，因為殘留的 -wal/-shm 檔案狀態已經跟新檔案對不起來）。
+      await db?.closeAsync();
       await importBackup(file.uri, setProgress);
       setStep('done');
     } catch (e: any) {
@@ -146,8 +153,14 @@ export function BackupRestoreModal({ visible, mode, onClose }: Props) {
   const isExport = mode === 'export';
   const title    = isExport ? '匯出備份' : '匯入備份';
 
+  // 這裡刻意不用 <Modal>：這個元件已經是在另一個 <Modal>（SettingsModal）
+  // 裡面開啟的，內部又會呼叫 DocumentPicker / Sharing（也是原生 Modal）。
+  // iOS 上巢狀開三層原生 Modal 會讓畫面卡死不回應（匯入時實測會卡在選完
+  // 檔案之後）。改成一般的絕對定位 View 疊在最上層可以避免這個問題。
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
+    <>
       <View style={s.overlay}>
         <View style={s.sheet}>
           <AppText style={s.title}>{title}</AppText>
@@ -214,7 +227,7 @@ export function BackupRestoreModal({ visible, mode, onClose }: Props) {
           {step === 'idle' && <View style={{ height: 60 }} />}
         </View>
       </View>
-    </Modal>
+    </>
   );
 }
 
@@ -222,11 +235,14 @@ export function BackupRestoreModal({ visible, mode, onClose }: Props) {
 
 const s = StyleSheet.create({
   overlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
+    zIndex: 999,
+    elevation: 999,
   },
   sheet: {
     width: '100%',
