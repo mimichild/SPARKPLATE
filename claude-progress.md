@@ -9,11 +9,22 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-20 為 91 tests passed）
-- 目前最高優先級未完成功能：ios-004 EAS iOS 雲端建置成功（blocked：需先申請 Apple Developer Program 帳號）
-- 目前 blocker：ios-004/ios-005 需要 Apple Developer Program（$99/年），尚未申請
-- 背景：ios-001～ios-003、native-001 皆已 passing；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；native-001 的 config plugin（plugins/withRemoveRCTBridgeSourceURL.js）讓 expo prebuild --clean 不需手動改 ios/ 也能編譯成功，可直接複製給 SPARKSHAPE 用
+- 目前最高優先級未完成功能：ios-005 TestFlight 內部測試
+- 目前 blocker：無
+- 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-004、native-001 皆已 passing，EAS 雲端建置成功產出 .ipa，也驗證了 native-001 的 config plugin 在雲端環境確實有效；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug
 
 ## 工作階段日誌
+
+### 工作階段 005
+
+- 日期：2026-07-20
+- 本輪目標：完成 ios-004（EAS iOS 雲端建置成功）
+- 已完成：新增 eas.json（參考 SPARKWEAR 範本，含 SPARKWEAR 那輪發現的 Node 版本修法）；`eas init` 建立 EAS 專案；`eas build --platform ios --profile production`（互動模式，Distribution Certificate 沿用 SPARKWEAR 建置時已建立的、只需新建 Provisioning Profile）一次就成功，沒有再踩到 Node 版本問題
+- 執行過的驗證：實際跑 EAS 雲端建置，一次成功
+- 已擷取證據：見 feature_list.json ios-004 evidence，含 build URL 與 .ipa 下載連結
+- 提交記錄：（見本輪 commit）
+- 已知風險或未解決問題：無新增
+- 下一步最佳動作：開始 ios-005（TestFlight 內部測試，需要實體 iPhone）
 
 ### 工作階段 004
 
