@@ -77,14 +77,22 @@
       "area": "native",
       "title": "把 RCTBridge 原生修復轉成 Expo config plugin",
       "user_visible_behavior": "expo prebuild --clean 或 EAS 雲端建置重新產生 ios/ 後，不需手動修改也能編譯成功。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "把修復寫成 config plugin：AppDelegate.swift 移除 sourceURL(for bridge:) override（本專案未踩 fmt 問題，不需要那部分）。",
         "備份本機 ios/ 後執行 npx expo prebuild --clean。",
         "確認重新產生的 ios/ 含有修復、npx expo run:ios 建置成功。"
       ],
-      "evidence": [],
-      "notes": "ios-004 的硬前置。可與 SPARKSHAPE 的 native-001 共用同一個 plugin 寫法。icon 需確認已移除 alpha 透明通道（roadmap 指出 SPARKPLATE icon 有此問題）。"
+      "evidence": [
+        "2026-07-20 | cp -R ios ~/scratchpad/sparkplate-ios-backup | 備份完成（ios/ 被 .gitignore 排除，git 救不回來，動手前先備份）",
+        "2026-07-20 | npx expo prebuild --clean --platform ios（未加 plugin 前）→ npx expo run:ios | 重現預期中的編譯錯誤：AppDelegate.swift:58 cannot find type 'RCTBridge' in scope，證實問題在這套 Xcode 26.6 環境下仍會發生",
+        "2026-07-20 | 新增 plugins/withRemoveRCTBridgeSourceURL.js 並在 app.json plugins 陣列註冊 | 用 @expo/config-plugins 的 withAppDelegate mod 移除 sourceURL(for bridge:) override",
+        "2026-07-20 | npx expo prebuild --clean --platform ios（加了 plugin 後）| 重新產生的 ios/SPARKPLATE/AppDelegate.swift 確認 sourceURL(for bridge:) 已被移除、bundleURL() 保留，與原本手動修復結果一致",
+        "2026-07-20 | npx expo run:ios | Build Succeeded，0 error(s)；模擬器正常開啟並顯示首頁，截圖 docs/native-001-prebuild-clean-success.png",
+        "2026-07-20 | sips -g hasAlpha assets/images/icon.png | hasAlpha: no，icon alpha 透明通道問題確認已於先前 commit（eef9e19）修好",
+        "2026-07-20 | ./init.sh | 91 tests passed"
+      ],
+      "notes": "ios-004 的硬前置，已完成。plugin 檔案：plugins/withRemoveRCTBridgeSourceURL.js，可與 SPARKSHAPE 的 native-001 共用同一套寫法（SPARKSHAPE 的 AppDelegate.swift 有一模一樣的手動修復，屆時直接複製這個 plugin 檔案即可）。本機 ios/ 備份留在 /private/tmp scratchpad（session 結束會清掉，非永久保存，僅供本輪比對用）。"
     },
     {
       "id": "ios-004",
@@ -92,14 +100,14 @@
       "area": "ios",
       "title": "EAS iOS 雲端建置成功",
       "user_visible_behavior": "EAS Build 產出可安裝的 iOS build。",
-      "status": "not_started",
+      "status": "blocked",
       "verification": [
         "確認 Apple Developer 帳號可用、建立 eas.json（參考 SPARKWEAR）。",
         "執行 eas build --platform ios。",
         "確認 expo.dev 建置狀態 finished，記錄 build URL。"
       ],
       "evidence": [],
-      "notes": "前置：Apple Developer Program ＋ native-001。本專案目前沒有 eas.json。"
+      "notes": "2026-07-20 blocked：native-001 已完成，唯一前置條件剩 Apple Developer Program（$99/年）尚未申請，需使用者決定是否付費申請。已嘗試：無需嘗試，純屬外部帳號申請前置。建議解法：使用者申請 Apple Developer Program 後再回來繼續；帳號未辦好前不要空等此項。本專案目前沒有 eas.json，需在申請帳號後一併建立（可參考 SPARKWEAR 的 eas.json）。"
     },
     {
       "id": "ios-005",
