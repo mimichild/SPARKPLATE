@@ -8,12 +8,30 @@
 
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
-- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-17 為 87 tests passed）
-- 目前最高優先級未完成功能：ios-001 iOS 模擬器啟動 App 並截圖存證
+- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-20 為 91 tests passed）
+- 目前最高優先級未完成功能：ios-002 模擬器驗證核心流程（資料庫讀寫、1:1 相機 modal 與相簿）——本輪已順帶驗證「新增餐點＋重開 App 資料仍在」，但「拍照開啟 CameraLaunchModal」這一步尚未實測，不算完成
 - 目前 blocker：無
-- 背景：2026-07-17 已在模擬器 build 成功過（AppDelegate RCTBridge 修復在本機 ios/，已被 gitignore）；EAS 前必須完成 native-001
+- 背景：2026-07-17 已在模擬器 build 成功過（AppDelegate RCTBridge 修復在本機 ios/，已被 gitignore）；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug（ios-003 passing）；EAS 前必須完成 native-001
 
 ## 工作階段日誌
+
+### 工作階段 002
+
+- 日期：2026-07-20
+- 本輪目標：接續上次未解決的「匯入備份後資料庫唯讀，新增餐點失敗」bug（見上次 commit dba2b50，wip 未解決）
+- 已完成：
+  - 用 systematic-debugging 方法重新排查，在模擬器上實際重現，抓到精確錯誤是 `Calling the 'prepareAsync' function has failed → Caused by: Access to closed resource`（比上次記錄的「readonly database」更準確）
+  - 找到根本原因：`BackupRestoreModal` 匯入前呼叫 `db.closeAsync()` 關閉連線，但匯入完成後沒有任何程式碼重新開連線、更新回 `DBProvider` 的 context，導致同一次 App 執行期間所有後續查詢都撞到已關閉的舊連線；上次記錄「連重開 App 都救不回來」這點今天沒有重現（重開後其實會恢復，因為 `DBProvider` 的 `useEffect` 會重新 `initDB()`），但使用者體驗上不該逼人重開 App
+  - 修復：`DBProvider` 新增 `reloadDB()`（開新連線＋更新 context，且不會讓 children 整個卸載重掛），`BackupRestoreModal` 在 `importBackup()` 成功後呼叫它
+  - 新增測試：`src/__tests__/providers/DBProvider.test.tsx`、`src/__tests__/components/BackupRestoreModal.test.tsx`
+  - 在模擬器上完整跑過一次「匯出→新增→匯入→（不重開 App）再新增」，直接用 sqlite3 查容器內的 db 檔案確認新記錄真的寫入成功（meals 3 筆，含當下時間戳記），Metro log 全程無錯誤
+  - 順帶完成 ios-001（build＋啟動＋截圖）與 ios-003（匯出/匯入＋這次的回歸測試）的證據
+  - 發現一個範圍外的既有限制並記錄：photos 表存絕對路徑，App 重灌會讓舊照片路徑失效（不在本次修復範圍，已寫入 ios-003 notes）
+- 執行過的驗證：`pnpm test`（91 passed）、`pnpm typecheck`（既有錯誤與本次改動無關，本次改動的檔案本身型別乾淨）、模擬器手動操作＋sqlite3 直接驗證資料庫內容、Metro log 檢查
+- 已擷取證據：見 feature_list.json ios-001／ios-003 evidence
+- 提交記錄：（見本輪 commit）
+- 已知風險或未解決問題：ios-002 的「拍照開啟 CameraLaunchModal」尚未實測；photos 表絕對路徑的可攜性問題待開獨立項目處理
+- 下一步最佳動作：完成 ios-002 剩下的相機 modal 驗證
 
 ### 工作階段 001
 

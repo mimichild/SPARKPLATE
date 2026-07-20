@@ -21,14 +21,17 @@
       "area": "ios",
       "title": "iOS 模擬器啟動 App 並截圖存證",
       "user_visible_behavior": "在 iOS 模擬器上可以看到 SPARKPLATE 啟動並顯示今日頁。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "執行 npx expo run:ios（或 pnpm ios）。",
         "確認建置成功且模擬器開啟 App、今日頁正常渲染無紅屏。",
         "擷取模擬器截圖存入 docs/ 作為證據。"
       ],
-      "evidence": [],
-      "notes": "2026-07-17 已成功 build 過一次（AppDelegate 的 RCTBridge 修復在本機 ios/，該資料夾已被 gitignore；勿跑 expo prebuild --clean）。仍需實跑並留證據。"
+      "evidence": [
+        "2026-07-20 | npx expo run:ios | Build Succeeded，0 error(s)，安裝並開啟於 iPhone 17 Pro 模擬器",
+        "2026-07-20 | xcrun simctl io booted screenshot docs/ios-001-simulator-home.png | 畫面正常渲染（今日/照片列表含餐點資料），無紅屏錯誤"
+      ],
+      "notes": "2026-07-17 已成功 build 過一次（AppDelegate 的 RCTBridge 修復在本機 ios/，該資料夾已被 gitignore；勿跑 expo prebuild --clean）。本輪（2026-07-20）過程中曾誤與 SPARKWEAR 的 Metro 撞到同一個 8081 port 導致載入錯誤 bundle，停掉 SPARKWEAR 的 dev server 後重新乾淨建置即正常。"
     },
     {
       "id": "ios-002",
@@ -51,13 +54,18 @@
       "area": "ios",
       "title": "模擬器驗證 ZIP 匯出/匯入",
       "user_visible_behavior": "使用者在 iOS 上能匯出 ZIP 備份並成功匯入還原。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "建立測試資料後執行匯出，確認 ZIP 產生且分享面板出現。",
-        "清空資料後匯入，確認資料與照片完整還原。"
+        "清空資料後匯入，確認資料與照片完整還原。",
+        "匯入完成後，不重開 App，直接新增一筆資料，確認能正常寫入（回歸測試：先前 db.closeAsync() 之後沒有重新連線，導致同一次 App 執行期間所有寫入都失敗，見 commit dba2b50 / 本輪修復）。"
       ],
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "2026-07-20 | 模擬器操作：設定 → 匯出備份 | 分享面板正常出現，ZIP 產生於 Documents",
+        "2026-07-20 | 模擬器操作：設定 → 匯入備份（選剛匯出的 ZIP） | 匯入成功，資料與照片還原（sqlite3 查詢 meals/photos 表確認筆數與內容一致）",
+        "2026-07-20 | 匯入後不重開 App，直接新增一餐 | 新增成功；sqlite3 直接查詢容器內 sparkplate.db 確認新記錄已寫入（meals 從 2 筆增為 3 筆，新記錄 created_at 為當下時間）；Metro log 全程無 'Access to closed resource' 或 'readonly database' 錯誤"
+      ],
+      "notes": "修復內容：DBProvider 新增 reloadDB()（重新開一個新的 SQLite 連線並更新 context），BackupRestoreModal 在 importBackup() 成功後呼叫它，取代先前只有 closeAsync() 卻沒有重新連線的做法（commit dba2b50 遺留問題）。單元測試見 src/__tests__/providers/DBProvider.test.tsx 與 src/__tests__/components/BackupRestoreModal.test.tsx。另發現一個範圍外的既有限制：photos 表的 thumb_uri/grid_uri 等欄位存絕對路徑（含 App 容器 UUID），App 重灌會讓容器 UUID 改變、舊照片路徑失效；正常使用者不會頻繁重灌，此次未列入修復範圍，值得之後開一個獨立項目處理（改存相對路徑）。"
     },
     {
       "id": "native-001",

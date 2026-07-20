@@ -7,7 +7,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import { AppText } from '@/components/AppText';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { useDBContext } from '@/providers/DBProvider';
+import { useDBContext, useDBReload } from '@/providers/DBProvider';
 import { exportBackup, importBackup } from '@/services/backupService';
 
 // ── Progress Bar ──────────────────────────────────────────────────────────────
@@ -45,6 +45,7 @@ interface Props {
 export function BackupRestoreModal({ visible, mode, onClose }: Props) {
   const { fontColor } = useSettingsStore();
   const db = useDBContext();
+  const reloadDB = useDBReload();
   const [step, setStep]         = useState<Step>('idle');
   const [progress, setProgress] = useState(0);
   const [savedName, setSavedName] = useState('');
@@ -135,12 +136,14 @@ export function BackupRestoreModal({ visible, mode, onClose }: Props) {
       const file = result.assets[0];
       setStep('running');
       setProgress(0);
-      // 匯入是直接在硬碟上覆蓋 SQLite 檔案，若 App 當下開著的資料庫連線
-      // （WAL 模式）沒有先關閉，SQLite 會偵測到檔案在自己不知情的狀況下被
-      // 換掉，之後整個連線會被判定為不安全而拒絕寫入（即使之後重開 App
-      // 也不會恢復，因為殘留的 -wal/-shm 檔案狀態已經跟新檔案對不起來）。
+      // 匯入是直接在硬碟上覆蓋 SQLite 檔案，覆蓋前必須先關閉現有連線，
+      // 否則寫入時檔案正被佔用。但 closeAsync() 之後這個連線物件永久失效，
+      // 若不重新開一個新連線並更新回 DBProvider 的 context，同一次 App
+      // 執行期間所有後續查詢都會撞到「Access to closed resource」，只能
+      // 逼使用者整個關掉 App 重開才能恢復。
       await db?.closeAsync();
       await importBackup(file.uri, setProgress);
+      await reloadDB();
       setStep('done');
     } catch (e: any) {
       setErrorMsg(e?.message ?? '匯入失敗');
