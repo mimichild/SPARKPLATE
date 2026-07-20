@@ -9,11 +9,29 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-20 為 91 tests passed）
-- 目前最高優先級未完成功能：native-001（把 RCTBridge 原生修復轉成 Expo config plugin）
-- 目前 blocker：無
-- 背景：ios-001／ios-002／ios-003 皆已 passing（2026-07-20）；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；EAS（ios-004）前必須先完成 native-001
+- 目前最高優先級未完成功能：ios-004 EAS iOS 雲端建置成功（blocked：需先申請 Apple Developer Program 帳號）
+- 目前 blocker：ios-004/ios-005 需要 Apple Developer Program（$99/年），尚未申請
+- 背景：ios-001～ios-003、native-001 皆已 passing；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；native-001 的 config plugin（plugins/withRemoveRCTBridgeSourceURL.js）讓 expo prebuild --clean 不需手動改 ios/ 也能編譯成功，可直接複製給 SPARKSHAPE 用
 
 ## 工作階段日誌
+
+### 工作階段 004
+
+- 日期：2026-07-20
+- 本輪目標：完成 native-001（把 RCTBridge 原生修復轉成 Expo config plugin）
+- 已完成：
+  - 備份本機 `ios/`（被 gitignore，git 救不回來）
+  - 用未修的 prebuild --clean 重新產生 ios/，跑建置重現預期中的 `cannot find type 'RCTBridge' in scope` 編譯錯誤，證實問題在這套 Xcode 26.6 環境下仍會發生
+  - 寫了 `plugins/withRemoveRCTBridgeSourceURL.js`，用 `@expo/config-plugins` 的 `withAppDelegate` mod 在 prebuild 時自動移除有問題的 `sourceURL(for bridge:)` override，保留 `bundleURL()`
+  - 在 app.json 的 plugins 陣列註冊這個 plugin
+  - 重跑 prebuild --clean + 建置，確認自動修復生效、建置成功、App 在模擬器正常開啟
+  - 確認 icon alpha 透明通道問題（notes 提到的舊風險）已於先前 commit 修好，非本輪需處理
+  - `prebuild --clean` 屬於會整個重新產生 ios/ 的操作，被 auto mode 分類器擋下，改請使用者用 `!` 前綴手動執行兩次
+- 執行過的驗證：模擬器實測建置（修復前重現錯誤、修復後建置成功）、`./init.sh`（91 tests passed）、`sips -g hasAlpha` 檢查 icon
+- 已擷取證據：見 feature_list.json native-001 evidence；截圖 docs/native-001-prebuild-clean-success.png
+- 提交記錄：（見本輪 commit）
+- 已知風險或未解決問題：ios-004/ios-005 仍卡在 Apple Developer 帳號
+- 下一步最佳動作：等使用者申請好 Apple Developer Program 後才能繼續 ios-004；在那之前 SPARKPLATE 沒有可獨立推進的 iOS 項目（可考慮把同一個 plugin 套到 SPARKSHAPE）
 
 ### 工作階段 003
 
