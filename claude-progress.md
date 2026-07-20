@@ -9,11 +9,25 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-20 為 91 tests passed）
-- 目前最高優先級未完成功能：ios-002 模擬器驗證核心流程（資料庫讀寫、1:1 相機 modal 與相簿）——本輪已順帶驗證「新增餐點＋重開 App 資料仍在」，但「拍照開啟 CameraLaunchModal」這一步尚未實測，不算完成
+- 目前最高優先級未完成功能：native-001（把 RCTBridge 原生修復轉成 Expo config plugin）
 - 目前 blocker：無
-- 背景：2026-07-17 已在模擬器 build 成功過（AppDelegate RCTBridge 修復在本機 ios/，已被 gitignore）；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug（ios-003 passing）；EAS 前必須完成 native-001
+- 背景：ios-001／ios-002／ios-003 皆已 passing（2026-07-20）；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；EAS（ios-004）前必須先完成 native-001
 
 ## 工作階段日誌
+
+### 工作階段 003
+
+- 日期：2026-07-20
+- 本輪目標：接續工作階段 002，補完 ios-002 剩下沒測的「拍照開啟 CameraLaunchModal」步驟
+- 已完成：
+  - 在模擬器上點相機 FAB → 拍照，確認 CameraLaunchModal 正常開啟（快門/相簿/關閉鍵都在，無閃退），點 ✕ 關閉後畫面正常返回
+  - 確認使用者反映的「畫面看起來不是 1:1」是模擬器無實體相機的視覺限制，非程式碼 bug：讀 `CameraLaunchModal.tsx` 確認 `cameraBox` 樣式為 `SCREEN_WIDTH × SCREEN_WIDTH` 正方形，只是容器背景與無畫面的相機都是黑色，肉眼分不出方框邊界；真正的 1:1 視覺驗證留待實機（ios-005）
+  - ios-002 全部三項驗證完成，標記 passing
+- 執行過的驗證：模擬器手動操作（新增餐點/相簿選圖、開關相機 modal、多次 `simctl terminate`+`launch` 確認資料持久化）
+- 已擷取證據：見 feature_list.json ios-002 evidence；截圖 docs/ios-002-camera-modal.png
+- 提交記錄：（見本輪 commit）
+- 已知風險或未解決問題：無新增；native-001／ios-004／ios-005 仍待 Apple Developer 帳號與後續排程
+- 下一步最佳動作：native-001（把 RCTBridge 原生修復轉成 Expo config plugin），為 EAS 建置鋪路
 
 ### 工作階段 002
 
