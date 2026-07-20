@@ -100,14 +100,18 @@
       "area": "ios",
       "title": "EAS iOS 雲端建置成功",
       "user_visible_behavior": "EAS Build 產出可安裝的 iOS build。",
-      "status": "blocked",
+      "status": "passing",
       "verification": [
         "確認 Apple Developer 帳號可用、建立 eas.json（參考 SPARKWEAR）。",
         "執行 eas build --platform ios。",
         "確認 expo.dev 建置狀態 finished，記錄 build URL。"
       ],
-      "evidence": [],
-      "notes": "2026-07-20 blocked：native-001 已完成，唯一前置條件剩 Apple Developer Program（$99/年）尚未申請，需使用者決定是否付費申請。已嘗試：無需嘗試，純屬外部帳號申請前置。建議解法：使用者申請 Apple Developer Program 後再回來繼續；帳號未辦好前不要空等此項。本專案目前沒有 eas.json，需在申請帳號後一併建立（可參考 SPARKWEAR 的 eas.json）。"
+      "evidence": [
+        "2026-07-20 | 新增 eas.json | 參考 SPARKWEAR 範本，三個 build profile 都含 \"node\": \"22.13.0\"",
+        "2026-07-20 | npx eas-cli init --non-interactive --force | 建立 EAS 專案 @mimichild/sparkplate，projectId fbecd76c-26e9-4d13-892e-7254d5a998b0",
+        "2026-07-20 | npx eas-cli build --platform ios --profile production（互動模式，使用者本人建立 Provisioning Profile；Distribution Certificate 沿用同一個 Apple 帳號在 SPARKWEAR 建置時已建立的）| Build finished，產出 .ipa：https://expo.dev/artifacts/eas/PGumhC8pXVZ2pR8KJIrBWNuEcmlk3PrkNVl_arkZj0c.ipa；建置頁：https://expo.dev/accounts/mimichild/projects/sparkplate/builds/a825877a-6425-4e57-b4db-de49c392255b；一次就成功，沒有再踩到 SPARKWEAR 遇過的 Node 版本問題（因為 eas.json 一開始就套了修法）；也驗證了 native-001 的 config plugin（fmt/RCTBridge）在真正的雲端建置環境下確實有效"
+      ],
+      "notes": "native-001 的 config plugin 在雲端建置環境下驗證有效，這是它真正的價值所在（模擬器本機測試只證明本機 Xcode 環境沒問題，雲端環境完全獨立重跑 prebuild 才是真正的考驗）。"
     },
     {
       "id": "ios-005",
