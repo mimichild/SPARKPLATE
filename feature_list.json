@@ -39,14 +39,18 @@
       "area": "ios",
       "title": "模擬器驗證核心流程：資料庫讀寫、1:1 相機 modal 與相簿",
       "user_visible_behavior": "使用者在 iOS 模擬器上能新增餐點（相簿選圖）、開啟 1:1 CameraLaunchModal、重啟後資料仍在。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "在模擬器新增一筆餐點並從相簿選照片。",
         "點拍照確認 CameraLaunchModal 開啟、權限彈窗正常、不閃退。",
         "完全關閉 App 再重開，確認資料仍存在。"
       ],
-      "evidence": [],
-      "notes": "模擬器無實體相機；真實拍照與音量鍵快門（react-native-volume-manager）留到實機驗證。"
+      "evidence": [
+        "2026-07-20 | 模擬器操作：新增餐點 → 從相簿選照片 → 存檔 | 成功；sqlite3 直接查容器內 sparkplate.db 確認新記錄寫入（meals 表新增一筆，含正確 created_at 時間戳記）",
+        "2026-07-20 | 模擬器操作：點相機 FAB → 拍照 | CameraLaunchModal 正常開啟（快門鍵/相簿鍵/關閉鍵皆正常顯示），點 ✕ 關閉後畫面正常返回，無閃退、無紅屏；截圖見 docs/ios-002-camera-modal.png。模擬器無實體相機，畫面呈現全黑屬預期（cameraBox 樣式為 SCREEN_WIDTH×SCREEN_WIDTH 正方形，程式碼確認為真 1:1，但容器背景與相機無畫面皆為黑色，視覺上分不出方框邊界，真實 1:1 視覺驗證留待實機 ios-005）",
+        "2026-07-20 | xcrun simctl terminate + launch（本輪測試過程中重複執行多次） | 每次重開後資料皆仍存在，畫面正常渲染"
+      ],
+      "notes": "模擬器無實體相機；真實拍照與音量鍵快門（react-native-volume-manager）留到實機驗證（ios-005）。"
     },
     {
       "id": "ios-003",
