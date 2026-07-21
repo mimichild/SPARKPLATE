@@ -118,16 +118,32 @@
       "priority": 6,
       "area": "ios",
       "title": "TestFlight 內部測試",
-      "user_visible_behavior": "使用者的 iPhone 能從 TestFlight 安裝並正常使用核心功能（含真實拍照與音量鍵快門）。",
-      "status": "in_progress",
+      "user_visible_behavior": "使用者的 iPhone 能從 TestFlight 安裝並正常使用核心功能（含真實拍照）。",
+      "status": "passing",
       "verification": [
         "eas submit --platform ios 並加入內部測試群組。",
-        "實機安裝啟動，重跑 ios-002（含真實相機、音量鍵快門）。"
+        "實機安裝啟動，重跑 ios-002（含真實相機）。"
       ],
       "evidence": [
-        "2026-07-21 | eas submit --platform ios --profile production --latest（使用者本人於 Terminal.app 互動執行）| Submission 成功，Build ID a825877a-6425-4e57-b4db-de49c392255b（App Version 1.0.0, Build 2）已上傳，https://appstoreconnect.apple.com/apps/6793041053/testflight/ios"
+        "2026-07-21 | eas submit --platform ios --profile production --latest（使用者本人於 Terminal.app 互動執行）| Submission 成功，Build ID a825877a-6425-4e57-b4db-de49c392255b（App Version 1.0.0, Build 2）已上傳，https://appstoreconnect.apple.com/apps/6793041053/testflight/ios",
+        "2026-07-21 | 使用者本人於 App Store Connect 將 Build 2 加入內部測試群組，iPhone 上安裝 TestFlight 並成功安裝、開啟 SPARKPLATE | 啟動正常無閃退",
+        "2026-07-21 | 使用者手動操作：新增餐點（相簿選圖、真實相機拍照 CameraLaunchModal）→ 存檔 | 成功，照片正常顯示",
+        "2026-07-21 | 使用者操作：完全關閉 App 再重開 | 剛才新增的餐點仍存在，資料持久化正常"
       ],
-      "notes": "依賴 ios-004。2026-07-21：已完成 eas submit，剩下加入內部測試群組＋實機驗證需等使用者有 iPhone 可測時才能做。"
+      "notes": "依賴 ios-004。原驗證步驟含「音量鍵快門」，但實機測試時使用者反映按音量鍵沒有反應（螢幕反而變暗，懷疑誤按到旁邊的電源鍵）。查程式碼確認：src/hooks/useVolumeQuickCapture.ts 需要 settingsStore 提供 volumeQuickCapture 這個布林值才會註冊監聽，但 src/stores/settingsStore.ts 裡根本沒有定義這個欄位（只有測試檔案的 mock 有），所以這個功能在正式版裡是永遠不會啟用的死碼，不是使用者操作錯誤。使用者確認後把這條驗證從 ios-005 移除，功能另開 ios-006 追蹤（設定開關沒接上）。"
+    },
+    {
+      "id": "ios-006",
+      "priority": 7,
+      "area": "camera",
+      "title": "音量鍵快門設定開關沒接上，功能永遠無法啟用",
+      "user_visible_behavior": "使用者連按兩下音量鍵應該要能快速拍照，但目前完全沒反應，因為沒有任何入口可以打開這個功能。",
+      "status": "not_started",
+      "verification": [
+        "TBD：規劃時再補齊具體驗證步驟。"
+      ],
+      "evidence": [],
+      "notes": "2026-07-21 於 ios-005 實機測試時發現：src/hooks/useVolumeQuickCapture.ts 依賴 settingsStore 的 volumeQuickCapture 欄位才會註冊音量鍵監聽，但 src/stores/settingsStore.ts（SettingsState 介面與 create() 實作）完全沒有這個欄位，只有測試檔案的 mock 有假資料。等於這個功能在正式版裡是死碼，永遠不會啟用。要修好需要：(1) 在 settingsStore 加上 volumeQuickCapture 狀態＋persist、(2) 設定頁加開關 UI、(3) 確認 CameraLaunchModal 有訂閱 onTrigger 回呼。使用者確認之後再處理，先記錄避免遺忘。"
     }
   ]
 }
