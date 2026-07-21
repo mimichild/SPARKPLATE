@@ -9,11 +9,25 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-20 為 91 tests passed）
-- 目前最高優先級未完成功能：ios-005 TestFlight 內部測試（in_progress，已完成 eas submit，剩下加入測試群組＋實機驗證）
-- 目前 blocker：實機驗證步驟需要使用者的實體 iPhone 才能繼續
-- 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-004、native-001 皆已 passing，EAS 雲端建置成功產出 .ipa，也驗證了 native-001 的 config plugin 在雲端環境確實有效；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug
+- 目前最高優先級未完成功能：ios-006 音量鍵快門設定開關沒接上（not_started；ios-005 已 passing）
+- 目前 blocker：無
+- 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-005、native-001 皆已 passing（含 TestFlight 實機驗證），EAS 雲端建置成功產出 .ipa，也驗證了 native-001 的 config plugin 在雲端環境確實有效；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；實機測試時發現音量鍵快門功能是死碼（設定開關沒接上），已建 ios-006 追蹤
 
 ## 工作階段日誌
+
+### 工作階段 007
+
+- 日期：2026-07-21
+- 本輪目標：完成 ios-005（TestFlight 內部測試）剩餘步驟——加入測試群組＋實機驗證
+- 已完成：
+  - 使用者於 App Store Connect 把 Build 2 加入內部測試群組，iPhone 用 TestFlight 成功安裝並開啟 SPARKPLATE
+  - 實機重跑核心流程：新增餐點（相簿選圖＋真實相機拍照 CameraLaunchModal）、完全關閉重開確認持久化，皆正常
+  - 使用者反映按音量鍵沒反應（螢幕變暗，疑似誤按電源鍵）；查 src/hooks/useVolumeQuickCapture.ts 發現它依賴 settingsStore 的 volumeQuickCapture 欄位才會註冊監聽，但 src/stores/settingsStore.ts 根本沒有定義這個欄位——功能在正式版是死碼，永遠不會啟用，不是使用者操作錯誤。與使用者確認後把這條驗證從 ios-005 移除，開 ios-006 追蹤修復
+- 執行過的驗證：見上述，皆為使用者實機手動操作＋程式碼查證
+- 已擷取證據：見 feature_list.json ios-005 evidence
+- 提交記錄：（本輪 commit）
+- 已知風險或未解決問題：ios-006 尚未規劃，僅記錄現象與初步修法方向
+- 下一步最佳動作：ios-006；或視使用者意願先處理其他 App 的 ios-005
 
 ### 工作階段 006
 
