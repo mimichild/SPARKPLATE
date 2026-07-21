@@ -119,13 +119,15 @@
       "area": "ios",
       "title": "TestFlight 內部測試",
       "user_visible_behavior": "使用者的 iPhone 能從 TestFlight 安裝並正常使用核心功能（含真實拍照與音量鍵快門）。",
-      "status": "not_started",
+      "status": "in_progress",
       "verification": [
         "eas submit --platform ios 並加入內部測試群組。",
         "實機安裝啟動，重跑 ios-002（含真實相機、音量鍵快門）。"
       ],
-      "evidence": [],
-      "notes": "依賴 ios-004。"
+      "evidence": [
+        "2026-07-21 | eas submit --platform ios --profile production --latest（使用者本人於 Terminal.app 互動執行）| Submission 成功，Build ID a825877a-6425-4e57-b4db-de49c392255b（App Version 1.0.0, Build 2）已上傳，https://appstoreconnect.apple.com/apps/6793041053/testflight/ios"
+      ],
+      "notes": "依賴 ios-004。2026-07-21：已完成 eas submit，剩下加入內部測試群組＋實機驗證需等使用者有 iPhone 可測時才能做。"
     }
   ]
 }
