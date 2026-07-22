@@ -45,7 +45,7 @@ describe('useVolumeQuickCapture', () => {
     expect(mockAddVolumeListener).not.toHaveBeenCalled();
   });
 
-  it('triggers onTrigger on two volume decreases within 600ms', () => {
+  it('triggers onTrigger on two volume decreases within 1200ms', () => {
     const onTrigger = jest.fn();
     renderHook(() => useVolumeQuickCapture(onTrigger));
 
@@ -53,15 +53,15 @@ describe('useVolumeQuickCapture', () => {
       __simulateVolume(0.5); // baseline
       __simulateVolume(0.4); // first press
     });
-    jest.advanceTimersByTime(300);
+    jest.advanceTimersByTime(900);
     act(() => {
-      __simulateVolume(0.3); // second press within 600ms
+      __simulateVolume(0.3); // second press within 1200ms
     });
 
     expect(onTrigger).toHaveBeenCalledTimes(1);
   });
 
-  it('does not trigger when second press is after 600ms', () => {
+  it('does not trigger when second press is after 1200ms', () => {
     const onTrigger = jest.fn();
     renderHook(() => useVolumeQuickCapture(onTrigger));
 
@@ -69,7 +69,7 @@ describe('useVolumeQuickCapture', () => {
       __simulateVolume(0.5);
       __simulateVolume(0.4); // first press
     });
-    jest.advanceTimersByTime(700);
+    jest.advanceTimersByTime(1300);
     act(() => {
       __simulateVolume(0.3); // too late
     });
