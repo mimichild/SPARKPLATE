@@ -138,7 +138,7 @@
       "area": "camera",
       "title": "音量鍵快門設定開關沒接上，功能永遠無法啟用",
       "user_visible_behavior": "使用者連按兩下音量鍵應該要能快速拍照，但目前完全沒反應，因為沒有任何入口可以打開這個功能。",
-      "status": "blocked",
+      "status": "in_progress",
       "verification": [
         "pnpm test 全部通過。",
         "模擬器：設定頁能看到「音量鍵快門」開關，打開後設定持久化（重開 App 仍記得）。",
