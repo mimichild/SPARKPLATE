@@ -9,11 +9,27 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-22 為 94 tests passed）
-- 目前最高優先級未完成功能：ios-006 音量鍵快門（blocked，設定開關與拍照回歸都已驗證，剩下「連按音量鍵真的觸發拍照」需要實體 iPhone）
-- 目前 blocker：ios-006 最後一步需要使用者的實體 iPhone，先擱置不影響其他功能推進
-- 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-005、native-001 皆已 passing（含 TestFlight 實機驗證），EAS 雲端建置成功產出 .ipa，也驗證了 native-001 的 config plugin 在雲端環境確實有效；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug
+- 目前最高優先級未完成功能：無（feature_list.json 目前全部 passing）
+- 目前 blocker：無
+- 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug
 
 ## 工作階段日誌
+
+### 工作階段 009
+
+- 日期：2026-07-22
+- 本輪目標：設定 EAS Update（OTA）支援，並收尾 ios-006（音量鍵快門）的實機驗證
+- 已完成：
+  - `eas update:configure` 設定 OTA 更新；eas.json 加 `ascAppId` 讓 `eas submit` 可以完全非互動
+  - 重新 `eas build` + `eas submit`（Build 3，含音量鍵快門修復＋OTA 設定）→ 使用者在 App Store Connect 加入測試群組 → iPhone TestFlight 安裝
+  - 實機初測：連按兩下音量鍵沒反應，反而長按會觸發；查出根因是 `DOUBLE_PRESS_WINDOW_MS = 600` 太緊，兩次獨立按壓的間隔常超過 600ms（長按時連續音量下降剛好落在窗口內才會觸發）
+  - 跟使用者確認後放寬到 1200ms，用 `eas update --channel production`（本輪第一次實際使用 OTA 機制）推送，不需要重新走完整 native build
+  - 使用者完全關閉 App 重開套用更新，確認連按兩下音量－鍵成功觸發拍照；音量＋鍵沒反應（設計如此，只偵測音量下降）
+- 執行過的驗證：`pnpm test`（94 tests passed）、實機 TestFlight 測試、eas update 推送驗證
+- 已擷取證據：見 feature_list.json ios-006 evidence
+- 提交記錄：（本輪 commit）
+- 已知風險或未解決問題：無
+- 下一步最佳動作：feature_list.json 全部 passing，無待辦項目；之後純 JS/TS 修改可優先考慮 `eas update`
 
 ### 工作階段 008
 

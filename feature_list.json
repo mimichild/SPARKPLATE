@@ -138,7 +138,7 @@
       "area": "camera",
       "title": "音量鍵快門設定開關沒接上，功能永遠無法啟用",
       "user_visible_behavior": "使用者連按兩下音量鍵應該要能快速拍照，但目前完全沒反應，因為沒有任何入口可以打開這個功能。",
-      "status": "in_progress",
+      "status": "passing",
       "verification": [
         "pnpm test 全部通過。",
         "模擬器：設定頁能看到「音量鍵快門」開關，打開後設定持久化（重開 App 仍記得）。",
@@ -148,9 +148,11 @@
       "evidence": [
         "2026-07-22 | pnpm test | 94 tests passed（含新增 volumeQuickCapture 的 3 個測試案例）",
         "2026-07-22 | 模擬器操作：設定頁打開「音量鍵快門」開關 → 關閉設定頁重開 | 使用者確認開關狀態有記住（持久化正常）",
-        "2026-07-22 | 模擬器操作：開啟拍照畫面（1:1 CameraLaunchModal）| 使用者確認「都正常」，畫面正常無閃退（回歸測試通過）"
+        "2026-07-22 | 模擬器操作：開啟拍照畫面（1:1 CameraLaunchModal）| 使用者確認「都正常」，畫面正常無閃退（回歸測試通過）",
+        "2026-07-22 | 實機（TestFlight Build 3）連按兩下音量鍵 | 沒反應；發現長按會觸發（600ms 判定窗口太緊，兩次獨立按壓間隔常超過 600ms）",
+        "2026-07-22 | 修改 DOUBLE_PRESS_WINDOW_MS 600→1200ms，用 eas update（OTA）推送到 production channel，實機完全關閉 App 重開套用更新 | 使用者確認連按兩下音量－鍵成功觸發拍照；音量＋鍵無反應（設計如此，只偵測音量下降，符合 iOS 原生相機用音量－鍵當快門的慣例）"
       ],
-      "notes": "2026-07-21 於 ios-005 實機測試時發現：src/hooks/useVolumeQuickCapture.ts 依賴 settingsStore 的 volumeQuickCapture 欄位才會註冊音量鍵監聽，但 src/stores/settingsStore.ts（SettingsState 介面與 create() 實作）完全沒有這個欄位，只有測試檔案的 mock 有假資料。等於這個功能在正式版裡是死碼，永遠不會啟用。2026-07-22 已實作：(1) settingsStore.ts 加上 volumeQuickCapture 狀態＋AsyncStorage 持久化；(2) SettingsModal.tsx 加開關 UI（沿用既有 Switch 樣式，跟其他兩個開關一致）；(3) CameraLaunchModal.tsx 內接上 useVolumeQuickCapture(() => { if (visible) handleCapture(); })，用 visible 防止 Modal 隱藏時（元件仍掛載）背景誤觸。blocked 現象：模擬器沒有實體音量鍵，只能驗證設定開關持久化與拍照畫面本身沒被我的改動弄壞（皆已驗證通過），無法驗證「連按兩下音量鍵真的觸發拍照」這個核心行為。建議解法：等使用者有 iPhone 可測時一次驗證。"
+      "notes": "2026-07-21 於 ios-005 實機測試時發現：src/hooks/useVolumeQuickCapture.ts 依賴 settingsStore 的 volumeQuickCapture 欄位才會註冊音量鍵監聽，但 settingsStore.ts 完全沒有這個欄位，等於這個功能在正式版裡是死碼，永遠不會啟用。2026-07-22 已實作：(1) settingsStore.ts 加上 volumeQuickCapture 狀態＋AsyncStorage 持久化；(2) SettingsModal.tsx 加開關 UI；(3) CameraLaunchModal.tsx 內接上 useVolumeQuickCapture(() => { if (visible) handleCapture(); })。實機初測發現 600ms 雙按判定窗口太緊（兩次獨立按壓間隔常超過 600ms），放寬到 1200ms 後用 eas update 推送（第一次實際使用本輪剛設定好的 OTA 機制），確認正常。"
     }
   ]
 }
