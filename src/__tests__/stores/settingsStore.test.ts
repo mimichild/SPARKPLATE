@@ -47,6 +47,31 @@ describe('settingsStore', () => {
     });
   });
 
+  describe('volumeQuickCapture', () => {
+    it('defaults to false when AsyncStorage has no value', async () => {
+      const { result } = renderHook(() => useSettingsStore());
+      await act(async () => { await result.current.hydrate(); });
+      expect(result.current.volumeQuickCapture).toBe(false);
+    });
+
+    it('loads volumeQuickCapture from AsyncStorage', async () => {
+      mockStorage.getItem.mockImplementation(async (key) => {
+        if (key === 'settings:volumeQuickCapture') return 'true';
+        return null;
+      });
+      const { result } = renderHook(() => useSettingsStore());
+      await act(async () => { await result.current.hydrate(); });
+      expect(result.current.volumeQuickCapture).toBe(true);
+    });
+
+    it('setVolumeQuickCapture updates state and persists to AsyncStorage', async () => {
+      const { result } = renderHook(() => useSettingsStore());
+      await act(async () => { await result.current.setVolumeQuickCapture(true); });
+      expect(result.current.volumeQuickCapture).toBe(true);
+      expect(mockStorage.setItem).toHaveBeenCalledWith('settings:volumeQuickCapture', 'true');
+    });
+  });
+
   describe('pendingCameraOpen', () => {
     it('triggerCameraOpen sets pendingCameraOpen to true', () => {
       const { result } = renderHook(() => useSettingsStore());

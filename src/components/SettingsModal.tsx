@@ -14,7 +14,10 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ visible, onClose }: SettingsModalProps) {
-  const { fontColor, openCameraOnStart, autoSavePhoto, setFontColor, setOpenCameraOnStart, setAutoSavePhoto } = useSettingsStore();
+  const {
+    fontColor, openCameraOnStart, autoSavePhoto, volumeQuickCapture,
+    setFontColor, setOpenCameraOnStart, setAutoSavePhoto, setVolumeQuickCapture,
+  } = useSettingsStore();
   const [pendingColor, setPendingColor] = useState(fontColor);
   const [backupMode, setBackupMode]     = useState<'export' | 'import' | null>(null);
   const insets = useSafeAreaInsets();
@@ -63,6 +66,19 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
               testID="auto-save-photo-switch"
               value={autoSavePhoto}
               onValueChange={setAutoSavePhoto}
+            />
+          </View>
+
+          {/* Volume key quick capture */}
+          <View style={styles.row}>
+            <View style={styles.labelGroup}>
+              <AppText style={styles.label}>音量鍵快門</AppText>
+              <Text style={styles.hint}>拍照畫面開啟時，快速連按兩下音量鍵即可拍照</Text>
+            </View>
+            <Switch
+              testID="volume-quick-capture-switch"
+              value={volumeQuickCapture}
+              onValueChange={setVolumeQuickCapture}
             />
           </View>
 

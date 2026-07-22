@@ -7,6 +7,7 @@ interface SettingsState {
   fontColor: string;
   openCameraOnStart: boolean;
   autoSavePhoto: boolean;
+  volumeQuickCapture: boolean;
   pendingCameraOpen: boolean;
   hydrated: boolean;
   autoOpenFired: boolean; // session-only, not persisted
@@ -17,6 +18,7 @@ interface SettingsState {
   setFontColor: (color: string) => Promise<void>;
   setOpenCameraOnStart: (v: boolean) => Promise<void>;
   setAutoSavePhoto: (v: boolean) => Promise<void>;
+  setVolumeQuickCapture: (v: boolean) => Promise<void>;
   triggerCameraOpen: () => void;
   clearPendingCameraOpen: () => void;
   markAutoOpenFired: () => void;
@@ -32,6 +34,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   fontColor: DEFAULT_FONT_COLOR,
   openCameraOnStart: false,
   autoSavePhoto: false,
+  volumeQuickCapture: false,
   pendingCameraOpen: false,
   hydrated: false,
   autoOpenFired: false,
@@ -40,15 +43,17 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   pendingScreenshot: false,
 
   hydrate: async () => {
-    const [fontColor, openCameraOnStart, autoSavePhoto] = await Promise.all([
+    const [fontColor, openCameraOnStart, autoSavePhoto, volumeQuickCapture] = await Promise.all([
       AsyncStorage.getItem(STORAGE_KEYS.FONT_COLOR),
       AsyncStorage.getItem(STORAGE_KEYS.OPEN_CAMERA_ON_START),
       AsyncStorage.getItem(STORAGE_KEYS.AUTO_SAVE_PHOTO),
+      AsyncStorage.getItem(STORAGE_KEYS.VOLUME_QUICK_CAPTURE),
     ]);
     set({
       fontColor: fontColor ?? DEFAULT_FONT_COLOR,
       openCameraOnStart: openCameraOnStart === 'true',
       autoSavePhoto: autoSavePhoto === 'true',
+      volumeQuickCapture: volumeQuickCapture === 'true',
       hydrated: true,
     });
   },
@@ -66,6 +71,11 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   setAutoSavePhoto: async (v: boolean) => {
     set({ autoSavePhoto: v });
     await AsyncStorage.setItem(STORAGE_KEYS.AUTO_SAVE_PHOTO, String(v));
+  },
+
+  setVolumeQuickCapture: async (v: boolean) => {
+    set({ volumeQuickCapture: v });
+    await AsyncStorage.setItem(STORAGE_KEYS.VOLUME_QUICK_CAPTURE, String(v));
   },
 
   triggerCameraOpen: () => set({ pendingCameraOpen: true }),

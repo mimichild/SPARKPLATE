@@ -8,12 +8,28 @@
 
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
-- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-20 為 91 tests passed）
-- 目前最高優先級未完成功能：ios-006 音量鍵快門設定開關沒接上（not_started；ios-005 已 passing）
-- 目前 blocker：無
-- 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-005、native-001 皆已 passing（含 TestFlight 實機驗證），EAS 雲端建置成功產出 .ipa，也驗證了 native-001 的 config plugin 在雲端環境確實有效；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；實機測試時發現音量鍵快門功能是死碼（設定開關沒接上），已建 ios-006 追蹤
+- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-22 為 94 tests passed）
+- 目前最高優先級未完成功能：ios-006 音量鍵快門（blocked，設定開關與拍照回歸都已驗證，剩下「連按音量鍵真的觸發拍照」需要實體 iPhone）
+- 目前 blocker：ios-006 最後一步需要使用者的實體 iPhone，先擱置不影響其他功能推進
+- 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-005、native-001 皆已 passing（含 TestFlight 實機驗證），EAS 雲端建置成功產出 .ipa，也驗證了 native-001 的 config plugin 在雲端環境確實有效；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug
 
 ## 工作階段日誌
+
+### 工作階段 008
+
+- 日期：2026-07-22
+- 本輪目標：修 ios-006（音量鍵快門設定開關沒接上）
+- 已完成：
+  - `src/stores/settingsStore.ts` 加上 `volumeQuickCapture` 狀態＋AsyncStorage 持久化（沿用 `autoSavePhoto` 的既有模式）
+  - `src/components/SettingsModal.tsx` 加開關 UI，沿用既有 Switch 樣式
+  - `src/components/CameraLaunchModal.tsx` 內接上 `useVolumeQuickCapture(() => { if (visible) handleCapture(); })`，用 `visible` 防止 Modal 隱藏時（元件仍掛載）背景誤觸
+  - 過程中踩到一個環境坑：`npx expo run:ios` 時沒先關掉還在跑的 SPARKWEAR Metro server，兩個 App 搶同一個 8081 port，導致 SPARKPLATE 的原生殼載入了 SPARKWEAR 的 JS bundle（跳出 Worklets 版本不符的紅屏）。關掉舊的 SPARKWEAR process、確認 port 8081 沒有 LISTEN 之後重新 `expo run:ios` 才正確載入
+  - 模擬器實測：設定開關能打開、關閉重開設定頁後狀態有記住（持久化正常）；拍照畫面正常開啟無閃退（回歸測試通過）
+- 執行過的驗證：`pnpm test`（94 tests passed，含新增 3 個測試）、模擬器手動操作（使用者確認開關持久化、拍照畫面正常）
+- 已擷取證據：見 feature_list.json ios-006 evidence
+- 提交記錄：（本輪 commit）
+- 已知風險或未解決問題：模擬器沒有實體音量鍵，「連按兩下真的觸發拍照」這個核心行為還沒驗證，需要使用者拿實體 iPhone 測試
+- 下一步最佳動作：等使用者有 iPhone 時收尾 ios-006（連同 SPARKWEAR 的 ios-006 一起測，同樣卡在這一步）
 
 ### 工作階段 007
 

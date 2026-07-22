@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useVolumeQuickCapture } from '@/hooks/useVolumeQuickCapture';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -22,6 +23,10 @@ export function CameraLaunchModal({ visible, onPhotoTaken, onClose }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
   const [taking, setTaking] = useState(false);
   const autoSavePhoto = useSettingsStore((s) => s.autoSavePhoto);
+
+  // 只有在這個相機畫面實際打開時才讓音量鍵觸發拍照，避免 Modal 隱藏時
+  // （visible=false 但元件仍掛載）背景誤觸。
+  useVolumeQuickCapture(() => { if (visible) handleCapture(); });
 
   async function handleCapture() {
     if (taking || !cameraRef.current) return;
