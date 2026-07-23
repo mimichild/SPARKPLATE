@@ -9,11 +9,20 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-23 為 111 tests passed）
-- 目前最高優先級未完成功能：無（monetization-001 已 passing，使用者自行在模擬器/實機確認過所有個別鎖點）；下一步是把同一套模式複製到 SPARKSHAPE/SPARKFIT/SPARKLOG
+- 目前最高優先級未完成功能：無（monetization-001 已 passing，使用者自行在模擬器/實機確認過所有個別鎖點；同一套模式已複製到 SPARKSHAPE/SPARKFIT/SPARKLOG 並全部 passing）
 - 目前 blocker：無
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug
 
 ## 工作階段日誌
+
+### 工作階段 011
+
+- 日期：2026-07-23
+- 本輪目標：移除首頁跳轉 SPARK SHAPE/SPARK FIT 的互連連結（使用者要求跟 SPARKSHAPE/SPARKFIT 同步處理）
+- 已完成：`app/index.tsx` 移除 `sisterApps` 連結區塊與相關 style、未用到的 `Linking` import
+- 執行過的驗證：`npx jest`（19 suites、111 tests 全過）；`npx tsc --noEmit`（既有的 FlashList/Mood 型別錯誤是修改前就存在、與本次改動無關的檔案，未新增錯誤）
+- 已知風險或未解決問題：無
+- 下一步最佳動作：下次工作階段開始時照常從 feature_list.json 選下一個 not_started 功能
 
 ### 工作階段 010
 
