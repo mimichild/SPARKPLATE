@@ -153,6 +153,28 @@
         "2026-07-22 | 修改 DOUBLE_PRESS_WINDOW_MS 600→1200ms，用 eas update（OTA）推送到 production channel，實機完全關閉 App 重開套用更新 | 使用者確認連按兩下音量－鍵成功觸發拍照；音量＋鍵無反應（設計如此，只偵測音量下降，符合 iOS 原生相機用音量－鍵當快門的慣例）"
       ],
       "notes": "2026-07-21 於 ios-005 實機測試時發現：src/hooks/useVolumeQuickCapture.ts 依賴 settingsStore 的 volumeQuickCapture 欄位才會註冊音量鍵監聽，但 settingsStore.ts 完全沒有這個欄位，等於這個功能在正式版裡是死碼，永遠不會啟用。2026-07-22 已實作：(1) settingsStore.ts 加上 volumeQuickCapture 狀態＋AsyncStorage 持久化；(2) SettingsModal.tsx 加開關 UI；(3) CameraLaunchModal.tsx 內接上 useVolumeQuickCapture(() => { if (visible) handleCapture(); })。實機初測發現 600ms 雙按判定窗口太緊（兩次獨立按壓間隔常超過 600ms），放寬到 1200ms 後用 eas update 推送（第一次實際使用本輪剛設定好的 OTA 機制），確認正常。"
+    },
+    {
+      "id": "monetization-001",
+      "priority": 8,
+      "area": "monetization",
+      "title": "AdMob 橫幅廣告＋RevenueCat 訂閱＋Pro 功能鎖（複製 SPARKWEAR 範本）",
+      "user_visible_behavior": "iOS 免費使用者：無法使用分享、截圖、開啟時直接用相機打開、拍照自動下載、主題色、匯出匯入，點到這些功能會跳出升級提示；首頁、照片牆/標籤（掛在分頁列下方共用一條）底部能看到橫幅廣告。iOS Pro 使用者（RevenueCat 訂閱，或按「恢復購買」）：以上功能全部解鎖、無廣告。Android：沒有付費入口，一律視為 Pro，全部功能免費開放、不顯示廣告。",
+      "status": "in_progress",
+      "verification": [
+        "pnpm test 全部通過（含新增 useIsPro.test.ts/useProGate.test.ts/purchases.test.ts）。",
+        "npx tsc --noEmit -p . 無新增型別錯誤（既有的 FlashList estimatedItemSize／Mood 型別錯誤跟本次改動無關，維持原狀）。",
+        "模擬器（iOS，免費狀態）：點選分享/截圖/開機用相機開關/拍照自動下載開關/主題色確認套用/匯出/匯入，皆跳出「為 Pro 專屬功能」升級提示。",
+        "模擬器：畫面上能看到 AdMob 測試橫幅廣告正常渲染（非 Pro 狀態），涵蓋首頁、照片牆/標籤分頁（共用一條，在分頁列下方）。",
+        "確認 RevenueCat 相關程式碼在 REVENUECAT_API_KEY 為空字串時不會 crash，purchasePro/restorePurchases 安全地丟出明確錯誤並在畫面上顯示提示。"
+      ],
+      "evidence": [
+        "2026-07-23 | ./init.sh | 111 tests passed（含新增 useIsPro.test.ts 3 項、useProGate.test.ts 3 項、purchases.test.ts 11 項）",
+        "2026-07-23 | npx tsc --noEmit -p . | 無新增型別錯誤（既有 FlashList/Mood 型別錯誤跟本次改動無關，改動前後數量一致）",
+        "2026-07-23 | npx expo prebuild --platform ios && pod install | Google-Mobile-Ads-SDK 13.1.0（對應鎖定的 16.3.4）、RevenueCat 5.81.1 成功安裝",
+        "2026-07-23 | npx expo run:ios 建置成功（0 error）並在 iPhone 17 Pro 模擬器實測 | 首頁正常顯示且能看到 AdMob 測試廣告；點「設定」開啟 SettingsModal 正常渲染（PRO 解鎖區塊、兩個開關、主題色、備份區塊皆正常顯示，無 crash）；點「升級 Pro」正確觸發 purchasePro() 並顯示『升級失敗：RevenueCat 尚未設定，無法購買』"
+      ],
+      "notes": "對應 monetization_spec_5_apps 記憶；複製 SPARKWEAR 的 useProGate/useIsPro/AdBanner/purchases.ts/monetization.ts 範本。這個 App 沒有獨立的設定畫面，設定是用 SettingsModal（Modal，從 app/index.tsx 開啟），所以升級提示的『前往設定』改成：觸發 store 的 pendingSettingsOpen flag＋router.push('/')，index.tsx 的 useEffect 監聽這個 flag 自動打開 SettingsModal（沿用這個專案既有的 pendingExportOpen/pendingScreenshot 同一套 pattern，不是新發明）。react-native-google-mobile-ads 直接鎖定 16.3.4（見 SPARKWEAR feedback_android_native_stale_config 記憶規則五的 Kotlin 版本天花板問題，不要升到 16.4.0）。分享/截圖兩個按鈕在 app/(tabs)/_layout.tsx 的 BackHeader；匯出匯入是獨立於分享之外的功能，見 src/components/BackupRestoreModal.tsx。**尚未逐一手動點過每個個別鎖點**（開機用相機開關/拍照自動下載開關/分享/截圖/匯出/匯入各自的升級提示、主題色確認套用、恢復購買、Android 全功能開放）——這次在模擬器上因為 AppleScript 座標點擊校正卡住（React Native Alert 的 OK 按鈕點不到，換算多次仍失敗），改用單元測試（三個新測試檔完整覆蓋 requirePro 邏輯本身）＋一次真實端對端互動（升級 Pro 按鈕→正確顯示錯誤提示）作為證據；requirePro 是所有鎖點共用的同一個函式，邏輯已經被驗證正確，其餘鎖點只是呼叫同一個函式、寫法跟 SPARKWEAR 完全一樣的 pattern。建議使用者之後有空自己在模擬器或實機上快速點過一輪個別鎖點確認 UI 顯示正確，之後再統一改 passing。"
     }
   ]
 }

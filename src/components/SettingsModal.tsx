@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import {
-  Modal, View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView,
+  Modal, View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { THEME_COLORS } from '@/constants/themeColors';
 import { AppText } from '@/components/AppText';
 import { BackupRestoreModal } from '@/components/BackupRestoreModal';
+import { AdBanner } from '@/components/AdBanner';
+import { useProGate } from '@/hooks/useProGate';
+import { purchasePro, restorePurchases } from '@/services/purchases';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -17,9 +20,13 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
   const {
     fontColor, openCameraOnStart, autoSavePhoto, volumeQuickCapture,
     setFontColor, setOpenCameraOnStart, setAutoSavePhoto, setVolumeQuickCapture,
+    setProUnlocked,
   } = useSettingsStore();
+  const { isProUnlocked, requirePro } = useProGate();
   const [pendingColor, setPendingColor] = useState(fontColor);
   const [backupMode, setBackupMode]     = useState<'export' | 'import' | null>(null);
+  const [purchasing, setPurchasing]     = useState(false);
+  const [restoring, setRestoring]       = useState(false);
   const insets = useSafeAreaInsets();
 
   function handleOpen() {
@@ -27,8 +34,37 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
   }
 
   async function handleConfirm() {
+    if (!requirePro('主題色')) return;
     await setFontColor(pendingColor);
     onClose();
+  }
+
+  async function handlePurchase() {
+    setPurchasing(true);
+    try {
+      const isPro = await purchasePro();
+      if (isPro) {
+        await setProUnlocked(true);
+        Alert.alert('升級成功', 'Pro 功能已啟用');
+      }
+    } catch (e) {
+      Alert.alert('升級失敗', e instanceof Error ? e.message : '請稍後再試');
+    } finally {
+      setPurchasing(false);
+    }
+  }
+
+  async function handleRestore() {
+    setRestoring(true);
+    try {
+      const isPro = await restorePurchases();
+      await setProUnlocked(isPro);
+      Alert.alert(isPro ? '還原成功' : '沒有找到可還原的購買紀錄', isPro ? 'Pro 功能已啟用' : '若你曾經購買過，請確認使用的是同一個 Apple ID');
+    } catch (e) {
+      Alert.alert('還原失敗', e instanceof Error ? e.message : '請稍後再試');
+    } finally {
+      setRestoring(false);
+    }
   }
 
   return (
@@ -43,6 +79,28 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
         <ScrollView contentContainerStyle={[styles.sheet, { paddingTop: insets.top + 24 }]} showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>設定</Text>
 
+          {/* Pro 解鎖 */}
+          <AppText style={styles.colorSectionLabel}>PRO 解鎖</AppText>
+          <View style={styles.row}>
+            {Platform.OS === 'android' ? (
+              <AppText style={styles.proBadge}>✓ Pro 已解鎖（Android 版全功能免費開放）</AppText>
+            ) : isProUnlocked ? (
+              <AppText style={styles.proBadge}>✓ Pro 已解鎖</AppText>
+            ) : (
+              <View style={{ flex: 1 }}>
+                <Text style={styles.hint}>升級 Pro 即可解鎖分享、截圖、開機用相機、拍照自動下載、主題色、匯出匯入，並移除廣告</Text>
+                <TouchableOpacity onPress={handlePurchase} disabled={purchasing} activeOpacity={0.8}>
+                  <View style={[styles.backupBtnFill, { backgroundColor: fontColor, marginTop: 12 }]}>
+                    <Text style={styles.confirmBtnText}>{purchasing ? '處理中…' : '升級 Pro'}</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleRestore} disabled={restoring} activeOpacity={0.8} style={{ marginTop: 10, alignItems: 'center' }}>
+                  <Text style={{ color: fontColor, fontSize: 13, fontWeight: '600' }}>{restoring ? '還原中…' : '恢復購買'}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
           {/* Open camera on start */}
           <View style={styles.row}>
             <View style={styles.labelGroup}>
@@ -52,7 +110,7 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
             <Switch
               testID="open-camera-on-start-switch"
               value={openCameraOnStart}
-              onValueChange={setOpenCameraOnStart}
+              onValueChange={(v) => { if (!requirePro('開啟時直接用相機打開')) return; setOpenCameraOnStart(v); }}
             />
           </View>
 
@@ -65,7 +123,7 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
             <Switch
               testID="auto-save-photo-switch"
               value={autoSavePhoto}
-              onValueChange={setAutoSavePhoto}
+              onValueChange={(v) => { if (!requirePro('拍照時自動下載照片')) return; setAutoSavePhoto(v); }}
             />
           </View>
 
@@ -129,7 +187,7 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
           <AppText style={styles.backupSectionLabel}>備份與還原</AppText>
           <TouchableOpacity
             testID="backup-export-btn"
-            onPress={() => setBackupMode('export')}
+            onPress={() => { if (!requirePro('匯出備份')) return; setBackupMode('export'); }}
             activeOpacity={0.8}
           >
             <View style={[styles.backupBtnFill, { backgroundColor: fontColor }]}>
@@ -138,7 +196,7 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
           </TouchableOpacity>
           <TouchableOpacity
             testID="backup-import-btn"
-            onPress={() => setBackupMode('import')}
+            onPress={() => { if (!requirePro('匯入備份')) return; setBackupMode('import'); }}
             activeOpacity={0.8}
             style={{ marginTop: 10 }}
           >
@@ -159,6 +217,8 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
               onClose={() => setBackupMode(null)}
             />
           )}
+
+          <AdBanner />
         </ScrollView>
       </View>
     </Modal>
@@ -184,4 +244,5 @@ const styles = StyleSheet.create({
   backupBtnOutline: { borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1.5, backgroundColor: '#fff' },
   backupBtnOutlineText: { fontSize: 15, fontWeight: '700' },
   backupHint: { fontSize: 12, color: '#aaa', textAlign: 'center', marginTop: 8, marginBottom: 4 },
+  proBadge: { fontSize: 15, fontWeight: '600', color: '#43a047' },
 });

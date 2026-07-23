@@ -60,7 +60,14 @@
           "photosPermission": "讓 SPARK PLATE 儲存照片到您的相簿"
         }
       ],
-      "./plugins/withRemoveRCTBridgeSourceURL.js"
+      "./plugins/withRemoveRCTBridgeSourceURL.js",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
