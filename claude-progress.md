@@ -9,11 +9,20 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-23 為 111 tests passed）
-- 目前最高優先級未完成功能：無（monetization-001 已 passing，使用者自行在模擬器/實機確認過所有個別鎖點；同一套模式已複製到 SPARKSHAPE/SPARKFIT/SPARKLOG 並全部 passing）
+- 目前最高優先級未完成功能：無（monetization-001 已 passing，使用者自行在模擬器/實機確認過所有個別鎖點；同一套模式已複製到 SPARKSHAPE/SPARKFIT/SPARKLOG 並全部 passing）；AdMob 真實 iOS App ID 已設定（ca-app-pub-8914492142878610~3994424163），廣告單元 ID 待提供；Android 維持 Google 測試 ID
 - 目前 blocker：無
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug
 
 ## 工作階段日誌
+
+### 工作階段 013
+
+- 日期：2026-07-23
+- 本輪目標：使用者申請好真實 AdMob 帳號，把 iOS App ID 換成正式的
+- 已完成：`app.json` config plugin 的 `iosAppId` 換成 `ca-app-pub-8914492142878610~3994424163`；`androidAppId` 維持 Google 官方測試 ID（Android 一律視為 Pro，`AdBanner` 永遠不會渲染，不需要申請真的 Android 廣告版位）
+- 執行過的驗證：`python3 -c "json.load(...)"` 確認 app.json 仍是合法 JSON
+- 已知風險或未解決問題：這個改動屬於原生設定（會寫入 iOS Info.plist 的 GADApplicationIdentifier），純 JS 的 `eas update` OTA 推不動，需要重新 `expo prebuild`/整套 build 才會生效；廣告單元 ID（`BANNER_AD_UNIT_ID`）還沒換，目前仍是 Google 測試版位，待使用者在 AdMob 後台建立橫幅版位後提供
+- 下一步最佳動作：收到廣告單元 ID 後更新 `src/constants/monetization.ts`；之後找時間跑一次原生 build 讓新 App ID 生效
 
 ### 工作階段 012
 
