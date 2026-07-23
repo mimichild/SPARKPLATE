@@ -3,6 +3,8 @@ import { View, TouchableOpacity, StyleSheet, PanResponder, Text } from 'react-na
 import { Tabs, router, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useProGate } from '@/hooks/useProGate';
+import { AdBanner } from '@/components/AdBanner';
 
 function goBack() {
   if (router.canGoBack()) {
@@ -15,6 +17,7 @@ function goBack() {
 function BackHeader() {
   const insets = useSafeAreaInsets();
   const { fontColor, triggerExportOpen, triggerFilterOpen, triggerScreenshot } = useSettingsStore();
+  const { requirePro } = useProGate();
   const pathname = usePathname();
   const isGallery = pathname.includes('gallery');
   const isFilter = pathname.includes('filter');
@@ -32,14 +35,14 @@ function BackHeader() {
       {isGallery && (
         <View style={styles.rightBtns}>
           <TouchableOpacity
-            onPress={triggerScreenshot}
+            onPress={() => requirePro('截圖') && triggerScreenshot()}
             activeOpacity={0.7}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             <Text style={styles.backText}>截圖</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={triggerExportOpen}
+            onPress={() => requirePro('分享') && triggerExportOpen()}
             activeOpacity={0.7}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 8 }}
           >
@@ -63,7 +66,6 @@ function BackHeader() {
 
 export default function TabLayout() {
   const { fontColor } = useSettingsStore();
-  const insets = useSafeAreaInsets();
 
   const panResponder = useRef(
     PanResponder.create({
@@ -80,6 +82,7 @@ export default function TabLayout() {
   return (
     <View style={styles.container} {...panResponder.panHandlers}>
       <BackHeader />
+      {/* 分頁列下方接了 AdBanner，不是螢幕最底部，所以不用另外加 insets.bottom。 */}
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -88,10 +91,10 @@ export default function TabLayout() {
           tabBarStyle: {
             backgroundColor: fontColor,
             borderTopWidth: 0,
-            height: 56 + insets.bottom,
-            paddingBottom: insets.bottom,
+            height: 56,
+            paddingBottom: 0,
           },
-          tabBarItemStyle: { justifyContent: 'center', paddingBottom: 12 },
+          tabBarItemStyle: { justifyContent: 'center' },
           tabBarLabelStyle: { fontSize: 16, fontWeight: '600' },
         }}
       >
@@ -99,6 +102,8 @@ export default function TabLayout() {
         <Tabs.Screen name="filter" options={{ title: '標籤', tabBarLabel: '標籤', tabBarIcon: () => null }} />
         <Tabs.Screen name="today" options={{ href: null }} />
       </Tabs>
+
+      <AdBanner />
     </View>
   );
 }

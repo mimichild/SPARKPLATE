@@ -8,12 +8,30 @@
 
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
-- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-22 為 94 tests passed）
-- 目前最高優先級未完成功能：無（feature_list.json 目前全部 passing）
+- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-23 為 111 tests passed）
+- 目前最高優先級未完成功能：monetization-001（in_progress）——AdMob＋RevenueCat＋Pro 功能鎖，複製自 SPARKWEAR 範本；build/tsc/單元測試都過，模擬器上確認過主流程（設定頁正常渲染、升級 Pro 按鈕正確顯示錯誤提示），但個別鎖點（開機用相機/拍照自動下載/分享/截圖/匯出/匯入的升級提示、恢復購買）還沒逐一手動點過，待使用者有空自己在模擬器/實機測一輪
 - 目前 blocker：無
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug
 
 ## 工作階段日誌
+
+### 工作階段 010
+
+- 日期：2026-07-23
+- 本輪目標：複製 SPARKWEAR 的付費功能範本到 SPARKPLATE（monetization-001）
+- 已完成：
+  - 安裝 `react-native-google-mobile-ads`（直接鎖定 16.3.4，見 SPARKWEAR 的 Kotlin 版本天花板教訓，不要用預設的 16.4.0）與 `react-native-purchases`
+  - 新增 `src/constants/monetization.ts`、`src/services/purchases.ts`、`src/hooks/useIsPro.ts`、`src/hooks/useProGate.ts`、`src/components/AdBanner.tsx`（跟 SPARKWEAR 完全同一套 pattern，只是 import 路徑改用這個專案的 `@/` alias）
+  - `settingsStore.ts` 加 `isProUnlocked`/`setProUnlocked`；這個 App 的設定是用 Modal（`SettingsModal.tsx`，從 `app/index.tsx` 開）不是獨立畫面，所以額外加了 `pendingSettingsOpen` flag（沿用專案既有的 `pendingExportOpen`/`pendingScreenshot` pattern），`useProGate` 的升級提示按下「升級 Pro」時觸發這個 flag＋導回首頁，`index.tsx` 監聽後自動開啟 SettingsModal
+  - `SettingsModal.tsx` 加上 PRO 解鎖區塊（升級 Pro／恢復購買按鈕）＋把開機用相機開關、拍照自動下載開關、主題色確認套用、匯出/匯入按鈕都接上 `requirePro()`；`app/(tabs)/_layout.tsx` 的分享／截圖按鈕也接上
+  - 廣告放置：首頁、照片牆/標籤分頁（掛在 `app/(tabs)/_layout.tsx` 共用一條，在分頁列下方，同 SPARKWEAR 教訓調整 tabBarStyle 高度避免被墊高）
+  - 新增對應的單元測試（`useIsPro.test.ts`／`useProGate.test.ts`／直接複製 SPARKWEAR 的 `purchases.test.ts`），111 tests 全過
+  - `npx expo prebuild --platform ios && pod install` 成功；`npx expo run:ios` 建置成功並在模擬器實測：首頁看得到 AdMob 測試廣告、設定頁正常渲染 PRO 解鎖區塊、點「升級 Pro」正確跳出『升級失敗：RevenueCat 尚未設定，無法購買』
+- 執行過的驗證：`./init.sh`（111 tests passed）、`npx tsc --noEmit -p .`（無新增錯誤）、模擬器手動操作（主流程，見上）
+- 已擷取證據：見 feature_list.json monetization-001 evidence
+- 提交記錄：（見本輪 commit）
+- 已知風險或未解決問題：個別鎖點（開機用相機/拍照自動下載/分享/截圖/匯出/匯入各自跳出升級提示、恢復購買按鈕、Android 全功能開放）還沒逐一手動點過——這次在模擬器上因為 AppleScript 座標點擊校正卡在一個 React Native Alert 的 OK 按鈕上（換算多次仍點不到，可能跟畫面上疊了一個 dev perf 監測 HUD 有關），改用單元測試＋一次真實端對端互動作為證據，requirePro 邏輯本身已經被單元測試完整覆蓋且跟 SPARKWEAR 是同一套函式
+- 下一步最佳動作：使用者有空時自己在模擬器/實機快速點過一輪個別鎖點確認畫面正確 → monetization-001 改 passing；接著複製同一套模式到 SPARKSHAPE/SPARKFIT/SPARKLOG
 
 ### 工作階段 009
 

@@ -8,17 +8,20 @@ interface SettingsState {
   openCameraOnStart: boolean;
   autoSavePhoto: boolean;
   volumeQuickCapture: boolean;
+  isProUnlocked: boolean;
   pendingCameraOpen: boolean;
   hydrated: boolean;
   autoOpenFired: boolean; // session-only, not persisted
   pendingExportOpen: boolean; // session-only, not persisted
   pendingFilterOpen: boolean; // session-only, not persisted
   pendingScreenshot: boolean; // session-only, not persisted
+  pendingSettingsOpen: boolean; // session-only, not persisted
   hydrate: () => Promise<void>;
   setFontColor: (color: string) => Promise<void>;
   setOpenCameraOnStart: (v: boolean) => Promise<void>;
   setAutoSavePhoto: (v: boolean) => Promise<void>;
   setVolumeQuickCapture: (v: boolean) => Promise<void>;
+  setProUnlocked: (v: boolean) => Promise<void>;
   triggerCameraOpen: () => void;
   clearPendingCameraOpen: () => void;
   markAutoOpenFired: () => void;
@@ -28,6 +31,8 @@ interface SettingsState {
   clearPendingFilterOpen: () => void;
   triggerScreenshot: () => void;
   clearPendingScreenshot: () => void;
+  triggerSettingsOpen: () => void;
+  clearPendingSettingsOpen: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -35,25 +40,29 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   openCameraOnStart: false,
   autoSavePhoto: false,
   volumeQuickCapture: false,
+  isProUnlocked: false,
   pendingCameraOpen: false,
   hydrated: false,
   autoOpenFired: false,
   pendingExportOpen: false,
   pendingFilterOpen: false,
   pendingScreenshot: false,
+  pendingSettingsOpen: false,
 
   hydrate: async () => {
-    const [fontColor, openCameraOnStart, autoSavePhoto, volumeQuickCapture] = await Promise.all([
+    const [fontColor, openCameraOnStart, autoSavePhoto, volumeQuickCapture, isProUnlocked] = await Promise.all([
       AsyncStorage.getItem(STORAGE_KEYS.FONT_COLOR),
       AsyncStorage.getItem(STORAGE_KEYS.OPEN_CAMERA_ON_START),
       AsyncStorage.getItem(STORAGE_KEYS.AUTO_SAVE_PHOTO),
       AsyncStorage.getItem(STORAGE_KEYS.VOLUME_QUICK_CAPTURE),
+      AsyncStorage.getItem(STORAGE_KEYS.IS_PRO_UNLOCKED),
     ]);
     set({
       fontColor: fontColor ?? DEFAULT_FONT_COLOR,
       openCameraOnStart: openCameraOnStart === 'true',
       autoSavePhoto: autoSavePhoto === 'true',
       volumeQuickCapture: volumeQuickCapture === 'true',
+      isProUnlocked: isProUnlocked === 'true',
       hydrated: true,
     });
   },
@@ -78,6 +87,11 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     await AsyncStorage.setItem(STORAGE_KEYS.VOLUME_QUICK_CAPTURE, String(v));
   },
 
+  setProUnlocked: async (v: boolean) => {
+    set({ isProUnlocked: v });
+    await AsyncStorage.setItem(STORAGE_KEYS.IS_PRO_UNLOCKED, String(v));
+  },
+
   triggerCameraOpen: () => set({ pendingCameraOpen: true }),
 
   clearPendingCameraOpen: () => set({ pendingCameraOpen: false }),
@@ -89,4 +103,6 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   clearPendingFilterOpen: () => set({ pendingFilterOpen: false }),
   triggerScreenshot: () => set({ pendingScreenshot: true }),
   clearPendingScreenshot: () => set({ pendingScreenshot: false }),
+  triggerSettingsOpen: () => set({ pendingSettingsOpen: true }),
+  clearPendingSettingsOpen: () => set({ pendingSettingsOpen: false }),
 }));
