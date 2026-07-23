@@ -15,6 +15,15 @@
 
 ## 工作階段日誌
 
+### 工作階段 012
+
+- 日期：2026-07-23
+- 本輪目標：分頁列底部安全區改成依「有沒有廣告」動態決定（跟 SPARKWEAR/SPARKSHAPE 同步處理）
+- 已完成：`app/(tabs)/_layout.tsx` 加 `useIsPro()`，`bottomInset = isPro ? insets.bottom : 0`（`useSafeAreaInsets` 原本就有 import），動態加到 `tabBarStyle.height`/`paddingBottom`；這個專案的分頁畫面本來就沒有 SafeAreaView 重複保留 bottom edge 的問題，不用額外修
+- 執行過的驗證：`npx tsc --noEmit`（無新增錯誤，既有 FlashList/Mood 型別錯誤與本次改動的檔案無關）；`npx jest`（19 suites、111 tests 全過）
+- 已知風險或未解決問題：Pro（無廣告）分支目前無法在模擬器上實測（RevenueCat 尚未設定金鑰），邏輯依賴標準 `useSafeAreaInsets()` 疊加，未做額外模擬器驗證
+- 下一步最佳動作：下次工作階段開始時照常從 feature_list.json 選下一個 not_started 功能
+
 ### 工作階段 011
 
 - 日期：2026-07-23

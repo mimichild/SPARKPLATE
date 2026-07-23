@@ -4,7 +4,10 @@ import { Tabs, router, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useProGate } from '@/hooks/useProGate';
+import { useIsPro } from '@/hooks/useIsPro';
 import { AdBanner } from '@/components/AdBanner';
+
+const TAB_BAR_BASE_HEIGHT = 56;
 
 function goBack() {
   if (router.canGoBack()) {
@@ -66,6 +69,11 @@ function BackHeader() {
 
 export default function TabLayout() {
   const { fontColor } = useSettingsStore();
+  const isPro = useIsPro();
+  const insets = useSafeAreaInsets();
+  // 有廣告時分頁列下方接的是 AdBanner，不用留安全區；沒有廣告（Android 全部、iOS Pro）
+  // 時分頁列才是螢幕真正的底部，要補回安全區高度。
+  const bottomInset = isPro ? insets.bottom : 0;
 
   const panResponder = useRef(
     PanResponder.create({
@@ -91,8 +99,8 @@ export default function TabLayout() {
           tabBarStyle: {
             backgroundColor: fontColor,
             borderTopWidth: 0,
-            height: 56,
-            paddingBottom: 0,
+            height: TAB_BAR_BASE_HEIGHT + bottomInset,
+            paddingBottom: bottomInset,
           },
           tabBarItemStyle: { justifyContent: 'center' },
           tabBarLabelStyle: { fontSize: 16, fontWeight: '600' },
