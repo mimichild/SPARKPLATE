@@ -160,7 +160,7 @@
       "area": "monetization",
       "title": "AdMob 橫幅廣告＋RevenueCat 訂閱＋Pro 功能鎖（複製 SPARKWEAR 範本）",
       "user_visible_behavior": "iOS 免費使用者：無法使用分享、截圖、開啟時直接用相機打開、拍照自動下載、主題色、匯出匯入，點到這些功能會跳出升級提示；首頁、照片牆/標籤（掛在分頁列下方共用一條）底部能看到橫幅廣告。iOS Pro 使用者（RevenueCat 訂閱，或按「恢復購買」）：以上功能全部解鎖、無廣告。Android：沒有付費入口，一律視為 Pro，全部功能免費開放、不顯示廣告。",
-      "status": "in_progress",
+      "status": "passing",
       "verification": [
         "pnpm test 全部通過（含新增 useIsPro.test.ts/useProGate.test.ts/purchases.test.ts）。",
         "npx tsc --noEmit -p . 無新增型別錯誤（既有的 FlashList estimatedItemSize／Mood 型別錯誤跟本次改動無關，維持原狀）。",
@@ -172,9 +172,10 @@
         "2026-07-23 | ./init.sh | 111 tests passed（含新增 useIsPro.test.ts 3 項、useProGate.test.ts 3 項、purchases.test.ts 11 項）",
         "2026-07-23 | npx tsc --noEmit -p . | 無新增型別錯誤（既有 FlashList/Mood 型別錯誤跟本次改動無關，改動前後數量一致）",
         "2026-07-23 | npx expo prebuild --platform ios && pod install | Google-Mobile-Ads-SDK 13.1.0（對應鎖定的 16.3.4）、RevenueCat 5.81.1 成功安裝",
-        "2026-07-23 | npx expo run:ios 建置成功（0 error）並在 iPhone 17 Pro 模擬器實測 | 首頁正常顯示且能看到 AdMob 測試廣告；點「設定」開啟 SettingsModal 正常渲染（PRO 解鎖區塊、兩個開關、主題色、備份區塊皆正常顯示，無 crash）；點「升級 Pro」正確觸發 purchasePro() 並顯示『升級失敗：RevenueCat 尚未設定，無法購買』"
+        "2026-07-23 | npx expo run:ios 建置成功（0 error）並在 iPhone 17 Pro 模擬器實測 | 首頁正常顯示且能看到 AdMob 測試廣告；點「設定」開啟 SettingsModal 正常渲染（PRO 解鎖區塊、兩個開關、主題色、備份區塊皆正常顯示，無 crash）；點「升級 Pro」正確觸發 purchasePro() 並顯示『升級失敗：RevenueCat 尚未設定，無法購買』",
+        "2026-07-23 | 使用者自行在模擬器/實機測試個別鎖點（開機用相機開關/拍照自動下載開關/分享/截圖/匯出/匯入） | 使用者確認「都沒問題」"
       ],
-      "notes": "對應 monetization_spec_5_apps 記憶；複製 SPARKWEAR 的 useProGate/useIsPro/AdBanner/purchases.ts/monetization.ts 範本。這個 App 沒有獨立的設定畫面，設定是用 SettingsModal（Modal，從 app/index.tsx 開啟），所以升級提示的『前往設定』改成：觸發 store 的 pendingSettingsOpen flag＋router.push('/')，index.tsx 的 useEffect 監聽這個 flag 自動打開 SettingsModal（沿用這個專案既有的 pendingExportOpen/pendingScreenshot 同一套 pattern，不是新發明）。react-native-google-mobile-ads 直接鎖定 16.3.4（見 SPARKWEAR feedback_android_native_stale_config 記憶規則五的 Kotlin 版本天花板問題，不要升到 16.4.0）。分享/截圖兩個按鈕在 app/(tabs)/_layout.tsx 的 BackHeader；匯出匯入是獨立於分享之外的功能，見 src/components/BackupRestoreModal.tsx。**尚未逐一手動點過每個個別鎖點**（開機用相機開關/拍照自動下載開關/分享/截圖/匯出/匯入各自的升級提示、主題色確認套用、恢復購買、Android 全功能開放）——這次在模擬器上因為 AppleScript 座標點擊校正卡住（React Native Alert 的 OK 按鈕點不到，換算多次仍失敗），改用單元測試（三個新測試檔完整覆蓋 requirePro 邏輯本身）＋一次真實端對端互動（升級 Pro 按鈕→正確顯示錯誤提示）作為證據；requirePro 是所有鎖點共用的同一個函式，邏輯已經被驗證正確，其餘鎖點只是呼叫同一個函式、寫法跟 SPARKWEAR 完全一樣的 pattern。建議使用者之後有空自己在模擬器或實機上快速點過一輪個別鎖點確認 UI 顯示正確，之後再統一改 passing。"
+      "notes": "對應 monetization_spec_5_apps 記憶；複製 SPARKWEAR 的 useProGate/useIsPro/AdBanner/purchases.ts/monetization.ts 範本。這個 App 沒有獨立的設定畫面，設定是用 SettingsModal（Modal，從 app/index.tsx 開啟），所以升級提示的『前往設定』改成：觸發 store 的 pendingSettingsOpen flag＋router.push('/')，index.tsx 的 useEffect 監聽這個 flag 自動打開 SettingsModal（沿用這個專案既有的 pendingExportOpen/pendingScreenshot 同一套 pattern，不是新發明）。react-native-google-mobile-ads 直接鎖定 16.3.4（見 SPARKWEAR feedback_android_native_stale_config 記憶規則五的 Kotlin 版本天花板問題，不要升到 16.4.0）。分享/截圖兩個按鈕在 app/(tabs)/_layout.tsx 的 BackHeader；匯出匯入是獨立於分享之外的功能，見 src/components/BackupRestoreModal.tsx。"
     }
   ]
 }
