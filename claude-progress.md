@@ -9,11 +9,20 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-23 為 111 tests passed）
-- 目前最高優先級未完成功能：無（monetization-001 已 passing，使用者自行在模擬器/實機確認過所有個別鎖點；同一套模式已複製到 SPARKSHAPE/SPARKFIT/SPARKLOG 並全部 passing）；AdMob 真實 iOS App ID 已設定（ca-app-pub-8914492142878610~3994424163），廣告單元 ID 待提供；Android 維持 Google 測試 ID
+- 目前最高優先級未完成功能：無（monetization-001 已 passing，使用者自行在模擬器/實機確認過所有個別鎖點；同一套模式已複製到 SPARKSHAPE/SPARKFIT/SPARKLOG 並全部 passing）；AdMob 真實 iOS App ID（ca-app-pub-8914492142878610~3994424163）與廣告單元 ID（ca-app-pub-8914492142878610/4178522929）皆已設定；Android 維持 Google 測試 ID；待辦：跑一次原生 build 讓新 ID 生效、之後設定 RevenueCat
 - 目前 blocker：無
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug
 
 ## 工作階段日誌
+
+### 工作階段 014
+
+- 日期：2026-07-23
+- 本輪目標：使用者在 AdMob 後台建好橫幅廣告單元，把測試版位換成正式的
+- 已完成：`src/constants/monetization.ts` 的 `BANNER_AD_UNIT_ID` 改成 `Platform.select`，iOS 用正式 ID `ca-app-pub-8914492142878610/4178522929`，Android 維持 `TestIds.BANNER`
+- 執行過的驗證：`npx tsc --noEmit`（無新增錯誤）；`npx jest`（19 suites、111 tests 全過）
+- 已知風險或未解決問題：需要重新原生 build 才會真正生效；AdMob 應用程式狀態目前是「需審核」
+- 下一步最佳動作：找時間跑一次原生 build 讓新 ID 生效；之後設定 RevenueCat
 
 ### 工作階段 013
 
