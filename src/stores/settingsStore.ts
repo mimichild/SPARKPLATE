@@ -15,7 +15,6 @@ interface SettingsState {
   pendingExportOpen: boolean; // session-only, not persisted
   pendingFilterOpen: boolean; // session-only, not persisted
   pendingScreenshot: boolean; // session-only, not persisted
-  pendingSettingsOpen: boolean; // session-only, not persisted
   hydrate: () => Promise<void>;
   setFontColor: (color: string) => Promise<void>;
   setOpenCameraOnStart: (v: boolean) => Promise<void>;
@@ -31,8 +30,6 @@ interface SettingsState {
   clearPendingFilterOpen: () => void;
   triggerScreenshot: () => void;
   clearPendingScreenshot: () => void;
-  triggerSettingsOpen: () => void;
-  clearPendingSettingsOpen: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -47,7 +44,6 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   pendingExportOpen: false,
   pendingFilterOpen: false,
   pendingScreenshot: false,
-  pendingSettingsOpen: false,
 
   hydrate: async () => {
     const [fontColor, openCameraOnStart, autoSavePhoto, volumeQuickCapture, isProUnlocked] = await Promise.all([
@@ -103,6 +99,4 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   clearPendingFilterOpen: () => set({ pendingFilterOpen: false }),
   triggerScreenshot: () => set({ pendingScreenshot: true }),
   clearPendingScreenshot: () => set({ pendingScreenshot: false }),
-  triggerSettingsOpen: () => set({ pendingSettingsOpen: true }),
-  clearPendingSettingsOpen: () => set({ pendingSettingsOpen: false }),
 }));

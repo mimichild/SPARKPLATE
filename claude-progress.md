@@ -9,11 +9,25 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-23 為 111 tests passed）
-- 目前最高優先級未完成功能：無（monetization-001 已 passing）；AdMob／RevenueCat 已設定並已實機 build 安裝成功；購買流程實測時遇到 RevenueCat 官方已知事故（詳見 monetization_spec_5_apps 記憶），待事故排除後重測
-- 目前 blocker：RevenueCat 購買測試卡在官方事故（非本專案問題），等對方修復
+- 目前最高優先級未完成功能：無（monetization-001 已 passing）；AdMob／RevenueCat 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
+- 目前 blocker：無
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug
 
 ## 工作階段日誌
+
+### 工作階段 017
+
+- 日期：2026-08-01
+- 本輪目標：RevenueCat 官方事故排除後重測，修好順便發現的真實 bug
+- 已完成：
+  - 實機重測「升級 Pro」確認購買流程成功（RevenueCat 事故已解決）
+  - 發現並修正真實 bug：從鎖定功能（例如「開啟時直接用相機打開」）跳出的升級提示裡點「升級 Pro」沒反應——原因是 `useProGate.ts` 設計成 `triggerSettingsOpen()` + `router.push('/')` 導回首頁重開設定 Modal，但使用者觸發時通常已經身處設定 Modal 內，`showSettings` 狀態沒變化導致無可見效果
+  - 改成「升級 Pro」按鈕直接呼叫 `purchasePro()` 觸發真實購買，成功後 `setProUnlocked(true)` 並顯示「升級成功」，失敗顯示「升級失敗」＋錯誤訊息
+  - 清掉因此變成死碼的 `pendingSettingsOpen`／`triggerSettingsOpen`／`clearPendingSettingsOpen`（store 與 `app/index.tsx` 的 watcher useEffect）
+  - 更新 `src/__tests__/hooks/useProGate.test.ts` 對應新行為
+- 執行過的驗證：`npx tsc --noEmit`（無新增錯誤）；`npx jest`（19 suites、112 tests 全過）；實機互動測試確認修好
+- 已知風險或未解決問題：無
+- 下一步最佳動作：無（monetization-001 全部完成）
 
 ### 工作階段 016
 

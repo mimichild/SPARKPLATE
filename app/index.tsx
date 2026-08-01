@@ -12,7 +12,6 @@ export default function SplashScreen() {
   const [showSettings, setShowSettings] = useState(false);
   const {
     fontColor, openCameraOnStart, hydrated, autoOpenFired, triggerCameraOpen, markAutoOpenFired,
-    pendingSettingsOpen, clearPendingSettingsOpen,
   } = useSettingsStore();
 
   useEffect(() => {
@@ -23,13 +22,6 @@ export default function SplashScreen() {
       router.replace('/(tabs)/gallery');
     }
   }, [hydrated, openCameraOnStart, autoOpenFired]);
-
-  useEffect(() => {
-    if (pendingSettingsOpen) {
-      setShowSettings(true);
-      clearPendingSettingsOpen();
-    }
-  }, [pendingSettingsOpen, clearPendingSettingsOpen]);
 
   return (
     <SafeAreaView style={styles.container}>
