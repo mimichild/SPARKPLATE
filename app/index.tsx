@@ -11,7 +11,7 @@ import { useSettingsStore } from '@/stores/settingsStore';
 export default function SplashScreen() {
   const [showSettings, setShowSettings] = useState(false);
   const {
-    fontColor, openCameraOnStart, hydrated, autoOpenFired, triggerCameraOpen, markAutoOpenFired,
+    openCameraOnStart, hydrated, autoOpenFired, triggerCameraOpen, markAutoOpenFired,
   } = useSettingsStore();
 
   useEffect(() => {
@@ -33,10 +33,12 @@ export default function SplashScreen() {
 
         <TouchableOpacity
           testID="settings-btn"
-          style={styles.settingsBtn}
           onPress={() => setShowSettings(true)}
+          activeOpacity={0.85}
         >
-          <AppText style={styles.settingsBtnText}>⚙️ 設定</AppText>
+          <View style={styles.settingsBtn}>
+            <Text style={styles.settingsBtnText}>設定</Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -44,7 +46,7 @@ export default function SplashScreen() {
           onPress={() => router.push('/(tabs)/gallery')}
           activeOpacity={0.85}
         >
-          <View style={{ backgroundColor: fontColor, borderRadius: 14, paddingVertical: 18, alignItems: 'center', marginBottom: 48 }}>
+          <View style={styles.startBtn}>
             <Text style={styles.startBtnText}>開始使用</Text>
           </View>
         </TouchableOpacity>
@@ -58,12 +60,20 @@ export default function SplashScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#EAAFB3' },
   content: { flex: 1, paddingHorizontal: 32 },
   hero: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 38, fontWeight: '800', letterSpacing: 3, marginBottom: 16 },
-  tagline: { fontSize: 14, color: '#777', textAlign: 'center', lineHeight: 22 },
-  settingsBtn: { alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 20, marginBottom: 24 },
-  settingsBtnText: { fontSize: 14, color: '#888' },
-  startBtnText: { color: '#fff', fontSize: 17, fontWeight: '700', letterSpacing: 1 },
+  title: { fontSize: 38, fontWeight: '800', letterSpacing: 3, marginBottom: 16, color: '#fff' },
+  tagline: { fontSize: 14, color: '#DDDDDD', textAlign: 'center', lineHeight: 22 },
+  settingsBtn: {
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    marginBottom: 24,
+  },
+  settingsBtnText: { fontSize: 14, color: '#fff', fontWeight: '600' },
+  startBtn: { backgroundColor: '#fff', borderRadius: 14, paddingVertical: 18, alignItems: 'center', marginBottom: 48 },
+  startBtnText: { color: '#EAAFB3', fontSize: 17, fontWeight: '700', letterSpacing: 1 },
 });
