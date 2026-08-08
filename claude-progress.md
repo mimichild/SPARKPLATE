@@ -11,9 +11,26 @@
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-23 為 111 tests passed）
 - 目前最高優先級未完成功能：無（monetization-001 已 passing）；AdMob／RevenueCat 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
 - 目前 blocker：無
-- 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug
+- 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）
 
 ## 工作階段日誌
+
+### 工作階段 018
+
+- 日期：2026-08-08
+- 本輪目標：首頁（app/index.tsx）改版為粉色主視覺；建置並驗證本機 Android APK
+- 已完成：
+  - 首頁樣式改版：背景 `#EAAFB3`、標題白色、副標題淺灰、設定按鈕改為跟開始使用一致的按鈕造型（移除齒輪圖示），開始使用按鈕改白底粉字
+  - 用 build-apk skill 第一次跑本機 Android APK 建置（此專案先前只做過 iOS/EAS，從未本機建過 Android）
+  - 首次建置的 APK 實機安裝後開啟即閃退，用 adb logcat 抓到 `FATAL EXCEPTION`：`Unable to get provider com.google.android.gms.ads.MobileAdsInitProvider` → `IllegalStateException: Invalid application ID`
+  - 用 git log 追根本原因：AdMob 外掛設定在 commit `55712ad` 才加入 `app.json`，但 `android/` 原生資料夾是更早的 commit `f06a7e6` 產生的，從未重新跑過 prebuild 讓外掛把 `com.google.android.gms.ads.APPLICATION_ID` meta-data 寫進 `AndroidManifest.xml`
+  - 修復：`npx expo prebuild --platform android`（非 `--clean`，未清空整個資料夾）重新同步外掛設定；manifest 補上缺的 meta-data，連帶重新產生 icon/splash 圖檔（內容未變，僅重新編碼）
+  - 過程中使用者手滑在手機上手動安裝到 Google Drive 資料夾裡另一個舊/壞掉的 APK，重現了同一個 crash，一度誤以為修復無效；用 `adb install -r` 明確指定修好的檔案重裝＋`dumpsys package` 看 `lastUpdateTime` 才排除干擾，確認修復本身有效
+- 執行過的驗證：`npx tsc --noEmit`（無新增錯誤，既有錯誤與本次改動無關）；`npx jest SplashScreen`（5 tests 全過）；實機（Pixel 10，USB 連接）`adb install -r` 安裝修好的 APK → `adb shell am start` 啟動 → `adb logcat` 確認無 FATAL EXCEPTION → `dumpsys window` 確認 `mFocusedApp` 為 SPARKPLATE MainActivity 且持續在前景
+- 已擷取證據：APK 檔案 `SPARK-Builds/SPARKPLATE/sparkplate-v1.0.0-20260808-1527.apk`；logcat 修復前後對照（見上）
+- 提交記錄：599258c（首頁樣式）、3813de6（AdMob manifest 修復）
+- 已知風險或未解決問題：Google Drive 建置資料夾裡還留著今天壞掉的那個 APK（`sparkplate-v1.0.0-20260808-1519.apk`），已建議使用者刪除以免下次裝錯，尚未確認使用者是否刪了
+- 下一步最佳動作：無明確待辦；若之後要再本機建置 Android，記得 app.json 的 plugins 若有變動，需重跑（非 --clean）`expo prebuild --platform android` 同步
 
 ### 工作階段 017
 
