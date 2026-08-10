@@ -176,6 +176,29 @@
         "2026-07-23 | 使用者自行在模擬器/實機測試個別鎖點（開機用相機開關/拍照自動下載開關/分享/截圖/匯出/匯入） | 使用者確認「都沒問題」"
       ],
       "notes": "對應 monetization_spec_5_apps 記憶；複製 SPARKWEAR 的 useProGate/useIsPro/AdBanner/purchases.ts/monetization.ts 範本。這個 App 沒有獨立的設定畫面，設定是用 SettingsModal（Modal，從 app/index.tsx 開啟），所以升級提示的『前往設定』改成：觸發 store 的 pendingSettingsOpen flag＋router.push('/')，index.tsx 的 useEffect 監聽這個 flag 自動打開 SettingsModal（沿用這個專案既有的 pendingExportOpen/pendingScreenshot 同一套 pattern，不是新發明）。react-native-google-mobile-ads 直接鎖定 16.3.4（見 SPARKWEAR feedback_android_native_stale_config 記憶規則五的 Kotlin 版本天花板問題，不要升到 16.4.0）。分享/截圖兩個按鈕在 app/(tabs)/_layout.tsx 的 BackHeader；匯出匯入是獨立於分享之外的功能，見 src/components/BackupRestoreModal.tsx。"
+    },
+    {
+      "id": "appstore-001",
+      "priority": 9,
+      "area": "ios",
+      "title": "proactively 修復訂閱付費畫面缺 Apple 3.1.2(c) 必要資訊並重新送審",
+      "user_visible_behavior": "使用者在「設定」的 PRO 解鎖卡片能看到真實方案（月費/年費）的標題、期間、價格，以及可點擊的隱私權政策/服務條款連結。",
+      "status": "passing",
+      "verification": [
+        "pnpm test（或專案對應指令）全部通過。",
+        "npx tsc --noEmit -p . 無新增錯誤。",
+        "eas build --platform ios --profile production 成功。",
+        "eas submit --platform ios --profile production --latest 成功。",
+        "App Store Connect：換上新 build 並重新提交至 App 審查。"
+      ],
+      "evidence": [
+        "2026-08-10 | 發現同一套範本的 SPARKSHAPE 被 Apple 拒絕（Guideline 2.2 Beta Testing + 3.1.2(c) 訂閱缺必要資訊），根因是 App 內購買畫面（src/components/SettingsModal.tsx）只有一顆泛用『升級 Pro』按鈕，沒有訂閱標題/期間/價格/服務條款/隱私權政策連結；本專案的付費畫面是同一套範本複製出來的，有一模一樣的缺口，proactively 套用同樣修法（SPARKSHAPE commit b6ea305 / SPARKWEAR commit d3d8641 的修法）",
+        "2026-08-10 | src/constants/monetization.ts 新增 PRIVACY_POLICY_URL/TERMS_OF_USE_URL；src/services/purchases.ts 新增 fetchPackages/purchasePackage；src/components/SettingsModal.tsx 的 PRO 解鎖卡片改成逐一渲染 RevenueCat 真實方案（標題含「SPARK PLATE」、期間、價格）並加上可點擊的隱私權政策/服務條款連結 | 測試與 typecheck 皆通過（詳見對應 commit）",
+        "2026-08-10 | git commit 43c24e1（訂閱付費畫面修復）| 已提交",
+        "2026-08-10 | npx eas build --platform ios --profile production --non-interactive → npx eas submit --platform ios --profile production --latest --non-interactive | Build 5 建置成功並上傳至 App Store Connect",
+        "2026-08-10 | App Store Connect：先將既有等待審查中的提交項目移除（避免舊 build 卡住審查佇列），等 Apple 處理完 Build 5 後換上新 build、儲存、確認無『受監管醫療器材聲明』阻擋項目、點『新增以供審查』| 狀態變成『正在等待審查』，成功重新送審"
+      ],
+      "notes": "本項是 proactive 修復——這個 App 本身尚未被 Apple 用這個理由拒絕過，是因為姊妹 App SPARKSHAPE 用同一套範本被拒絕，判斷同樣缺口大機率會在人工審查看到付費畫面時被拒，因此在使用者確認後（先撤回審查中的舊提交）主動套用同樣修法再重新送審。Apple 這輪實際審查結果尚未知，若再被拒需視新的拒絕理由處理。"
     }
   ]
 }

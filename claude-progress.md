@@ -9,11 +9,28 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-23 為 111 tests passed）
-- 目前最高優先級未完成功能：無（monetization-001 已 passing）；AdMob／RevenueCat 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
-- 目前 blocker：無
-- 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）
+- 目前最高優先級未完成功能：無（appstore-001 已 passing）；AdMob／RevenueCat 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
+- appstore-001：passing；proactively 修復訂閱付費畫面缺 Apple Guideline 3.1.2(c) 必要資訊（跟 SPARKSHAPE 被拒的原因同一套範本缺口），Build 5 已重新送審（App Store Connect 顯示「正在等待審查」），Apple 實際審查結果尚未知
+- 目前 blocker：無（等待 Apple 審查中，非我方可控）
+- 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）；2026-08-08 App Store 審查一度被拒（Age Rating 廣告內容描述沒勾選，跟訂閱資訊無關），已修正並重新送審過一次；2026-08-10 又因為訂閱付費畫面缺必要資訊主動撤回審查、修復、重新送審（見工作階段 019）
 
 ## 工作階段日誌
+
+### 工作階段 019
+
+- 日期：2026-08-10
+- 本輪目標：使用者請 Claude 檢查 SPARKPLATE/SPARKFIT/SPARKLOG 是否有跟 SPARKSHAPE 一樣的 App Store 審查缺口（訂閱付費畫面缺必要資訊），確認有之後主動修復並重新送審
+- 已完成：
+  - 確認本專案（當時仍在 App Store 審查佇列中，因為 8/8 曾因 Age Rating 廣告描述被拒後已修正重新送審）的 `src/services/purchases.ts`／`src/constants/monetization.ts` 跟 SPARKSHAPE 修復前的版本結構完全相同，`src/components/SettingsModal.tsx` 的 PRO 解鎖卡片也只有一顆泛用「升級 Pro」按鈕，沒有 Apple Guideline 3.1.2(c) 要求的訂閱標題/期間/價格/服務條款/隱私權政策連結
+  - 使用者確認後，先在 App Store Connect 把當時等待審查中的提交項目撤回（避免舊 build 卡住）
+  - 套用 SPARKSHAPE/SPARKWEAR 同一組修法：新增 `PRIVACY_POLICY_URL`/`TERMS_OF_USE_URL`、新增 `fetchPackages`/`purchasePackage`、`SettingsModal.tsx` 的 PRO 卡片改成逐一列出 RevenueCat 真實方案（標題含「SPARK PLATE」、期間、價格）＋可點擊的隱私權政策/服務條款連結
+  - `eas build --platform ios --profile production` 成功（Build 5）→ `eas submit --platform ios --profile production --latest` 成功上傳
+  - App Store Connect：等 Apple 處理完 Build 5 後換上新 build、確認無「受監管醫療器材聲明」阻擋項目、點「新增以供審查」重新送審
+- 執行過的驗證：`pnpm test` 全過（含新增的 fetchPackages/purchasePackage 測試）；`npx tsc --noEmit -p .` 無新增錯誤（既有錯誤數量與改動前一致，經 git stash 比對確認）；`eas build`/`eas submit` 皆實際執行且成功；App Store Connect 確認重新送審後狀態為「正在等待審查」
+- 已擷取證據：見 feature_list.json appstore-001 evidence
+- 提交記錄：43c24e1（訂閱付費畫面修復）
+- 已知風險或未解決問題：Apple 這輪審查結果尚未知；本項是 proactive 修復（這個 App 本身未曾因這個理由被拒），最終是否通過需等 Apple 實際審查
+- 下一步最佳動作：等 Apple 審查結果（通常會寄信通知或在 App Store Connect 顯示）；若因同樣或不同理由再被拒，讀新的拒絕訊息內容再處理
 
 ### 工作階段 018
 
