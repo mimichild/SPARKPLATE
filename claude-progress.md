@@ -29,7 +29,8 @@
   - 嘗試把英文名稱改回純『SPARK PLATE』時，App Store Connect 回報「輸入的名稱已由其他 App 使用」——判斷這正是先前某次工作階段留下 (ff40fb) 亂碼後綴的原因（用來繞開名稱衝突），只是這個做法本身又被 Apple 審查判定為未完成佔位文字而拒絕；跟使用者確認後改用『SPARK PLATE: Meal Log』，儲存成功
   - 修正英文描述：移除殘留的 AI 提示文字前綴，只保留正式英文文案，並在結尾補上『Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/』
   - 三項修正皆已在 App Store Connect 存檔成功
-- 執行過的驗證：逐一讀取修改後欄位內容確認正確（英文名稱不再含 (ff40fb)、描述不再含 Google Play 字樣、描述結尾含 EULA 連結）；App Store Connect 各欄位「儲存」按鈕皆顯示成功狀態
+  - 使用者額外要求把繁體中文 App 名稱改為「SPARK PLATE 心動餐盤」（16 字，在 30 字上限內），確認中英文名稱是各自獨立的在地化欄位、不會互相衝突後直接修改，存檔成功
+- 執行過的驗證：逐一讀取修改後欄位內容確認正確（英文名稱不再含 (ff40fb)、描述不再含 Google Play 字樣、描述結尾含 EULA 連結、繁中名稱改為「SPARK PLATE 心動餐盤」）；App Store Connect 各欄位「儲存」按鈕皆顯示成功狀態
 - 已擷取證據：見 feature_list.json appstore-001 evidence（本輪新增）
 - 提交記錄：無程式碼變更，本輪未產生 git commit
 - 已知風險或未解決問題：**尚未點「重新提交至 App 審查」**，使用者要求先只修正；英文 App 名稱『SPARK PLATE』純字串已確認被其他 App 佔用，之後不可再嘗試改回純字串
