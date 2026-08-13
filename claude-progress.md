@@ -10,11 +10,30 @@
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-23 為 111 tests passed）
 - 目前最高優先級未完成功能：無（appstore-001 已 passing）；AdMob／RevenueCat 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
-- appstore-001：passing；proactively 修復訂閱付費畫面缺 Apple Guideline 3.1.2(c) 必要資訊（跟 SPARKSHAPE 被拒的原因同一套範本缺口），Build 5 已重新送審（App Store Connect 顯示「正在等待審查」），Apple 實際審查結果尚未知
+- appstore-001：passing；proactively 修復訂閱付費畫面缺 Apple Guideline 3.1.2(c) 必要資訊（跟 SPARKSHAPE 被拒的原因同一套範本缺口），Build 5 已重新送審；2026-08-13 這輪審查結果出爐——被拒（2.1(a) App Completeness + 2.3.10 Accurate Metadata + 3.1.2(c) Subscriptions），三個原因皆為 App Store Connect 後台英文在地化文案問題（App 名稱殘留測試字串、描述殘留 Google Play 提示文字、描述缺 EULA 連結），已修正並存檔，**尚未重新送審**（使用者要求先只修正）；英文 App 名稱因與其他 App 衝突已改為「SPARK PLATE: Meal Log」
 - 目前 blocker：無（等待 Apple 審查中，非我方可控）
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）；2026-08-08 App Store 審查一度被拒（Age Rating 廣告內容描述沒勾選，跟訂閱資訊無關），已修正並重新送審過一次；2026-08-10 又因為訂閱付費畫面缺必要資訊主動撤回審查、修復、重新送審（見工作階段 019）
 
 ## 工作階段日誌
+
+### 工作階段 020
+
+- 日期：2026-08-13
+- 本輪目標：使用者請求檢查 App Store Connect 上 SPARK PLATE 這次被拒的原因並修正
+- 已完成：
+  - App Store Connect（App ID 6793041053）確認 Build 5 這輪被拒三個原因：Guideline 2.1(a) App Completeness、2.3.10 Accurate Metadata、3.1.2(c) Payments - Subscriptions
+  - 逐一排查根因，三者皆為英文（美國）在地化欄位問題，繁體中文版皆正常，不涉及程式碼：
+    - 2.1(a)：英文 App 名稱為『SPARK PLATE (ff40fb)』，含測試殘留字串
+    - 2.3.10：英文描述開頭殘留提及 Google Play 的 AI 翻譯提示文字（跟同一天處理過的 SPARKSHAPE 一模一樣的模式）
+    - 3.1.2(c)：英文描述結尾沒有服務條款（EULA）連結（繁中版有，英文版遺漏）
+  - 嘗試把英文名稱改回純『SPARK PLATE』時，App Store Connect 回報「輸入的名稱已由其他 App 使用」——判斷這正是先前某次工作階段留下 (ff40fb) 亂碼後綴的原因（用來繞開名稱衝突），只是這個做法本身又被 Apple 審查判定為未完成佔位文字而拒絕；跟使用者確認後改用『SPARK PLATE: Meal Log』，儲存成功
+  - 修正英文描述：移除殘留的 AI 提示文字前綴，只保留正式英文文案，並在結尾補上『Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/』
+  - 三項修正皆已在 App Store Connect 存檔成功
+- 執行過的驗證：逐一讀取修改後欄位內容確認正確（英文名稱不再含 (ff40fb)、描述不再含 Google Play 字樣、描述結尾含 EULA 連結）；App Store Connect 各欄位「儲存」按鈕皆顯示成功狀態
+- 已擷取證據：見 feature_list.json appstore-001 evidence（本輪新增）
+- 提交記錄：無程式碼變更，本輪未產生 git commit
+- 已知風險或未解決問題：**尚未點「重新提交至 App 審查」**，使用者要求先只修正；英文 App 名稱『SPARK PLATE』純字串已確認被其他 App 佔用，之後不可再嘗試改回純字串
+- 下一步最佳動作：跟使用者確認修正內容沒問題後，去 App Store Connect 點「重新提交至 App 審查」
 
 ### 工作階段 019
 

@@ -1,6 +1,6 @@
 {
   "project": "SPARKPLATE",
-  "last_updated": "2026-07-17",
+  "last_updated": "2026-08-13",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -196,9 +196,14 @@
         "2026-08-10 | src/constants/monetization.ts 新增 PRIVACY_POLICY_URL/TERMS_OF_USE_URL；src/services/purchases.ts 新增 fetchPackages/purchasePackage；src/components/SettingsModal.tsx 的 PRO 解鎖卡片改成逐一渲染 RevenueCat 真實方案（標題含「SPARK PLATE」、期間、價格）並加上可點擊的隱私權政策/服務條款連結 | 測試與 typecheck 皆通過（詳見對應 commit）",
         "2026-08-10 | git commit 43c24e1（訂閱付費畫面修復）| 已提交",
         "2026-08-10 | npx eas build --platform ios --profile production --non-interactive → npx eas submit --platform ios --profile production --latest --non-interactive | Build 5 建置成功並上傳至 App Store Connect",
-        "2026-08-10 | App Store Connect：先將既有等待審查中的提交項目移除（避免舊 build 卡住審查佇列），等 Apple 處理完 Build 5 後換上新 build、儲存、確認無『受監管醫療器材聲明』阻擋項目、點『新增以供審查』| 狀態變成『正在等待審查』，成功重新送審"
+        "2026-08-10 | App Store Connect：先將既有等待審查中的提交項目移除（避免舊 build 卡住審查佇列），等 Apple 處理完 Build 5 後換上新 build、儲存、確認無『受監管醫療器材聲明』阻擋項目、點『新增以供審查』| 狀態變成『正在等待審查』，成功重新送審",
+        "2026-08-13 | Build 5 這輪審查結果出爐：被拒，三個原因——Guideline 2.1(a) Performance: App Completeness、2.3.10 Performance: Accurate Metadata、3.1.2(c) Business: Payments - Subscriptions（Submission ID 6d6fc20c-efb5-4eab-9e7b-12e31e531b18，Review date August 12, 2026）",
+        "2026-08-13 | 逐一排查三個原因的根因，皆為 App Store Connect 後台英文（美國）在地化欄位問題，不涉及程式碼：(1) 2.1(a) App 名稱『SPARK PLATE (ff40fb)』含測試殘留字串；(2) 2.3.10 英文描述開頭殘留提及 Google Play 的 AI 翻譯提示文字（『...符合外國應用程式商店（App Store / Google Play）風格的英文翻譯：\\n\\n英文翻譯\\n』）；(3) 3.1.2(c) 英文描述結尾缺服務條款（EULA）連結（繁體中文版有，英文版沒貼）",
+        "2026-08-13 | 修正 (1)：嘗試把英文名稱改回純『SPARK PLATE』儲存失敗，App Store Connect 回報『輸入的名稱已由其他 App 使用』——判斷這正是先前工作階段留下 (ff40fb) 後綴的原因（用來繞開名稱衝突），但該後綴被 Apple 判定為未完成佔位文字；跟使用者確認後改用『SPARK PLATE: Meal Log』，儲存成功",
+        "2026-08-13 | 修正 (2)(3)：在英文（美國）描述欄位移除殘留的 AI 提示文字前綴，只保留正式英文文案，並在結尾補上『Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/』，儲存成功",
+        "2026-08-13 | 三項修正皆已存檔，尚未點『重新提交至 App 審查』（使用者要求先只修正，重新送審留待之後確認）"
       ],
-      "notes": "本項是 proactive 修復——這個 App 本身尚未被 Apple 用這個理由拒絕過，是因為姊妹 App SPARKSHAPE 用同一套範本被拒絕，判斷同樣缺口大機率會在人工審查看到付費畫面時被拒，因此在使用者確認後（先撤回審查中的舊提交）主動套用同樣修法再重新送審。Apple 這輪實際審查結果尚未知，若再被拒需視新的拒絕理由處理。"
+      "notes": "本項是 proactive 修復——這個 App 本身尚未被 Apple 用這個理由拒絕過，是因為姊妹 App SPARKSHAPE 用同一套範本被拒絕，判斷同樣缺口大機率會在人工審查看到付費畫面時被拒，因此在使用者確認後（先撤回審查中的舊提交）主動套用同樣修法再重新送審。2026-08-13：Build 5 這輪被拒（2.1(a)+2.3.10+3.1.2(c)），三項皆為 App Store Connect 後台英文在地化文案問題，非程式碼 bug，已修正並存檔，等使用者確認後點『重新提交至 App 審查』。重要教訓：英文 App 名稱『SPARK PLATE』在 App Store 已被別的 App 佔用，之後任何要改回或使用這個純字串當英文顯示名稱的嘗試都會被拒，需維持『SPARK PLATE: Meal Log』或選其他可用名稱。"
     }
   ]
 }
