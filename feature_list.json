@@ -202,9 +202,10 @@
         "2026-08-13 | 修正 (1)：嘗試把英文名稱改回純『SPARK PLATE』儲存失敗，App Store Connect 回報『輸入的名稱已由其他 App 使用』——判斷這正是先前工作階段留下 (ff40fb) 後綴的原因（用來繞開名稱衝突），但該後綴被 Apple 判定為未完成佔位文字；跟使用者確認後改用『SPARK PLATE: Meal Log』，儲存成功",
         "2026-08-13 | 修正 (2)(3)：在英文（美國）描述欄位移除殘留的 AI 提示文字前綴，只保留正式英文文案，並在結尾補上『Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/』，儲存成功",
         "2026-08-13 | 三項修正皆已存檔，尚未點『重新提交至 App 審查』（使用者要求先只修正，重新送審留待之後確認）",
-        "2026-08-13 | 使用者要求把繁體中文 App 名稱改為『SPARK PLATE 心動餐盤』（16 字，30 字上限內）| App Store Connect 存檔成功，無名稱衝突（中英文名稱是各自獨立的在地化欄位，跟英文版『SPARK PLATE: Meal Log』的名稱衝突無關）"
+        "2026-08-13 | 使用者要求把繁體中文 App 名稱改為『SPARK PLATE 心動餐盤』（16 字，30 字上限內）| App Store Connect 存檔成功，無名稱衝突（中英文名稱是各自獨立的在地化欄位，跟英文版『SPARK PLATE: Meal Log』的名稱衝突無關）",
+        "2026-08-13 | 使用者確認修正內容無誤，App Store Connect → iOS 提交項目 → 點『重新提交至 App 審查』| iOS App 1.0 (Build 5) 狀態從『準備審查』變成『等待審查』，成功重新送審"
       ],
-      "notes": "本項是 proactive 修復——這個 App 本身尚未被 Apple 用這個理由拒絕過，是因為姊妹 App SPARKSHAPE 用同一套範本被拒絕，判斷同樣缺口大機率會在人工審查看到付費畫面時被拒，因此在使用者確認後（先撤回審查中的舊提交）主動套用同樣修法再重新送審。2026-08-13：Build 5 這輪被拒（2.1(a)+2.3.10+3.1.2(c)），三項皆為 App Store Connect 後台英文在地化文案問題，非程式碼 bug，已修正並存檔，等使用者確認後點『重新提交至 App 審查』。重要教訓：英文 App 名稱『SPARK PLATE』在 App Store 已被別的 App 佔用，之後任何要改回或使用這個純字串當英文顯示名稱的嘗試都會被拒，需維持『SPARK PLATE: Meal Log』或選其他可用名稱；繁體中文名稱不受此限制，已改為『SPARK PLATE 心動餐盤』。"
+      "notes": "本項是 proactive 修復——這個 App 本身尚未被 Apple 用這個理由拒絕過，是因為姊妹 App SPARKSHAPE 用同一套範本被拒絕，判斷同樣缺口大機率會在人工審查看到付費畫面時被拒，因此在使用者確認後（先撤回審查中的舊提交）主動套用同樣修法再重新送審。2026-08-13：Build 5 這輪被拒（2.1(a)+2.3.10+3.1.2(c)），三項皆為 App Store Connect 後台英文在地化文案問題，非程式碼 bug，已修正並存檔，且已重新提交至 App 審查（狀態『等待審查』），**等待 Apple 這輪審查結果**。重要教訓：英文 App 名稱『SPARK PLATE』在 App Store 已被別的 App 佔用，之後任何要改回或使用這個純字串當英文顯示名稱的嘗試都會被拒，需維持『SPARK PLATE: Meal Log』或選其他可用名稱；繁體中文名稱不受此限制，已改為『SPARK PLATE 心動餐盤』。"
     }
   ]
 }
