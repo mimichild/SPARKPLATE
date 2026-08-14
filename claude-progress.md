@@ -10,11 +10,25 @@
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-23 為 111 tests passed）
 - 目前最高優先級未完成功能：無（appstore-001 已 passing）；AdMob／RevenueCat 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
-- appstore-001：passing；proactively 修復訂閱付費畫面缺 Apple Guideline 3.1.2(c) 必要資訊（跟 SPARKSHAPE 被拒的原因同一套範本缺口），Build 5 已重新送審；2026-08-13 這輪審查結果出爐——被拒（2.1(a) App Completeness + 2.3.10 Accurate Metadata + 3.1.2(c) Subscriptions），三個原因皆為 App Store Connect 後台英文在地化文案問題（App 名稱殘留測試字串、描述殘留 Google Play 提示文字、描述缺 EULA 連結），已修正並重新送審（狀態「等待審查」）；英文 App 名稱因與其他 App 衝突已改為「SPARK PLATE: Meal Log」，繁體中文名稱改為「SPARK PLATE 心動餐盤」，**等待 Apple 這輪審查結果**
-- 目前 blocker：無（等待 Apple 審查中，非我方可控）
+- appstore-001：passing（但 App 仍未上架，Apple 審查持續拉鋸中）；2026-08-13 那輪修正（App 名稱改「SPARK PLATE: Meal Log」、描述補 EULA 連結）重新送審後，2026-08-14 確認再次被拒，這輪只有一個原因且性質完全不同——**Guideline 2.1 Information Needed**（不是文案/程式碼問題）：Apple 要求在 App Store Connect「App 審查資訊→備註」補充：(1) 實體裝置螢幕錄影展示核心流程含購買/訂閱流程、(2) 測試裝置型號與 iOS 版本清單、(3) App 功能與目標受眾說明、(4) 主要功能設定/存取說明、(5) 核心功能所用外部服務清單、(6) 地區功能差異說明、(7) 若屬受監管產業需附證明文件（不適用）。第 2~7 點可由 Claude 代寫，第 1 點螢幕錄影**必須用使用者實體 iPhone 錄製**，Claude 無法代勞
+- 目前 blocker：等待使用者手邊有 iPhone 時錄製螢幕錄影（2026-08-14 使用者確認今天手邊沒有裝置，改天再繼續）；備註文字尚未撰寫/填入 App Store Connect
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）；2026-08-08 App Store 審查一度被拒（Age Rating 廣告內容描述沒勾選，跟訂閱資訊無關），已修正並重新送審過一次；2026-08-10 又因為訂閱付費畫面缺必要資訊主動撤回審查、修復、重新送審（見工作階段 019）
 
 ## 工作階段日誌
+
+### 工作階段 021
+
+- 日期：2026-08-14
+- 本輪目標：使用者請求檢查 App Store Connect 上這輪審查結果並修正重新送審
+- 已完成：
+  - App Store Connect（App ID 6793041053，Submission ID 6d6fc20c-efb5-4eab-9e7b-12e31e531b18）確認 Build 5 再次被拒，這輪只有一個原因：Guideline 2.1 Performance: App Completeness，訊息內容其實是「Information Needed - New App Submission」——Apple 要求在「App 審查資訊→備註」補充七項資訊（含一段實體裝置螢幕錄影），不是文案或程式碼問題（與 2026-08-13 那輪三個文案問題性質不同）
+  - 確認目前「App 審查資訊」的「備註」欄位是空的（4,000 字上限、目前 0 字）、「登入資訊」的「需要登入」未勾選（App 本身無帳號系統，這點可以直接寫進備註回答第 4 點）
+  - 跟使用者確認螢幕錄影怎麼處理，使用者表示今天手邊沒有 iPhone 裝置，決定先暫停，改天再繼續
+- 執行過的驗證：讀取 App Store Connect 頁面內容確認拒絕訊息全文與備註欄位現況（皆為觀察，非程式碼變更）
+- 已擷取證據：無新增（本輪未修改任何欄位）
+- 提交記錄：無程式碼變更，本輪僅更新進度文件
+- 已知風險或未解決問題：Apple 這次要求的螢幕錄影必須是實體裝置錄製（訊息明確寫「captured on a physical device」），模擬器錄影風險較高可能被視為不符要求；備註文字（裝置型號/App 說明/外部服務清單等）尚未撰寫
+- 下一步最佳動作：使用者有 iPhone 可用時，(1) 錄一段螢幕錄影涵蓋開啟 App→新增餐點（相機或相簿）→設定頁→PRO 訂閱卡片畫面、(2) 告知目前 TestFlight 測試用的 iPhone 型號與 iOS 版本；拿到這兩項後 Claude 可直接寫好其餘備註文字、上傳錄影附件、回覆 App 審查或重新提交
 
 ### 工作階段 020
 
