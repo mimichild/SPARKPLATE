@@ -1,4 +1,5 @@
 export const documentDirectory = '/mock/documents/';
+export const cacheDirectory = '/mock/cache/';
 export const copyAsync = jest.fn().mockResolvedValue(undefined);
 export const deleteAsync = jest.fn().mockResolvedValue(undefined);
 export const makeDirectoryAsync = jest.fn().mockResolvedValue(undefined);

@@ -8,13 +8,30 @@
 
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
-- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-07-23 為 111 tests passed）
-- 目前最高優先級未完成功能：無（appstore-001 已 passing）；AdMob／RevenueCat 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
+- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-28 為 122 tests passed）
+- 目前進行中功能：photo-naming-001（拍照自動下載檔名改成日期排序），程式碼＋單元測試已完成，僅缺實機驗證，見工作階段 024
+- 目前最高優先級未完成功能（不含 photo-naming-001）：無（appstore-001 已 passing）；AdMob／RevenueCat 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
 - appstore-001：passing。2026-08-19 那輪送審已被 Apple 核准（版本狀態「已可發佈」），但核准後「定價與供應狀況」未設定供應地區，導致 App 顯示「已從 App Store 下架停售」；2026-08-27 已設定「所有國家或地區（175 個）」解除，24 小時內在 App Store 生效，「自動發佈此版本」設定確認生效中，不需額外手動發佈
 - 目前 blocker：無；等待 24 小時供應狀況全面生效讓 App 真正出現在 App Store 上；另有一個不阻擋上架、但需留意的待辦——App Store Connect 發佈頁面出現「受監管醫療器材聲明」提醒，2027 年初前需在「App 資訊」頁面聲明是否為受監管醫療器材（僅影響歐盟/歐洲經濟區/英國/美國上市），可之後找時間處理
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）；2026-08-08 App Store 審查一度被拒（Age Rating 廣告內容描述沒勾選，跟訂閱資訊無關），已修正並重新送審過一次；2026-08-10 又因為訂閱付費畫面缺必要資訊主動撤回審查、修復、重新送審（見工作階段 019）
 
 ## 工作階段日誌
+
+### 工作階段 024
+
+- 日期：2026-08-28
+- 本輪目標：使用者反映「每次拍照的檔案名稱可以以日期來排列嗎？目前的檔案名稱沒有什麼規律」，請 Claude 修正
+- 已完成：
+  - 排查發現根因：開啟「拍照自動下載」時，`src/hooks/usePhoto.ts`（`takePicture`/`saveToDevice`）與 `src/components/CameraLaunchModal.tsx`（`handleCapture`）都直接對相機/ImagePicker 給的暫存檔 uri 呼叫 `MediaLibrary.saveToLibraryAsync(uri)`，該暫存檔名是亂數字串，會被原樣帶進系統相簿，導致依檔名排序時毫無規律
+  - 新增 `src/services/mediaLibraryService.ts`：`generateDatedFilename()` 產生 `SPARKPLATE_YYYYMMDD_HHMMSSmmm.jpg` 格式（含毫秒避免同秒連拍撞名，字典序等同時間序）；`saveDatedPhotoToLibrary()` 先用 `FileSystem.copyAsync` 複製成日期檔名再呼叫 `MediaLibrary.saveToLibraryAsync`
+  - `usePhoto.ts`、`CameraLaunchModal.tsx` 的三處存進相簿呼叫都改用 `saveDatedPhotoToLibrary`；`CameraLaunchModal.tsx` 移除因此變成未用的 `MediaLibrary` import
+  - 依 TDD 先寫 `src/__tests__/services/mediaLibraryService.test.ts`（4 tests：檔名格式、零填、字典序等於時間序、`saveDatedPhotoToLibrary` 會先 copyAsync 到日期檔名再 saveToLibraryAsync），確認先失敗（模組不存在）再實作到全過；`__mocks__/expo-file-system.ts` 補上 `cacheDirectory` 供測試使用
+  - 範圍刻意排除 `ExportModal.tsx` 的健康報表匯出圖片——使用者反映的是「拍照」，匯出報表是另一條路徑，不在本次要求內
+- 執行過的驗證：`npx jest src/__tests__/services/mediaLibraryService.test.ts`（4 tests 全過）；`./init.sh`（20 suites、122 tests 全過）；`npx tsc --noEmit -p .`（既有的 FlashList/Mood/MealGrade 型別錯誤與本次改動的三個檔案無關，無新增錯誤）
+- 已擷取證據：見 feature_list.json photo-naming-001 evidence
+- 提交記錄：（見本輪 commit）
+- 已知風險或未解決問題：verification 第 3 步（實機/模擬器實測——連續拍兩張照片後在系統相簿以檔名排序，確認確實依時間排列）需要實體裝置或可存取相簿的模擬器操作，本輪未執行，故 photo-naming-001 維持 `in_progress`，未標記 passing
+- 下一步最佳動作：使用者下次有 iPhone 在手邊時，開「拍照自動下載」連續拍兩張，去系統相簿/Files App 用檔名排序抽驗一次，確認後把 photo-naming-001 改成 passing
 
 ### 工作階段 023
 

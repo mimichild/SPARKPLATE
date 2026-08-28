@@ -214,6 +214,25 @@
         "2026-08-27 | 重新整理『發佈』頁面確認 | 原本『此 App 已從 App Store 下架停售』警示已消失，確認 App Store 版本發佈設定為『自動發佈此版本』（核准後自動上架，非手動），故不需再額外按發佈按鈕，等 24 小時供應狀況全面生效即可"
       ],
       "notes": "本項是 proactive 修復——這個 App 本身尚未被 Apple 用這個理由拒絕過，是因為姊妹 App SPARKSHAPE 用同一套範本被拒絕，判斷同樣缺口大機率會在人工審查看到付費畫面時被拒，因此在使用者確認後（先撤回審查中的舊提交）主動套用同樣修法再重新送審。2026-08-13：Build 5 這輪被拒（2.1(a)+2.3.10+3.1.2(c)），三項皆為 App Store Connect 後台英文在地化文案問題，非程式碼 bug，已修正並存檔，且已重新提交至 App 審查。2026-08-14：同一個 Build 5 提交再次被拒，但這次是 Guideline 2.1 Information Needed——要求補充 App 審查資訊（含實體裝置螢幕錄影），跟文案/程式碼無關，屬於审查流程資訊落差，不是 bug。2026-08-19：使用者用 iPhone 17 錄好螢幕錄影（涵蓋主畫面啟動、核心功能瀏覽、實際點『訂閱』觸發 TestFlight 沙盒購買確認彈窗後取消），一次到位不需重錄；原始檔案 89.6MB 超過瀏覽器上傳工具 10MB 限制，用 ffmpeg 壓縮（scale=750, crf 24）到 4.5MB 仍清楚可辨識；App Store Connect 操作要點：點『更新審查內容』會讓備註欄位被清空（附件不會），須在狀態轉成『準備審查』後重新填備註、存檔、重新整理頁面確認真的持久化，才能點『重新提交至 App 審查』，已成功送審（狀態『等待審查』）。重要教訓：英文 App 名稱『SPARK PLATE』在 App Store 已被別的 App 佔用，之後任何要改回或使用這個純字串當英文顯示名稱的嘗試都會被拒，需維持『SPARK PLATE: Meal Log』或選其他可用名稱；繁體中文名稱不受此限制，已改為『SPARK PLATE 心動餐盤』。2026-08-27：這輪 Apple 審查其實已經核准（狀態『已可發佈』），使用者以為的『被刪除沒上架』其實是核准後漏了『定價與供應狀況』這一步（新 App 第一次上架特有的陷阱：核准≠自動選好供應地區），設定 175 個國家或地區供應後解除；另外發佈頁面出現新提醒『受監管醫療器材聲明』，期限 2027 年初前需在『App 資訊』頁面聲明是否為受監管醫療器材（歐盟/英國/美國上市適用），目前尚未阻擋任何審查或上架，之後找時間處理即可。"
+    },
+    {
+      "id": "photo-naming-001",
+      "priority": 10,
+      "area": "photo",
+      "title": "拍照自動下載到相簿的檔名依日期排序",
+      "user_visible_behavior": "開啟『拍照自動下載』後，拍照存進系統相簿/檔案 App 的檔名採可依日期時間排序的格式（例如 SPARKPLATE_20260828_153045123.jpg），不再是相機給的亂數檔名。",
+      "status": "in_progress",
+      "verification": [
+        "npx jest 新增的 mediaLibraryService 測試全過。",
+        "npx tsc --noEmit -p . 無新增錯誤。",
+        "模擬器或實機開啟『拍照自動下載』，連續拍兩張照片後在系統相簿以檔名排序，確認兩張檔名依時間先後排列（可用相簿分享/AirDrop 或 Files App 查看檔名，或用 `xcrun simctl` 檢查儲存的檔案）。"
+      ],
+      "evidence": [
+        "2026-08-28 | 新增 src/__tests__/services/mediaLibraryService.test.ts（4 tests，涵蓋檔名格式、零填、字典序等於時間序、saveDatedPhotoToLibrary 會先 copyAsync 到日期檔名再 saveToLibraryAsync）| npx jest src/__tests__/services/mediaLibraryService.test.ts → 4 tests 全過",
+        "2026-08-28 | 新增 src/services/mediaLibraryService.ts（generateDatedFilename/saveDatedPhotoToLibrary），改 src/hooks/usePhoto.ts 與 src/components/CameraLaunchModal.tsx 的 autoSavePhoto/saveToDevice 流程改呼叫 saveDatedPhotoToLibrary 取代直接 MediaLibrary.saveToLibraryAsync(uri) | ./init.sh → 20 suites、122 tests 全過",
+        "2026-08-28 | npx tsc --noEmit -p . | 既有錯誤（FlashList estimatedItemSize、Mood/MealGrade 型別）與本次改動的三個檔案無關，無新增錯誤"
+      ],
+      "notes": "使用者反映：目前的檔案名稱沒有規律。根因：`usePhoto.ts`/`CameraLaunchModal.tsx` 呼叫 `MediaLibrary.saveToLibraryAsync(uri)` 時，uri 是相機/ImagePicker 給的暫存檔（亂數檔名），該檔名會被原樣帶進系統相簿，導致依檔名排序時是亂的。修法：存進相簿前先用 FileSystem.copyAsync 複製成日期時間格式的檔名（SPARKPLATE_YYYYMMDD_HHMMSSmmm.jpg，含毫秒避免同秒連拍撞名）再存。範圍僅涵蓋『拍照』流程（usePhoto.ts 的 takePicture/saveToDevice、CameraLaunchModal.tsx 的 handleCapture）；ExportModal.tsx 的健康報表匯出圖片不在本次範圍內（使用者反映的是『拍照』，非匯出報表）。單元測試＋typecheck 已過，但 verification 第 3 步（實機/模擬器實測相簿檔名排序）需要實體裝置，本輪未執行，故暫不標記 passing，等使用者下次有裝置時補測。"
     }
   ]
 }

@@ -5,10 +5,10 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import * as MediaLibrary from 'expo-media-library';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useVolumeQuickCapture } from '@/hooks/useVolumeQuickCapture';
+import { saveDatedPhotoToLibrary } from '@/services/mediaLibraryService';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -49,7 +49,7 @@ export function CameraLaunchModal({ visible, onPhotoTaken, onClose }: Props) {
       );
 
       if (autoSavePhoto) {
-        try { await MediaLibrary.saveToLibraryAsync(cropped.uri); } catch { /* silent */ }
+        try { await saveDatedPhotoToLibrary(cropped.uri); } catch { /* silent */ }
       }
       onPhotoTaken(cropped.uri);
     } finally {

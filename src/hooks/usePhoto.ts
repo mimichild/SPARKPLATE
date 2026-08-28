@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { saveDatedPhotoToLibrary } from '@/services/mediaLibraryService';
 
 interface UsePhotoReturn {
   takePicture: () => Promise<string | null>;
@@ -31,7 +32,7 @@ export function usePhoto(): UsePhotoReturn {
     if (autoSavePhoto) {
       const { status: libStatus } = await MediaLibrary.requestPermissionsAsync();
       if (libStatus === 'granted') {
-        await MediaLibrary.saveToLibraryAsync(uri);
+        await saveDatedPhotoToLibrary(uri);
       }
     }
 
@@ -59,7 +60,7 @@ export function usePhoto(): UsePhotoReturn {
   const saveToDevice = useCallback(async (uri: string): Promise<void> => {
     const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status !== 'granted') return;
-    await MediaLibrary.saveToLibraryAsync(uri);
+    await saveDatedPhotoToLibrary(uri);
   }, []);
 
   return { takePicture, pickFromLibrary, sharePhoto, saveToDevice };
