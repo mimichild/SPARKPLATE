@@ -9,15 +9,32 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-28 為 122 tests passed）
-- 目前進行中功能：ios-101-001（iOS 1.0.1：RevenueCat 訂閱重新送審＋啟動畫面優化＋隨附拍照檔名排序），見工作階段 025；卡在需要使用者確認才能執行 `eas build`/`eas submit`/App Store Connect 送審
-- **重要現況**：目前 App Store 上架版本（1.0）的 RevenueCat 訂閱是壞的——兩個訂閱項目狀態為「被開發者拒絕」，使用者點「升級 Pro」會直接失敗，需要走完 ios-101-001 才能修好，見工作階段 025
-- photo-naming-001（拍照自動下載檔名改成日期排序）：程式碼＋單元測試已完成，狀態 blocked（併入 ios-101-001 一起送審與驗證，非真的卡住），見工作階段 024／025
+- **重要現況**：iOS 1.0.1（含 RevenueCat 訂閱重新送審＋啟動畫面優化＋拍照檔名排序）已於 2026-08-28 正式送出 Apple 審查（App Version 1.0.1 / Build 7，連同 Pro 月費/年費訂閱與 SPARK PLATE Pro 訂閱群組共 4 個項目），狀態「等待審核」，最長可能需要 48 小時，審完會寄 email 通知；目前線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好，見工作階段 025／026
+- ios-101-001／photo-naming-001：狀態皆為 blocked（等待 Apple 審查結果，非程式碼卡住）；審查通過後需實機驗證三件事（啟動畫面無 icon、升級 Pro 正常購買、拍照檔名依時間排序）才能改為 passing，見工作階段 026
 - 目前最高優先級未完成功能（不含上述兩項）：無；AdMob 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決，但見上方「重要現況」，該次驗證是在訂閱審查還有效時做的，08-10 撤回提交後訂閱已失效）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
 - appstore-001：passing。2026-08-19 那輪送審已被 Apple 核准（版本狀態「已可發佈」），但核准後「定價與供應狀況」未設定供應地區，導致 App 顯示「已從 App Store 下架停售」；2026-08-27 已設定「所有國家或地區（175 個）」解除，24 小時內在 App Store 生效，「自動發佈此版本」設定確認生效中，不需額外手動發佈
 - 目前 blocker：無；等待 24 小時供應狀況全面生效讓 App 真正出現在 App Store 上；另有一個不阻擋上架、但需留意的待辦——App Store Connect 發佈頁面出現「受監管醫療器材聲明」提醒，2027 年初前需在「App 資訊」頁面聲明是否為受監管醫療器材（僅影響歐盟/歐洲經濟區/英國/美國上市），可之後找時間處理
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）；2026-08-08 App Store 審查一度被拒（Age Rating 廣告內容描述沒勾選，跟訂閱資訊無關），已修正並重新送審過一次；2026-08-10 又因為訂閱付費畫面缺必要資訊主動撤回審查、修復、重新送審（見工作階段 019）
 
 ## 工作階段日誌
+
+### 工作階段 026
+
+- 日期：2026-08-28
+- 本輪目標：接續工作階段 025，使用者確認後執行完整 iOS 1.0.1 送審流程（RevenueCat 訂閱重新送審＋啟動畫面優化＋拍照檔名排序一起包進去）
+- 已完成：
+  - `eas build --platform ios --profile production`（app.json version 仍是 1.0.0，只有 buildNumber 自動遞增到 6）→ `eas submit --platform ios --profile production --latest` 上傳成功，但 App Store Connect 處理 Build 6 時失敗：錯誤 90062『CFBundleShortVersionString [1.0.0] must contain a higher version than that of the previously approved version [1.0.0]』、90186『Invalid Pre-Release Train』——踩到一個坑：eas.json 的 `autoIncrement` 只會遞增內部 build number，不會自動遞增 app.json 的 `version`（app 版本號），需要手動改
+  - 修正：`app.json` version 改成 `1.0.1`，`npx expo prebuild --platform android` 同步（`android/app/build.gradle` versionName 確認變成 1.0.1）
+  - 重新 `eas build --platform ios --profile production`（版本 1.0.1）→ Build 成功 → `eas submit --platform ios --profile production --latest` → App Version 1.0.1 / Build number 7 上傳成功，等 Apple 處理完成（TestFlight 頁面確認狀態『準備提交』，非失敗）
+  - App Store Connect 建立「iOS App 版本 1.0.1」→ 把 Build 7 掛上「建置版本」並存檔
+  - 點「新增以供審查」時卡住：頁面顯示「本頁面有一或多個錯誤：英文（美國）／繁體中文的『此版本的新增功能』欄位為必填」——補上中英文的 What's New 文案（涵蓋啟動畫面優化、拍照檔名排序、穩定性）
+  - 再次踩坑：把 App 版本、兩個訂閱項目都加進同一份「提交項目草稿」後，「提交以供審查」仍反灰，警告改成「自動續訂型訂閱項目須與其訂閱群組一同提交」——原來訂閱「群組」本身（SPARK PLATE Pro）也要另外去群組頁面點一次「新增以供審查」加進同一份草稿，光加兩個訂閱項目本身不夠
+  - 把 App 版本、Pro 月費、Pro 年費、SPARK PLATE Pro 訂閱群組（共 4 個項目）都加進同一份草稿後，警告消失，「提交以供審查」按鈕轉為可點擊，點下去後頁面顯示「已提交 4 個項目」，訂閱群組與兩個訂閱狀態變成「等待審核」，App Store Connect 提示審查時間最長可能需要 48 小時，審完會寄 email 通知
+- 執行過的驗證：實際跑 `eas build`/`eas submit` 兩輪（含一次失敗一次成功）；App Store Connect 頁面文字/截圖確認 Build 7 處理完成、What's New 欄位補齊、4 個項目成功送審且狀態為「等待審核」
+- 已擷取證據：見 feature_list.json ios-101-001 evidence（本輪新增）
+- 提交記錄：（見本輪 commit，僅 app.json version 與 android/ 同步的變更）
+- 已知風險或未解決問題：等待 Apple 審查結果（最長 48 小時），審查通過後才能實機驗證三件事：(a) 開啟 App 不再看到 icon 啟動畫面、(b) 點「升級 Pro」能正常顯示方案並購買、(c) 開啟「拍照自動下載」連拍兩張，相簿依檔名排序確認依時間排列；若這輪被拒，需重新讀取拒絕原因處理
+- 下一步最佳動作：等 Apple 審查結果（Email 通知或 App Store Connect 查看）；審查通過後做上述三項實機驗證，驗證完成後把 ios-101-001 與 photo-naming-001 都改為 passing
 
 ### 工作階段 025
 
