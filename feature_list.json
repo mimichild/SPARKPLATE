@@ -221,7 +221,7 @@
       "area": "photo",
       "title": "拍照自動下載到相簿的檔名依日期排序",
       "user_visible_behavior": "開啟『拍照自動下載』後，拍照存進系統相簿/檔案 App 的檔名採可依日期時間排序的格式（例如 SPARKPLATE_20260828_153045123.jpg），不再是相機給的亂數檔名。",
-      "status": "in_progress",
+      "status": "blocked",
       "verification": [
         "npx jest 新增的 mediaLibraryService 測試全過。",
         "npx tsc --noEmit -p . 無新增錯誤。",
@@ -232,7 +232,30 @@
         "2026-08-28 | 新增 src/services/mediaLibraryService.ts（generateDatedFilename/saveDatedPhotoToLibrary），改 src/hooks/usePhoto.ts 與 src/components/CameraLaunchModal.tsx 的 autoSavePhoto/saveToDevice 流程改呼叫 saveDatedPhotoToLibrary 取代直接 MediaLibrary.saveToLibraryAsync(uri) | ./init.sh → 20 suites、122 tests 全過",
         "2026-08-28 | npx tsc --noEmit -p . | 既有錯誤（FlashList estimatedItemSize、Mood/MealGrade 型別）與本次改動的三個檔案無關，無新增錯誤"
       ],
-      "notes": "使用者反映：目前的檔案名稱沒有規律。根因：`usePhoto.ts`/`CameraLaunchModal.tsx` 呼叫 `MediaLibrary.saveToLibraryAsync(uri)` 時，uri 是相機/ImagePicker 給的暫存檔（亂數檔名），該檔名會被原樣帶進系統相簿，導致依檔名排序時是亂的。修法：存進相簿前先用 FileSystem.copyAsync 複製成日期時間格式的檔名（SPARKPLATE_YYYYMMDD_HHMMSSmmm.jpg，含毫秒避免同秒連拍撞名）再存。範圍僅涵蓋『拍照』流程（usePhoto.ts 的 takePicture/saveToDevice、CameraLaunchModal.tsx 的 handleCapture）；ExportModal.tsx 的健康報表匯出圖片不在本次範圍內（使用者反映的是『拍照』，非匯出報表）。單元測試＋typecheck 已過，但 verification 第 3 步（實機/模擬器實測相簿檔名排序）需要實體裝置，本輪未執行，故暫不標記 passing，等使用者下次有裝置時補測。"
+      "notes": "使用者反映：目前的檔案名稱沒有規律。根因：`usePhoto.ts`/`CameraLaunchModal.tsx` 呼叫 `MediaLibrary.saveToLibraryAsync(uri)` 時，uri 是相機/ImagePicker 給的暫存檔（亂數檔名），該檔名會被原樣帶進系統相簿，導致依檔名排序時是亂的。修法：存進相簿前先用 FileSystem.copyAsync 複製成日期時間格式的檔名（SPARKPLATE_YYYYMMDD_HHMMSSmmm.jpg，含毫秒避免同秒連拍撞名）再存。範圍僅涵蓋『拍照』流程（usePhoto.ts 的 takePicture/saveToDevice、CameraLaunchModal.tsx 的 handleCapture）；ExportModal.tsx 的健康報表匯出圖片不在本次範圍內（使用者反映的是『拍照』，非匯出報表）。單元測試＋typecheck 已過，但 verification 第 3 步（實機/模擬器實測相簿檔名排序）需要實體裝置，本輪未執行，故暫不標記 passing，等使用者下次有裝置時補測。  2026-08-28：使用者接著要求把這個修正、啟動畫面優化、RevenueCat 訂閱重新送審一起包進 iOS 1.0.1 送審，三者會透過同一輪 TestFlight/上架後的實機測試一起驗證，故本項目狀態改為 blocked（非真的卡住，是暫停獨立追蹤），改到 [[ios-101-001]] 底下的 verification 一併記錄與驗證，等該項目驗證完成後這裡才會回填 evidence 並改為 passing。"
+    },
+    {
+      "id": "ios-101-001",
+      "priority": 11,
+      "area": "ios",
+      "title": "iOS 1.0.1：修復 RevenueCat 訂閱審查（升級失敗）＋啟動畫面優化，隨附拍照檔名排序",
+      "user_visible_behavior": "App 內點『升級 Pro』能正常顯示訂閱方案並完成購買，不再跳出『升級失敗：There is an issue with your configuration...』；開啟 App 不再看到 icon 短暫閃現的白底啟動畫面，直接接到粉色的『開始使用』首頁（若開啟『開機用相機』設定則直接進相機）。",
+      "status": "in_progress",
+      "verification": [
+        "App Store Connect 訂閱項目（Pro 月費/Pro 年費）狀態變成『準備審查』且已加入同一份提交草稿。",
+        "npx jest 全過、npx tsc --noEmit -p . 無新增錯誤。",
+        "npx expo prebuild --platform android（非 clean）＋本機 APK 建置成功，抽查啟動畫面背景色（截圖或 sips 讀取 android 資源顏色）已改為 #EAAFB3 且無 icon 圖案。",
+        "eas build --platform ios --profile production 成功、eas submit 上傳成功。",
+        "App Store Connect 建立新版本（1.0.1）、掛上該 build、把兩個訂閱項目加進同一份提交、送出審查。",
+        "Apple 審查通過後，實機安裝：(a) 開啟 App 確認無 icon 啟動畫面、直接看到粉色首頁；(b) 點『升級 Pro』能看到真實方案列表並可完成沙盒購買；(c) 開啟『拍照自動下載』連拍兩張，相簿依檔名排序確認依時間排列（回填 photo-naming-001 的 evidence）。"
+      ],
+      "evidence": [
+        "2026-08-28 | App Store Connect『SPARK PLATE Pro』訂閱群組，Pro 月費／Pro 年費狀態皆為『被開發者拒絕』| 確認為根因：這是 App 第一個自動續訂型訂閱，Apple 規定必須跟新 App 版本一起送審；2026-08-10（工作階段 019）撤回審查中提交項目時連帶讓訂閱變成『被開發者拒絕』，之後幾輪只重新送審了 App 本體，沒人再送訂閱，導致 RevenueCat 永遠抓不到商品資料（getOfferings 回傳空），對應 App 內錯誤『None of the products registered in the RevenueCat dashboard could be fetched from App Store Connect』",
+        "2026-08-28 | 在 Pro 月費／Pro 年費頁面各點『新增以供審查』，選擇加入同一份『提交項目草稿』| 兩者狀態變成『準備審查』，草稿顯示『訂閱項目 (2)』；『提交以供審查』按鈕仍反灰，因為草稿提示『你的第一個自動續訂型訂閱項目須與新的 App 版本一同提交』，需等新版本建立後才能真正送出",
+        "2026-08-28 | 建立 assets/images/splash-blank.png（PIL 產生 1024x1024 全透明 PNG）、app.json 的 splash.image 改指向它、splash.backgroundColor 從 #ffffff 改成 #EAAFB3（跟首頁 app/index.tsx 背景色一致）| npx expo prebuild --platform android 同步成功，android/app/src/main/res/values/colors.xml 的 splashscreen_background 確認變成 #EAAFB3",
+        "2026-08-28 | bash build-apk skill 本機建置 | BUILD SUCCESSFUL，APK 存到 SPARK-Builds/SPARKPLATE/sparkplate-v1.0.0-20260828-1129.apk（尚未實機安裝檢視畫面，等使用者測試）"
+      ],
+      "notes": "本項目是這輪工作階段的主線，把三件事綁在同一個 iOS 1.0.1 版本一起送審：(1) RevenueCat 訂閱審查問題（見上）、(2) 使用者要求的啟動畫面優化（拿掉 icon 啟動畫面，改成跟首頁同色的純色過渡）、(3) 已完成但還沒進 iOS build 的 [[photo-naming-001]] 拍照檔名排序修正。iOS 原生啟動畫面無法完全跳過（Apple/Android 系統層級都要求短暫顯示 launch screen），本次做法是把它改成跟首頁一樣的粉色純色、不放 icon 圖案，讓視覺上感覺是直接進入首頁，沒有明顯的『另一個畫面』。Android 本機 APK 已建置成功可先讓使用者用 Android 裝置預覽啟動畫面效果（Android 跟 iOS 共用同一份 app.json splash 設定）。下一步需要 eas build --platform ios + eas submit 產生新版本，再到 App Store Connect 建立 1.0.1、把訂閱一併掛上送審——這步驟需要使用者確認才能執行（會用掉 EAS 建置額度且是正式送審 Apple）。"
     }
   ]
 }

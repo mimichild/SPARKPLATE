@@ -9,13 +9,34 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-28 為 122 tests passed）
-- 目前進行中功能：photo-naming-001（拍照自動下載檔名改成日期排序），程式碼＋單元測試已完成，僅缺實機驗證，見工作階段 024
-- 目前最高優先級未完成功能（不含 photo-naming-001）：無（appstore-001 已 passing）；AdMob／RevenueCat 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
+- 目前進行中功能：ios-101-001（iOS 1.0.1：RevenueCat 訂閱重新送審＋啟動畫面優化＋隨附拍照檔名排序），見工作階段 025；卡在需要使用者確認才能執行 `eas build`/`eas submit`/App Store Connect 送審
+- **重要現況**：目前 App Store 上架版本（1.0）的 RevenueCat 訂閱是壞的——兩個訂閱項目狀態為「被開發者拒絕」，使用者點「升級 Pro」會直接失敗，需要走完 ios-101-001 才能修好，見工作階段 025
+- photo-naming-001（拍照自動下載檔名改成日期排序）：程式碼＋單元測試已完成，狀態 blocked（併入 ios-101-001 一起送審與驗證，非真的卡住），見工作階段 024／025
+- 目前最高優先級未完成功能（不含上述兩項）：無；AdMob 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決，但見上方「重要現況」，該次驗證是在訂閱審查還有效時做的，08-10 撤回提交後訂閱已失效）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
 - appstore-001：passing。2026-08-19 那輪送審已被 Apple 核准（版本狀態「已可發佈」），但核准後「定價與供應狀況」未設定供應地區，導致 App 顯示「已從 App Store 下架停售」；2026-08-27 已設定「所有國家或地區（175 個）」解除，24 小時內在 App Store 生效，「自動發佈此版本」設定確認生效中，不需額外手動發佈
 - 目前 blocker：無；等待 24 小時供應狀況全面生效讓 App 真正出現在 App Store 上；另有一個不阻擋上架、但需留意的待辦——App Store Connect 發佈頁面出現「受監管醫療器材聲明」提醒，2027 年初前需在「App 資訊」頁面聲明是否為受監管醫療器材（僅影響歐盟/歐洲經濟區/英國/美國上市），可之後找時間處理
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）；2026-08-08 App Store 審查一度被拒（Age Rating 廣告內容描述沒勾選，跟訂閱資訊無關），已修正並重新送審過一次；2026-08-10 又因為訂閱付費畫面缺必要資訊主動撤回審查、修復、重新送審（見工作階段 019）
 
 ## 工作階段日誌
+
+### 工作階段 025
+
+- 日期：2026-08-28
+- 本輪目標：使用者反映 iOS 已上架但點「升級 Pro」跳出「升級失敗：There is an issue with your configuration... None of the products registered in the RevenueCat dashboard could be fetched from App Store Connect」，請 Claude 找出原因並修正；過程中使用者追加要求把「拍照檔名排序」「啟動畫面拿掉 icon」一起包進同一輪 iOS 1.0.1 送審
+- 已完成：
+  - 用 systematic-debugging 方法排查：登入 App Store Connect 確認「SPARK PLATE Pro」訂閱群組下 Pro 月費（`com.sparkplate.app.pro.monthly`）、Pro 年費（`com.sparkplate.app.pro.yearly`）狀態都是「被開發者拒絕」，不是已核准供應中——這正是 RevenueCat 錯誤訊息的根因：Apple 那邊這兩個商品根本不是可販售狀態，RevenueCat 抓不到任何商品資料，Offering 是空的
+  - 推斷成因：2026-08-10（工作階段 019）曾「先在 App Store Connect 把當時等待審查中的提交項目撤回」，訂閱當時是跟著那次 App 提交一起送審的，撤回連帶讓訂閱變成「被開發者拒絕」；之後 08-13/08-19 幾輪都只重新送審了 App 本體，沒人再把訂閱重新送審，App 核准上架後訂閱卻一直沒真的生效
+  - 在 Pro 月費／Pro 年費頁面各點「新增以供審查」，兩者加入同一份「提交項目草稿」，狀態變成「準備審查」；但發現 Apple 規定「第一個自動續訂型訂閱項目必須跟新的 App 版本一起提交」，無法單獨送審，「提交以供審查」按鈕反灰
+  - 跟使用者確認要包進同一輪的還有哪些已改好但未上 iOS build 的東西：核對 git log 確認「拿掉首頁互連連結」（f76ebdc，07-23）、「首頁改粉色主視覺」（65ac3e3，08-08）都已經在 Build 5（08-10）之前完成，早已上架生效，不需要重做；唯一 Build 5 之後、還沒進 iOS build 的程式碼改動是這次工作階段的「拍照檔名排序」（見工作階段 024）
+  - 使用者進一步要求「開 App 不要看到 icon 的啟動畫面，直接進入開始使用的畫面」——確認這是原生 launch screen（app.json 的 `splash` 設定：`splash-icon.png` 圖示＋白底），不是 `app/index.tsx` 那個「開始使用」封面頁；iOS/Android 系統層級都要求短暫顯示原生啟動畫面、無法完全跳過，改用「背景色跟首頁一致＋不放 icon 圖案」讓視覺上感覺像直接進入首頁
+  - 新增 `assets/images/splash-blank.png`（Python PIL 產生的 1024×1024 全透明 PNG）；`app.json` 的 `splash.image` 改指向它、`splash.backgroundColor` 從 `#ffffff` 改成 `#EAAFB3`（跟 `app/index.tsx` 首頁背景色一致）
+  - `npx expo prebuild --platform android`（非 clean）同步本機 android/ 原生專案，確認 `android/app/src/main/res/values/colors.xml` 的 `splashscreen_background` 變成 `#EAAFB3`；用 build-apk skill 本機建置驗證設定改動後仍能正常建置成功
+  - 把這次工作階段涉及的三件事（RevenueCat 訂閱重新送審、啟動畫面優化、隨附拍照檔名排序）合併記錄成 `ios-101-001`（因為專案規則同時間只能有一個 in_progress），`photo-naming-001` 改記為 `blocked`（非真的卡住，是併入 ios-101-001 一起追蹤與驗證，附上 `[[ios-101-001]]` 連結）
+- 執行過的驗證：`npx jest`（20 suites、122 tests 全過）；App Store Connect 操作（訂閱加入審查草稿）與 App Store Connect 頁面文字讀取確認狀態變化；`npx expo prebuild --platform android` + 本機 APK 建置成功（BUILD SUCCESSFUL）
+- 已擷取證據：見 feature_list.json ios-101-001 evidence
+- 提交記錄：（見本輪 commit）
+- 已知風險或未解決問題：訂閱審查草稿目前卡在「需要新的 App 版本才能一起送審」，尚未實際跑 `eas build --platform ios` + `eas submit` + 在 App Store Connect 建立 1.0.1 版本並送審——這步驟需要使用者確認才會執行（會用掉 EAS 建置額度且是正式送審 Apple，本輪工作階段結束時尚未取得這一步的明確執行許可）；啟動畫面改動只在本機 Android APK 驗證過設定值正確，尚未實機肉眼確認視覺效果，也還沒在 iOS 上驗證
+- 下一步最佳動作：跟使用者確認後執行 `eas build --platform ios --profile production` → `eas submit` → App Store Connect 建立 1.0.1 版本、掛上 build、把兩個訂閱項目加入同一份提交、送出審查；審查通過後實機驗證三件事（啟動畫面、訂閱購買、拍照檔名排序），驗證完成後回填 ios-101-001 與 photo-naming-001 的 evidence 並改為 passing
 
 ### 工作階段 024
 
