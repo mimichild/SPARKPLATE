@@ -37,11 +37,15 @@
   - 依 TDD 修正：先改 `useProGate.test.ts` 的 `openSettingsOnUpgrade` 案例，斷言 Alert 不帶 buttons 陣列、呼叫 `requirePro` 後 `settingsVisible` 立刻變 true（不用手動觸發按鈕 onPress）（Red：`npx jest` 顯示 1 個失敗，仍收到帶按鈕陣列的呼叫）；`useProGate.ts` 簡化 `requirePro()`：兩種情況統一只傳 title/message、不帶 buttons；`openSettingsOnUpgrade: true` 時改成跳出提示的同時同步呼叫 `openSettings()`，不再靠按鈕 onPress 觸發（Green：4 tests 全過）
   - 更新 `feature_list.json`（ios-101-001 新增 5 筆 evidence 記錄本輪排查與四次 UX 修正、`user_visible_behavior`／`verification`／`notes` 同步更新）與 `claude-progress.md`「目前已驗證狀態」
   - 使用者確認推送：`npx eas-cli update --branch production --non-interactive` 發佈成功——iOS Update group `e95be076-07cd-4ee5-9753-b9fba62498fd`（Runtime version 1.0.1，跟 Build 12 相符）、Android Update group `3f8af773-58ea-479a-a037-77c710b4ec73`（Runtime version 1.0.0）
-- 執行過的驗證：`npx jest src/__tests__/hooks/useProGate.test.ts`（四輪 Red→Green，最終 4 tests 全過）；`npx jest`（全套 20 suites、125 tests 全過，無回歸）；`npx tsc --noEmit -p .`（本次改動的 3 個檔案無新增錯誤，既有 FlashList/Mood/MealGrade 型別錯誤與本次改動無關）；App Store Connect／RevenueCat 頁面文字讀取（get_page_text）確認訂閱審查卡住現況；`eas update` 指令輸出確認 iOS/Android 更新已發佈
-- 已擷取證據：見 feature_list.json ios-101-001 evidence（本輪新增 6 筆）
+  - 使用者提供實機錄影（89.6MB），要求上傳並回覆 Apple 3.1.2(c) 那則訊息，說明按分享/截圖與其他功能鍵可到設定頁 PRO 解鎖區塊訂閱
+  - 用 ffmpeg 把影片壓縮成 2.5MB（h264/1080寬/30fps，符合附件大小限制），抽取多個影格檢視內容：確認 PRO 解鎖區塊正常顯示方案標題/期間/價格，按「訂閱」後真的觸發 TestFlight sandbox 購買確認框；但發現確認框金額（$100/$790）跟 App 內顯示（$2.99/$24.99）不符，一度誤判為嚴重超收費用 bug，先暫停不上傳
+  - 查證：App Store Connect「Pro 月費/年費」的「所有價格與貨幣」表格，確認台灣(TWD)定價本來就是 NT$100/NT$790（對應 $2.99/$24.99 USD 級距的官方換算金額），跟確認框金額完全吻合，排除超收疑慮；判斷 App 內顯示的 $2.99/$24.99 是沙盒測試環境已知現象（價格預覽用裝置真實 Apple ID 地區、實際購買用另一組沙盒測試帳號地區，正式上架後不會有此分裂），非真正的定價 bug，經使用者確認後繼續
+  - 用 claude-in-chrome 在提交詳情頁（提交 ID `6f1123ae...`）點「回覆 App 審查」，貼上英文說明（描述 requirePro() 實際行為：六個 Pro 專屬功能都顯示提示，截圖/分享自動導去設定頁 PRO 解鎖區塊看到方案資訊後才能購買，其餘四個可自行進入同一區塊），附加壓縮後的影片，送出——訊息串確認變成「訊息 (4)」，新增回覆與附件
+- 執行過的驗證：`npx jest src/__tests__/hooks/useProGate.test.ts`（四輪 Red→Green，最終 4 tests 全過）；`npx jest`（全套 20 suites、125 tests 全過，無回歸）；`npx tsc --noEmit -p .`（本次改動的 3 個檔案無新增錯誤，既有 FlashList/Mood/MealGrade 型別錯誤與本次改動無關）；App Store Connect／RevenueCat 頁面文字讀取（get_page_text）確認訂閱審查卡住現況與定價設定；`eas update` 指令輸出確認 iOS/Android 更新已發佈；App Store Connect 訊息串確認回覆與附件送出成功
+- 已擷取證據：見 feature_list.json ios-101-001 evidence（本輪新增 8 筆）
 - 提交記錄：（見本輪 commit）
-- 已知風險或未解決問題：這次 OTA 已推送，但**尚未經使用者實機確認生效**（可能需要完全關閉重開 App 才會抓到新 bundle，見工作階段 031 的已知風險）；還沒重新走 App Store 3.1.2(c) 的送審流程（Build 7 換成含修正的 build、錄影、回覆 Apple、重新提交）——沒完成這步，訂閱永遠不會真正可購買，不管前端怎麼改都一樣；使用者目前選擇先擋住無效的購買嘗試（改成純告知＋部分自動導航），沒有要求立即處理送審
-- 下一步最佳動作：請使用者完全關閉並重開 App 確認抓到 OTA 更新，重測六個 Pro 專屬功能入口的提示文案與導航行為是否符合預期；另外需要另外找時間跟使用者確認是否要處理卡住的 3.1.2(c) 送審（換 build 掛回提交項目、錄影、回覆 Apple、重新提交至審查），這步才能真正讓訂閱恢復可購買
+- 已知風險或未解決問題：這次 OTA 已推送，但**尚未經使用者實機確認生效**（可能需要完全關閉重開 App 才會抓到新 bundle，見工作階段 031 的已知風險）；**回覆 Apple 時提交項目上掛的仍是 Build 7**（3.1.2(c) 最初被拒絕時的那個 build，不含任何後續 requirePro/SettingsModal 修正），所有修正都是靠 OTA 推送生效，若 Apple 審查時用全新裝置安裝 Build 7 且未觸發過 OTA 更新檢查，看到的可能還是修正前的舊版行為——這次回覆沒有處理換 build，是否需要額外換 build 重新提交，需視 Apple 後續回應決定
+- 下一步最佳動作：請使用者完全關閉並重開 App 確認抓到 OTA 更新，重測六個 Pro 專屬功能入口的提示文案與導航行為是否符合預期；等待 Apple 對這次回覆的回應；如果 Apple 之後又抓到問題（尤其可能與 Build 7 沒有原生層級修正有關），優先確認並換上含完整修正的 build 再重新提交，不要只靠訊息文字說明
 
 ### 工作階段 031
 
