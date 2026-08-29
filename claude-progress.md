@@ -8,15 +8,33 @@
 
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
-- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-29 為 121 tests passed，比 08-28 少 1 個是移除了 useProGate 舊行為的測試案例，非新增失敗）
-- **重要現況**：iOS 1.0.1 先前被 Apple 拒絕理由 4.3(a) Spam（回覆申訴後已消失）、接著又因 **Guideline 3.1.2(c)** 被拒（App 內「升級 Pro」購買路徑繞過方案資訊）；工作階段 028 修好後跑了 Build 8 並用 eas submit 上傳，但工作階段 029 使用者實機用 TestFlight 測試時發現修正沒生效（按「升級 Pro」直接跳回主畫面），排查後是 `router.replace('/')` 在有背景 index 畫面時會新建重複實例、跟舊實例互搶 pendingSettingsOpen 旗標，改用 `router.navigate('/')` 修正；**此問題只有透過使用者實機測試才發現，unit test 沒測出來**，見工作階段 029。程式碼修正已完成、測試與 typecheck 皆過，**尚未進行下一輪 eas build/submit（Build 9）**，需使用者確認才能執行；**這整串拒絕不影響目前已上架的 1.0 版**，1.0 持續正常供應中，但線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好
-- ios-101-001／photo-naming-001：狀態 in_progress；下一步是使用者確認後 eas build + eas submit（Build 9）→ 實機用 TestFlight 測試「升級 Pro」導向設定頁是否正常 → 錄影 → 回覆 Apple 3.1.2(c) 訊息附上錄影 → 等審查；審查通過後需實機驗證四件事（啟動畫面無 icon、升級 Pro 正常購買且會先看到方案資訊、拍照檔名依時間排序、Pro 專屬功能升級提示會導向設定頁而非直接購買）才能改為 passing，見工作階段 026／027／028／029
+- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-29 為 122 tests passed）
+- **重要現況**：iOS 1.0.1 先前被 Apple 拒絕理由 4.3(a) Spam（回覆申訴後已消失）、接著又因 **Guideline 3.1.2(c)** 被拒（App 內「升級 Pro」購買路徑繞過方案資訊）。工作階段 028/029 用「router 導航回首頁 + 觸發旗標」的模式修了兩輪（Build 8 用 replace、Build 9 改用 navigate），使用者實機測試都還是有問題（跳回主畫面 / 完全沒反應）——這個模式本身跟 expo-router 的巢狀導覽、堆疊重用規則有結構性的競態問題，不是換個 router 方法就能治好。工作階段 030 改用**架構層級**修法：`SettingsModal` 固定掛在 `app/_layout.tsx` 最頂層，顯示與否純靠 `settingsStore.settingsVisible` 這個全域布林值控制，`useProGate.ts` 的「升級 Pro」只呼叫 `openSettings()`，**完全不再需要任何 router 導航**，不管使用者在 App 哪個畫面都能直接疊上來。程式碼修正已完成、測試（122 tests）與 typecheck 皆過，**尚未進行下一輪 eas build/submit（Build 10）**，需使用者確認才能執行，且這次務必請使用者完整重測分享／截圖／開機用相機／拍照自動下載這四個入口再回覆 Apple；**這整串拒絕不影響目前已上架的 1.0 版**，1.0 持續正常供應中，但線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好
+- ios-101-001／photo-naming-001：狀態 in_progress；下一步是使用者確認後 eas build + eas submit（Build 10）→ 實機用 TestFlight 完整測試四個 Pro 專屬功能入口的升級提示是否都正確導向設定頁 → 錄影 → 回覆 Apple 3.1.2(c) 訊息附上錄影 → 等審查；審查通過後需實機驗證四件事（啟動畫面無 icon、升級 Pro 正常購買且會先看到方案資訊、拍照檔名依時間排序、Pro 專屬功能升級提示會導向設定頁而非直接購買）才能改為 passing，見工作階段 026～030
 - 目前最高優先級未完成功能（不含上述兩項）：無；AdMob 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決，但見上方「重要現況」，該次驗證是在訂閱審查還有效時做的，08-10 撤回提交後訂閱已失效）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
 - appstore-001：passing。2026-08-19 那輪送審已被 Apple 核准（版本狀態「已可發佈」），但核准後「定價與供應狀況」未設定供應地區，導致 App 顯示「已從 App Store 下架停售」；2026-08-27 已設定「所有國家或地區（175 個）」解除，24 小時內在 App Store 生效，「自動發佈此版本」設定確認生效中，不需額外手動發佈
 - 目前 blocker：無；等待 24 小時供應狀況全面生效讓 App 真正出現在 App Store 上；另有一個不阻擋上架、但需留意的待辦——App Store Connect 發佈頁面出現「受監管醫療器材聲明」提醒，2027 年初前需在「App 資訊」頁面聲明是否為受監管醫療器材（僅影響歐盟/歐洲經濟區/英國/美國上市），可之後找時間處理
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）；2026-08-08 App Store 審查一度被拒（Age Rating 廣告內容描述沒勾選，跟訂閱資訊無關），已修正並重新送審過一次；2026-08-10 又因為訂閱付費畫面缺必要資訊主動撤回審查、修復、重新送審（見工作階段 019）
 
 ## 工作階段日誌
+
+### 工作階段 030
+
+- 日期：2026-08-29
+- 本輪目標：接續工作階段 029，使用者確認後執行 eas build + eas submit 產生 Build 9；使用者實機測試後回報問題依然存在，且範圍擴大：截圖／分享仍跳回主畫面，開啟時直接用相機打開／拍照時自動下載照片這兩個 toggle 觸發升級提示後「就不會動了」
+- 已完成：
+  - `npx eas-cli build --platform ios --profile production --non-interactive`（buildNumber 遞增到 9）→ Build 成功 → `npx eas-cli submit ... --latest --non-interactive` → 上傳成功；背景等待後確認 TestFlight 頁面 Build 9 狀態「完成」「準備提交」，已自動加入內部測試群組
+  - 使用者更新到 Build 9 後回報症狀依舊：截圖／分享仍跳回主畫面（工作階段 029 的 navigate 修法沒解決），且新發現開啟時直接用相機打開／拍照時自動下載照片這兩個「在 SettingsModal 內部呼叫 requirePro」的 toggle，按升級 Pro 後完全沒反應
+  - 判斷 `router.navigate('/')` 只是換一種方式踩到同一類問題（expo-router 在巢狀導覽 `(tabs)` 底下的分頁、以及同路由情境下，對「是否重用既有畫面實例」的行為不夠穩定可預期），不是根治，繼續在 router 方法上打轉不會有結果——用 AskUserQuestion 跟使用者確認要不要換成架構層級的修法（把設定頁改成掛在 App 最頂層、不需要 router 導航），取得同意後執行
+  - 依 TDD 流程重構：先改 `src/__tests__/hooks/useProGate.test.ts`（斷言改成檢查 `settingsStore.settingsVisible` 變 true，不再涉及任何 router 呼叫）與新增 `src/__tests__/screens/SplashScreen.test.tsx` 的測試案例（驗證設定按鈕呼叫 openSettings 且不觸發任何 router 方法），確認先跑出失敗（Red）
+  - 實作：`src/stores/settingsStore.ts` 把語意不精準的 `pendingSettingsOpen`／`triggerSettingsOpen`／`clearPendingSettingsOpen`（原本設計成『一次性訊號，某個畫面消費後清掉』）重構成 `settingsVisible`／`openSettings`／`closeSettings`（『實際顯示狀態』，沒有消費/清除的概念）；`src/hooks/useProGate.ts` 的「升級 Pro」onPress 改成單純呼叫 `openSettings()`，移除 `router`／`expo-router` import；`app/index.tsx` 移除本地 `showSettings` state 與 `SettingsModal` import／渲染，設定按鈕改成直接呼叫 store 的 `openSettings`；`app/_layout.tsx` 新增 `GlobalSettingsModal` 元件、固定掛在 `RootLayout` 的 `<Stack>` 旁邊，讀 `settingsStore` 的 `settingsVisible`／`closeSettings` 傳給 `SettingsModal`——這樣不管使用者當下在哪個畫面（含巢狀在 `(tabs)` 底下的 gallery/filter/today），Modal 都能直接以原生 `<Modal>` 疊上去，完全不需要導航
+  - 全部測試轉綠（Green）；`grep` 確認沒有殘留 `pendingSettingsOpen` 等舊機制的引用
+  - 更新 `feature_list.json`（ios-101-001 新增 3 筆 evidence 記錄 Build 9 測試結果、根因重新判斷、架構重構過程；notes 補充這次的教訓——一開始照抄專案裡既有的 pendingCameraOpen 等 trigger-flag 模式是誤用，那些既有模式適合『導向特定畫面觸發一次性動作』，不適合『同一元件無論從哪呼叫都要能疊加顯示』的需求）與 `claude-progress.md`「目前已驗證狀態」
+- 執行過的驗證：`npx jest src/__tests__/hooks/useProGate.test.ts`、`npx jest src/__tests__/screens/SplashScreen.test.tsx`（皆 Red→Green）；`npx jest`（全套 20 suites、122 tests 全過，比修正前多 1 個新測試）；`npx tsc --noEmit -p .`（本次改動的 5 個檔案無新增錯誤）
+- 已擷取證據：見 feature_list.json ios-101-001 evidence（本輪新增）
+- 提交記錄：（見本輪 commit）
+- 已知風險或未解決問題：程式碼修正已完成但**尚未進行下一輪 eas build/submit（Build 10）**，需要使用者確認才能執行；這是連續第三輪修這個問題，這次是架構層級的修法（消除了 router 導航本身），理論上應該徹底解決，但基於前兩輪的教訓，**務必請使用者用新 build 完整重測全部四個 Pro 專屬功能入口**（分享、截圖、開機用相機、拍照自動下載）才能下結論，不要只憑程式碼邏輯推斷或只測其中一個入口就回覆 Apple
+- 下一步最佳動作：跟使用者確認是否要現在跑 `eas build --platform ios` + `eas submit`（Build 10）；上傳完成後請使用者完整重測全部四個入口；全部確認正常後請使用者錄影，再去 App Store Connect 回覆 3.1.2(c) 那則訊息並附上錄影
 
 ### 工作階段 029
 

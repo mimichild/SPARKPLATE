@@ -1,18 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
 } from 'react-native';
 import { router } from 'expo-router';
-import { SettingsModal } from '@/components/SettingsModal';
 import { AppText } from '@/components/AppText';
 import { AdBanner } from '@/components/AdBanner';
 import { useSettingsStore } from '@/stores/settingsStore';
 
 export default function SplashScreen() {
-  const [showSettings, setShowSettings] = useState(false);
   const {
     openCameraOnStart, hydrated, autoOpenFired, triggerCameraOpen, markAutoOpenFired,
-    pendingSettingsOpen, clearPendingSettingsOpen,
+    openSettings,
   } = useSettingsStore();
 
   useEffect(() => {
@@ -24,13 +22,6 @@ export default function SplashScreen() {
     }
   }, [hydrated, openCameraOnStart, autoOpenFired]);
 
-  useEffect(() => {
-    if (pendingSettingsOpen) {
-      setShowSettings(true);
-      clearPendingSettingsOpen();
-    }
-  }, [pendingSettingsOpen, clearPendingSettingsOpen]);
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -41,7 +32,7 @@ export default function SplashScreen() {
 
         <TouchableOpacity
           testID="settings-btn"
-          onPress={() => setShowSettings(true)}
+          onPress={openSettings}
           activeOpacity={0.85}
         >
           <View style={styles.settingsBtn}>
@@ -61,8 +52,6 @@ export default function SplashScreen() {
       </View>
 
       <AdBanner />
-
-      {showSettings ? <SettingsModal visible onClose={() => setShowSettings(false)} /> : null}
     </SafeAreaView>
   );
 }

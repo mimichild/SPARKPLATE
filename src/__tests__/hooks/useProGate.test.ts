@@ -1,15 +1,12 @@
 import { Alert } from 'react-native';
 import { renderHook, act } from '@testing-library/react-native';
-import { router } from 'expo-router';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useProGate } from '@/hooks/useProGate';
-
-jest.mock('expo-router');
 
 describe('useProGate', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useSettingsStore.setState({ isProUnlocked: false, pendingSettingsOpen: false });
+    useSettingsStore.setState({ isProUnlocked: false, settingsVisible: false });
   });
 
   it('requirePro returns true and does not alert when already Pro', () => {
@@ -39,7 +36,7 @@ describe('useProGate', () => {
     );
   });
 
-  it('the alert "升級 Pro" button navigates to the Settings screen instead of purchasing directly', () => {
+  it('the alert "升級 Pro" button opens the global Settings modal instead of purchasing directly', () => {
     let upgradePress: (() => void) | undefined;
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
       const upgradeBtn = buttons?.find(b => b.text === '升級 Pro');
@@ -52,14 +49,10 @@ describe('useProGate', () => {
 
     act(() => { upgradePress?.(); });
 
-    // 必須先導向設定頁（顯示方案標題／期間／價格／法律連結），不能繞過這些資訊直接購買。
-    expect(useSettingsStore.getState().pendingSettingsOpen).toBe(true);
-    // 用 navigate 而非 replace：index.tsx 在使用者從首頁 push 進其他分頁後仍留在背景，
-    // replace('/') 會另外新建一個 index 實例，導致背景那個已經處理過 pendingSettingsOpen
-    // 旗標的舊實例被晾在一邊，畫面上新出現的 index 卻看不到旗標——導致按了「升級 Pro」
-    // 卻直接跳回首頁、設定頁完全沒打開。navigate 會切回堆疊裡既有的 index 畫面，不會有
-    // 兩個實例互搶旗標的問題。
-    expect(router.navigate).toHaveBeenCalledWith('/');
-    expect(router.replace).not.toHaveBeenCalled();
+    // 必須先看到方案標題／期間／價格／法律連結，不能繞過這些資訊直接購買。SettingsModal
+    // 固定掛在 app/_layout.tsx 頂層，只靠這個全域旗標控制顯示——不透過 router 導航，
+    // 這樣不管使用者當下在哪個畫面（含巢狀在 (tabs) 底下的分頁），都能直接遮上來，
+    // 不會有 router.replace/navigate 在有背景畫面或巢狀導覽情境下的競態問題。
+    expect(useSettingsStore.getState().settingsVisible).toBe(true);
   });
 });
