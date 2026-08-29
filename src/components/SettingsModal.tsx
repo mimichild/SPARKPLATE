@@ -11,7 +11,7 @@ import { BackupRestoreModal } from '@/components/BackupRestoreModal';
 import { AdBanner } from '@/components/AdBanner';
 import { useProGate } from '@/hooks/useProGate';
 import {
-  purchasePro, purchasePackage, restorePurchases, fetchPackages,
+  purchasePackage, restorePurchases, fetchPackages,
 } from '@/services/purchases';
 import { PRIVACY_POLICY_URL, TERMS_OF_USE_URL } from '@/constants/monetization';
 
@@ -55,6 +55,14 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
     setPendingColor(fontColor); // reset to current on open
   }
 
+  // 供「重新整理」按鈕使用；掛載時的載入邏輯在下面的 useEffect（多了 cancelled 防護）。
+  function loadPackages() {
+    setLoadingPackages(true);
+    return fetchPackages()
+      .then(pkgs => setPackages(pkgs))
+      .finally(() => setLoadingPackages(false));
+  }
+
   // 需要顯示各方案的標題／期間／價格（Apple Guideline 3.1.2(c)），只有面板開啟、
   // iOS 且尚未解鎖 Pro 時才需要載入。
   useEffect(() => {
@@ -71,21 +79,6 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
     if (!requirePro('主題色')) return;
     await setFontColor(pendingColor);
     onClose();
-  }
-
-  async function handlePurchase() {
-    setPurchasing(true);
-    try {
-      const isPro = await purchasePro();
-      if (isPro) {
-        await setProUnlocked(true);
-        Alert.alert('升級成功', 'Pro 功能已啟用');
-      }
-    } catch (e) {
-      Alert.alert('升級失敗', e instanceof Error ? e.message : '請稍後再試');
-    } finally {
-      setPurchasing(false);
-    }
   }
 
   async function handlePurchasePackage(pkg: PurchasesPackage) {
@@ -161,11 +154,17 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
                     </View>
                   ))
                 ) : (
-                  <TouchableOpacity onPress={handlePurchase} disabled={purchasing} activeOpacity={0.8}>
-                    <View style={[styles.backupBtnFill, { backgroundColor: fontColor, marginTop: 12 }]}>
-                      <Text style={styles.confirmBtnText}>{purchasing ? '處理中…' : '升級 Pro'}</Text>
-                    </View>
-                  </TouchableOpacity>
+                  // 方案資料抓不到時不能顯示可直接購買的按鈕：Apple Guideline 3.1.2(c)
+                  // 要求購買前必須先看到方案標題／期間／價格，這裡沒有這些資料可顯示，
+                  // 只能讓使用者重試，不能繞過去直接觸發購買。
+                  <View style={{ marginTop: 12 }} testID="pro-plans-load-error">
+                    <Text style={styles.hint}>暫時無法載入方案資訊，請稍後再試</Text>
+                    <TouchableOpacity onPress={loadPackages} activeOpacity={0.8} testID="pro-plans-retry-btn">
+                      <View style={[styles.backupBtnFill, { backgroundColor: fontColor, marginTop: 8 }]}>
+                        <Text style={styles.confirmBtnText}>重新整理</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
                 )}
 
                 <TouchableOpacity onPress={handleRestore} disabled={restoring} activeOpacity={0.8} style={{ marginTop: 10, alignItems: 'center' }}>

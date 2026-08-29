@@ -1,37 +1,31 @@
 import { Alert } from 'react-native';
+import { router } from 'expo-router';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useIsPro } from './useIsPro';
-import { purchasePro } from '@/services/purchases';
 
 /**
- * 免費使用者點到 Pro 專屬功能時的統一互動：跳出升級提示，按「升級 Pro」直接
- * 觸發購買（不是導回設定頁再要求使用者自己找按鈕點第二次——原本的導頁設計在
- * 使用者已經身處設定頁時會因為 showSettings 狀態沒變化而看起來「沒反應」）。
+ * 免費使用者點到 Pro 專屬功能時的統一互動：跳出升級提示，按「升級 Pro」導向設定頁
+ * 的 PRO 解鎖區塊（顯示方案標題／期間／價格／隱私權政策與服務條款連結）讓使用者
+ * 確認方案內容後再購買——不能在這裡直接觸發購買，否則會跳過這些必要資訊直接進入
+ * 系統購買框，違反 Apple Guideline 3.1.2(c)。
  * 用法：`if (!requirePro('分享')) return;` 接在功能執行前面。
  */
 export function useProGate() {
   const isProUnlocked = useIsPro();
-  const setProUnlocked = useSettingsStore(s => s.setProUnlocked);
+  const triggerSettingsOpen = useSettingsStore(s => s.triggerSettingsOpen);
 
   function requirePro(featureLabel: string): boolean {
     if (isProUnlocked) return true;
     Alert.alert(
       `${featureLabel}為 Pro 專屬功能`,
-      '升級 Pro 即可解鎖，要現在升級嗎？',
+      '升級 Pro 即可解鎖，要現在查看方案嗎？',
       [
         { text: '之後再說', style: 'cancel' },
         {
           text: '升級 Pro',
-          onPress: async () => {
-            try {
-              const success = await purchasePro();
-              if (success) {
-                await setProUnlocked(true);
-                Alert.alert('升級成功', 'Pro 功能已啟用');
-              }
-            } catch (e) {
-              Alert.alert('升級失敗', e instanceof Error ? e.message : '請稍後再試');
-            }
+          onPress: () => {
+            triggerSettingsOpen();
+            router.replace('/');
           },
         },
       ],

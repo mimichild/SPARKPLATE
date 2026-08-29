@@ -8,15 +8,32 @@
 
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
-- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-28 為 122 tests passed）
-- **重要現況**：iOS 1.0.1（App Version 1.0.1 / Build 7）已於 2026-08-29 被 Apple 拒絕，理由 **Guideline 4.3(a) Design: Spam**（判定與已提交的其他 App 共享類似 binary/metadata/概念），非技術性問題；已在 App Store Connect 訊息串回覆 Apple 說明 1.0.1 只是 1.0 的維護更新（修復升級 Pro 購買錯誤＋啟動畫面優化＋拍照檔名排序），非新概念/相似 App，等待 Apple 後續回應（無固定 SLA），見工作階段 027；**此拒絕不影響目前已上架的 1.0 版**，1.0 持續正常供應中，但線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好
-- ios-101-001／photo-naming-001：狀態皆為 blocked（等待 Apple 對 4.3(a) 申訴回覆的結果，非程式碼卡住）；若 Apple 之後要求重新提交，「重新提交至 App 審查」按鈕才會解鎖；審查通過後需實機驗證三件事（啟動畫面無 icon、升級 Pro 正常購買、拍照檔名依時間排序）才能改為 passing，見工作階段 026／027
+- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-29 為 121 tests passed，比 08-28 少 1 個是移除了 useProGate 舊行為的測試案例，非新增失敗）
+- **重要現況**：iOS 1.0.1（App Version 1.0.1 / Build 7）先前被 Apple 拒絕理由 4.3(a) Spam，回覆申訴後該理由已消失，但 Apple 人工複核追加發現新問題 **Guideline 3.1.2(c)**——App 內某條「升級 Pro」購買路徑會繞過方案標題／期間／價格資訊直接觸發購買；根因與修法見工作階段 028（已用 TDD 修正 `useProGate.ts` 與 `SettingsModal.tsx` 兩條繞過路徑，程式碼修正已完成、測試與 typecheck 皆過，**但尚未重新 build + 送審**，需使用者確認才能執行 eas build/submit）；**此拒絕不影響目前已上架的 1.0 版**，1.0 持續正常供應中，但線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好
+- ios-101-001／photo-naming-001：狀態改回 in_progress（工作階段 028 有實際程式碼修正在進行）；下一步是使用者確認後 eas build + eas submit + 回覆 Apple（附畫面錄影）；審查通過後需實機驗證四件事（啟動畫面無 icon、升級 Pro 正常購買且會先看到方案資訊、拍照檔名依時間排序、Pro 專屬功能升級提示會導向設定頁而非直接購買）才能改為 passing，見工作階段 026／027／028
 - 目前最高優先級未完成功能（不含上述兩項）：無；AdMob 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決，但見上方「重要現況」，該次驗證是在訂閱審查還有效時做的，08-10 撤回提交後訂閱已失效）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
 - appstore-001：passing。2026-08-19 那輪送審已被 Apple 核准（版本狀態「已可發佈」），但核准後「定價與供應狀況」未設定供應地區，導致 App 顯示「已從 App Store 下架停售」；2026-08-27 已設定「所有國家或地區（175 個）」解除，24 小時內在 App Store 生效，「自動發佈此版本」設定確認生效中，不需額外手動發佈
 - 目前 blocker：無；等待 24 小時供應狀況全面生效讓 App 真正出現在 App Store 上；另有一個不阻擋上架、但需留意的待辦——App Store Connect 發佈頁面出現「受監管醫療器材聲明」提醒，2027 年初前需在「App 資訊」頁面聲明是否為受監管醫療器材（僅影響歐盟/歐洲經濟區/英國/美國上市），可之後找時間處理
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）；2026-08-08 App Store 審查一度被拒（Age Rating 廣告內容描述沒勾選，跟訂閱資訊無關），已修正並重新送審過一次；2026-08-10 又因為訂閱付費畫面缺必要資訊主動撤回審查、修復、重新送審（見工作階段 019）
 
 ## 工作階段日誌
+
+### 工作階段 028
+
+- 日期：2026-08-29
+- 本輪目標：接續工作階段 027，使用者問「你幫我送審了嗎」「現在似乎可以按審查了」，Claude 回去確認 App Store Connect 最新狀態並依實況處理
+- 已完成：
+  - 確認「重新提交至 App 審查」按鈕仍反灰（截圖比對確認是 disabled 樣式），並讀取提交詳情頁最新訊息：4.3(a) Spam 已從拒絕清單消失（申訴有效），但 Apple 人工複核後追加了新的獨立問題 **Guideline 3.1.2(c) Business: Payments - Subscriptions**——App 內購買流程缺少訂閱期間與價格等必要資訊；訊息附兩張審查員截圖
+  - 跟使用者確認後下載並查看兩張截圖：確認審查員是從『截圖』這個 Pro 專屬功能點進去，跳出陽春的 Alert『升級 Pro』提示，按下去直接跳到 Apple 系統 Sandbox 購買確認框，中間完全沒有經過任何顯示方案標題／期間／價格／法律連結的畫面
+  - 讀 `src/hooks/useProGate.ts` 源碼確認根因：`requirePro()` 的 Alert「升級 Pro」按鈕直接呼叫 `purchasePro()`，繞過 `SettingsModal.tsx` 裡本來就有、且符合 3.1.2(c) 規定的方案資訊顯示區塊（該區塊有正確顯示標題／期間／價格／隱私權政策/服務條款連結，是 2026-08-10 工作階段 019 就修過的）
+  - 使用者確認要修這個問題後，依 TDD 流程執行：先改 `src/__tests__/hooks/useProGate.test.ts` 反映新預期行為（Red：`npx jest` 顯示 1 個失敗），再實作修正（Green：3 tests 全過）——`src/stores/settingsStore.ts` 新增 `pendingSettingsOpen`／`triggerSettingsOpen`／`clearPendingSettingsOpen`（沿用既有 pendingCameraOpen 等 trigger-flag 模式）；`useProGate.ts` 的「升級 Pro」按鈕改成 `triggerSettingsOpen()` + `router.replace('/')` 導向設定頁，不再直接購買；`app/index.tsx` 新增 useEffect 消費該旗標開啟設定 Modal
+  - 使用者進一步確認後，一併修復 `SettingsModal.tsx` 裡第二條類似的繞過路徑：`fetchPackages()` 回傳空陣列（方案資料抓不到）時的 fallback 按鈕，原本也是直接呼叫 `purchasePro()`；嘗試寫 React Native Testing Library 元件測試驗證時，連續 3 次踩到同一個 `react-native-reanimated`／Worklets 原生模組在 Jest 環境初始化失敗的既有測試環境限制（跟本次改動無關），依專案規則「同一種失敗重試超過 2 次要換方法」放棄該方向，改以程式碼直接檢視＋既有全套測試＋typecheck 驗證；把 fallback 按鈕改成「暫時無法載入方案資訊，請稍後再試」文字＋「重新整理」按鈕（呼叫抽出的 `loadPackages()` 重新 fetch，不觸發購買），移除 `handlePurchase()` 與 `purchasePro` import
+  - 更新 `feature_list.json`（ios-101-001 狀態改回 `in_progress`，新增 6 筆 evidence 記錄本輪排查與修正過程，notes 補充最新進度）與 `claude-progress.md`「目前已驗證狀態」
+- 執行過的驗證：`npx jest src/__tests__/hooks/useProGate.test.ts`（Red→Green，3 tests 全過）；`npx jest`（全套 20 suites、121 tests 全過，無回歸）；`npx tsc --noEmit -p .`（本次改動的 4 個檔案無新增錯誤，既有 FlashList/Mood/MealGrade 型別錯誤與本次改動無關）
+- 已擷取證據：見 feature_list.json ios-101-001 evidence（本輪新增 6 筆）
+- 提交記錄：（見本輪 commit）
+- 已知風險或未解決問題：程式碼修正已完成但**尚未重新 build + 送審**，需要使用者確認才能執行 `eas build --platform ios` + `eas submit`（會用掉 EAS 建置額度且是正式送審 Apple）；重新送審後 Apple 訊息裡明確要求「附上畫面錄影確認」修正生效，需要準備錄影素材；`SettingsModal.tsx` 目前沒有專屬的自動化元件測試（被既有測試環境限制擋住），未來若要補測試，需要先解決 `react-native-reanimated`/Worklets 在 Jest 環境的初始化問題（可能需要調整 jest 設定或升級相關套件版本）
+- 下一步最佳動作：跟使用者確認是否要現在執行 `eas build --platform ios` + `eas submit`；建立新的 App Store Connect 提交後，在 3.1.2(c) 那則訊息回覆 Apple，說明已修正兩條繞過路徑並附上畫面錄影；審查通過後實機驗證四件事並回填 evidence，把 ios-101-001／photo-naming-001 改為 passing
 
 ### 工作階段 027
 
