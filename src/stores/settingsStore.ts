@@ -16,6 +16,8 @@ interface SettingsState {
   pendingFilterOpen: boolean; // session-only, not persisted
   pendingScreenshot: boolean; // session-only, not persisted
   settingsVisible: boolean; // session-only, not persisted；控制掛在 app/_layout.tsx 頂層的 SettingsModal
+  settingsScrollToken: number; // session-only；每次 openSettings() 都遞增，即使 settingsVisible 已經是
+    // true（例如在設定頁內部再次觸發升級提示）也能通知 SettingsModal 捲回頂部看到 Pro 方案資訊
   hydrate: () => Promise<void>;
   setFontColor: (color: string) => Promise<void>;
   setOpenCameraOnStart: (v: boolean) => Promise<void>;
@@ -48,6 +50,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   pendingFilterOpen: false,
   pendingScreenshot: false,
   settingsVisible: false,
+  settingsScrollToken: 0,
 
   hydrate: async () => {
     const [fontColor, openCameraOnStart, autoSavePhoto, volumeQuickCapture, isProUnlocked] = await Promise.all([
@@ -103,6 +106,6 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   clearPendingFilterOpen: () => set({ pendingFilterOpen: false }),
   triggerScreenshot: () => set({ pendingScreenshot: true }),
   clearPendingScreenshot: () => set({ pendingScreenshot: false }),
-  openSettings: () => set({ settingsVisible: true }),
+  openSettings: () => set(s => ({ settingsVisible: true, settingsScrollToken: s.settingsScrollToken + 1 })),
   closeSettings: () => set({ settingsVisible: false }),
 }));

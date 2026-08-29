@@ -8,15 +8,34 @@
 
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
-- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-29 為 122 tests passed）
-- **重要現況**：iOS 1.0.1 先前被 Apple 拒絕理由 4.3(a) Spam（回覆申訴後已消失）、接著又因 **Guideline 3.1.2(c)** 被拒（App 內「升級 Pro」購買路徑繞過方案資訊）。工作階段 028/029 用「router 導航回首頁 + 觸發旗標」的模式修了兩輪（Build 8 用 replace、Build 9 改用 navigate），使用者實機測試都還是有問題（跳回主畫面 / 完全沒反應）——這個模式本身跟 expo-router 的巢狀導覽、堆疊重用規則有結構性的競態問題，不是換個 router 方法就能治好。工作階段 030 改用**架構層級**修法：`SettingsModal` 固定掛在 `app/_layout.tsx` 最頂層，顯示與否純靠 `settingsStore.settingsVisible` 這個全域布林值控制，`useProGate.ts` 的「升級 Pro」只呼叫 `openSettings()`，**完全不再需要任何 router 導航**，不管使用者在 App 哪個畫面都能直接疊上來。程式碼修正已完成、測試（122 tests）與 typecheck 皆過，**尚未進行下一輪 eas build/submit（Build 10）**，需使用者確認才能執行，且這次務必請使用者完整重測分享／截圖／開機用相機／拍照自動下載這四個入口再回覆 Apple；**這整串拒絕不影響目前已上架的 1.0 版**，1.0 持續正常供應中，但線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好
-- ios-101-001／photo-naming-001：狀態 in_progress；下一步是使用者確認後 eas build + eas submit（Build 10）→ 實機用 TestFlight 完整測試四個 Pro 專屬功能入口的升級提示是否都正確導向設定頁 → 錄影 → 回覆 Apple 3.1.2(c) 訊息附上錄影 → 等審查；審查通過後需實機驗證四件事（啟動畫面無 icon、升級 Pro 正常購買且會先看到方案資訊、拍照檔名依時間排序、Pro 專屬功能升級提示會導向設定頁而非直接購買）才能改為 passing，見工作階段 026～030
+- 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-29 為 124 tests passed）
+- **重要現況**：iOS 1.0.1 先前被 Apple 拒絕理由 4.3(a) Spam（回覆申訴後已消失）、接著又因 **Guideline 3.1.2(c)** 被拒（App 內「升級 Pro」購買路徑繞過方案資訊）。工作階段 028/029 用「router 導航回首頁 + 觸發旗標」的模式修了兩輪都失敗，工作階段 030 改用架構層級修法（`SettingsModal` 固定掛在 `app/_layout.tsx` 最頂層，靠 `settingsStore.settingsVisible` 全域布林值控制、不需要 router 導航），跑了 Build 10 但**當月 EAS 免費方案 iOS build 額度用完**（2026-09-01 重置），改用 `eas build --local` 本機建置成功繞過（實際是 Build 12，補裝了 fastlane），使用者實機測試：分享／截圖已修好，但設定頁內的兩個 toggle（開機用相機、拍照自動下載）按升級 Pro 後「停留在設定頁沒反應」——排查是設計疏漏非架構問題：這兩個 toggle 觸發時 settingsVisible 本來就已經是 true，沒有狀態變化，使用者當下捲動位置在畫面下方看不到最上面的方案資訊。工作階段 031 修正（新增 settingsScrollToken，每次 openSettings() 都遞增觸發捲回頂部），**這次修正純屬 JS 邏輯**，改用 `eas update --branch production` 推送 OTA 更新到已裝的 Build 12，不需要重新 build/送審。測試（124 tests）與 typecheck 皆過，**等使用者收到 OTA 更新後重新測試全部四個入口**；**這整串拒絕不影響目前已上架的 1.0 版**，1.0 持續正常供應中，但線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好
+- ios-101-001／photo-naming-001：狀態 in_progress；下一步是使用者用 TestFlight 收到 OTA 更新（或重開 App 觸發更新檢查）後，完整重測分享／截圖／開機用相機／拍照自動下載這四個入口 → 全部正常後錄影 → 回覆 Apple 3.1.2(c) 訊息附上錄影 → 等審查；審查通過後需實機驗證四件事（啟動畫面無 icon、升級 Pro 正常購買且會先看到方案資訊、拍照檔名依時間排序、Pro 專屬功能升級提示會導向設定頁而非直接購買）才能改為 passing，見工作階段 026～031；**備忘：下次遇到 EAS 免費 build 額度用完，可直接用 `eas build --local` 本機建置繞過，不用等額度重置**；**備忘：純 JS 改動不需要重新 native build，用 `eas update --branch production` 推 OTA 即可，省資源**
 - 目前最高優先級未完成功能（不含上述兩項）：無；AdMob 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決，但見上方「重要現況」，該次驗證是在訂閱審查還有效時做的，08-10 撤回提交後訂閱已失效）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
 - appstore-001：passing。2026-08-19 那輪送審已被 Apple 核准（版本狀態「已可發佈」），但核准後「定價與供應狀況」未設定供應地區，導致 App 顯示「已從 App Store 下架停售」；2026-08-27 已設定「所有國家或地區（175 個）」解除，24 小時內在 App Store 生效，「自動發佈此版本」設定確認生效中，不需額外手動發佈
 - 目前 blocker：無；等待 24 小時供應狀況全面生效讓 App 真正出現在 App Store 上；另有一個不阻擋上架、但需留意的待辦——App Store Connect 發佈頁面出現「受監管醫療器材聲明」提醒，2027 年初前需在「App 資訊」頁面聲明是否為受監管醫療器材（僅影響歐盟/歐洲經濟區/英國/美國上市），可之後找時間處理
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）；2026-08-08 App Store 審查一度被拒（Age Rating 廣告內容描述沒勾選，跟訂閱資訊無關），已修正並重新送審過一次；2026-08-10 又因為訂閱付費畫面缺必要資訊主動撤回審查、修復、重新送審（見工作階段 019）
 
 ## 工作階段日誌
+
+### 工作階段 031
+
+- 日期：2026-08-29
+- 本輪目標：接續工作階段 030，使用者確認要跑 Build 10；跑 Build 10 遇到雲端額度用完，改用本機建置；使用者測試新 build 後回報「開啟時直接用相機打開／拍照時自動下載照片」按升級 Pro 後停留在設定頁沒反應，並要求務必先確認修好再跑 build（本機建置吃資源）
+- 已完成：
+  - `eas build --platform ios --profile production` 失敗：帳號當月 EAS 免費方案 iOS build 額度已用完，訊息顯示 2026-09-01 重置
+  - 使用者問能否用 `eas build --local`：確認本機環境（Xcode 26.6、CocoaPods 1.17.0），發現缺 `fastlane`，用 `brew install fastlane` 補裝後重跑，本機建置成功產出 `.ipa`（因先前失敗的雲端嘗試已佔用 buildNumber 到 10，這次本機建置實際遞增到 Build 12）；`eas submit --path` 上傳成功；`.gitignore` 補上 `*.ipa`／`.expo/` 避免建置產物誤入版控
+  - App Store Connect TestFlight 確認 Build 12「完成」「準備提交」並自動加入內部測試群組；請使用者更新測試
+  - 使用者回報：分享／截圖已正常導向設定頁（工作階段 030 的架構修法確認有效）；但「開啟時直接用相機打開」「拍照時自動下載照片」這兩個在 SettingsModal 內部觸發的升級提示，按「升級 Pro」後停留在設定頁、沒有任何反應
+  - 排查（讀程式碼，非重跑 build 除錯）：確認這不是架構性 bug，是設計疏漏——這兩個 toggle 觸發 `requirePro()` 時，使用者本來就已經在設定頁裡（`settingsVisible` 已經是 `true`），呼叫 `openSettings()` 沒有造成任何可觀察的狀態變化，而使用者當下的捲動位置在畫面下方的 toggle 區塊，看不到頁面最上方顯示方案標題／期間／價格的 PRO 解鎖區塊，因此誤以為完全沒反應
+  - 依 TDD 修正：`src/stores/settingsStore.ts` 新增 `settingsScrollToken`（每次 `openSettings()` 呼叫都遞增，即使 `settingsVisible` 沒有變化），先在 `src/__tests__/stores/settingsStore.test.ts` 新增兩個測試案例（驗證 `openSettings` 設定 `settingsVisible` 為 true、驗證重複呼叫時 `settingsScrollToken` 會遞增）；`src/components/SettingsModal.tsx` 幫 `ScrollView` 加上 `ref`，新增 `useEffect` 監看 `settingsScrollToken` 變化時呼叫 `scrollTo({ y: 0, animated: true })` 捲回頂部
+  - 判斷這次修正純屬 JS 邏輯、完全沒有動到任何原生程式碼或原生依賴，符合用 EAS Update（OTA）推送的條件——確認 `app.json` 的 `runtimeVersion.policy` 是 `appVersion`（目前是 1.0.1），跟 Build 12 的 runtime version 相符，執行 `eas update --branch production` 推送更新，不需要重新 build/送審，直接省下使用者擔心的建置資源
+  - 更新 `feature_list.json`（ios-101-001 新增 5 筆 evidence 記錄本機建置繞過額度限制的過程、bug 排查、TDD 修正、OTA 推送結果；notes 補充教訓：下次額度用完可直接想到 `--local`、純 JS 改動可以用 `eas update` 省資源不用整個重 build）與 `claude-progress.md`「目前已驗證狀態」
+- 執行過的驗證：`npx jest src/__tests__/stores/settingsStore.test.ts`（新增 2 個測試全過）；`npx jest`（全套 20 suites、124 tests 全過）；`npx tsc --noEmit -p .`（本次改動的 3 個檔案無新增錯誤）；App Store Connect TestFlight 頁面文字讀取確認 Build 12 狀態；`eas update` 指令輸出確認 iOS 更新已發佈（Runtime version 1.0.1、Update group ID 07c0f952-486d-4c57-94af-ac97af96e037）
+- 已擷取證據：見 feature_list.json ios-101-001 evidence（本輪新增）
+- 提交記錄：（見本輪 commit）
+- 已知風險或未解決問題：OTA 更新已推送，但**尚未經使用者實機確認生效**——expo-updates 預設通常在 App 冷啟動時檢查更新，使用者可能需要完全關閉 App 再重開（而非只是切到背景）才會抓到新的 JS bundle；如果使用者測試後發現還是沒生效，需要進一步確認 App 內的 update-check 設定或改用手動觸發更新檢查
+- 下一步最佳動作：請使用者完全關閉並重開 App（確保抓到 OTA 更新），完整重測全部四個入口（分享、截圖、開機用相機、拍照自動下載）；全部確認正常後請使用者錄影，再去 App Store Connect 回覆 3.1.2(c) 那則訊息並附上錄影
 
 ### 工作階段 030
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Modal, View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform, Linking,
 } from 'react-native';
@@ -40,7 +40,7 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
   const {
     fontColor, openCameraOnStart, autoSavePhoto, volumeQuickCapture,
     setFontColor, setOpenCameraOnStart, setAutoSavePhoto, setVolumeQuickCapture,
-    setProUnlocked,
+    setProUnlocked, settingsScrollToken,
   } = useSettingsStore();
   const { isProUnlocked, requirePro } = useProGate();
   const [pendingColor, setPendingColor] = useState(fontColor);
@@ -50,6 +50,16 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(false);
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView>(null);
+
+  // 每次呼叫 openSettings()（即使設定頁已經開著，例如在頁面內部再次點到 Pro 專屬功能）
+  // 都要捲回頂部，讓使用者看到 PRO 解鎖區塊的方案標題／期間／價格資訊，不然若使用者
+  // 當下已經捲到頁面下方，會覺得按了「升級 Pro」毫無反應。
+  useEffect(() => {
+    if (settingsScrollToken > 0) {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    }
+  }, [settingsScrollToken]);
 
   function handleOpen() {
     setPendingColor(fontColor); // reset to current on open
@@ -118,7 +128,7 @@ export function SettingsModal({ visible, onClose }: SettingsModalProps) {
       onShow={handleOpen}
     >
       <View style={styles.overlay}>
-        <ScrollView contentContainerStyle={[styles.sheet, { paddingTop: insets.top + 24 }]} showsVerticalScrollIndicator={false}>
+        <ScrollView ref={scrollRef} contentContainerStyle={[styles.sheet, { paddingTop: insets.top + 24 }]} showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>設定</Text>
 
           {/* Pro 解鎖 */}

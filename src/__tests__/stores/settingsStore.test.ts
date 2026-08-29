@@ -72,6 +72,27 @@ describe('settingsStore', () => {
     });
   });
 
+  describe('openSettings / settingsScrollToken', () => {
+    it('openSettings sets settingsVisible to true', () => {
+      const { result } = renderHook(() => useSettingsStore());
+      act(() => { result.current.openSettings(); });
+      expect(result.current.settingsVisible).toBe(true);
+    });
+
+    it('openSettings increments settingsScrollToken even when settingsVisible is already true', () => {
+      // 使用者在已經打開的設定頁裡面（例如點『開啟時直接用相機打開』）再次觸發升級
+      // 提示時，settingsVisible 不會有變化（本來就是 true），但還是要能通知 SettingsModal
+      // 捲回頂部看到 Pro 方案資訊，不然使用者會覺得按了「升級 Pro」毫無反應。
+      const { result } = renderHook(() => useSettingsStore());
+      act(() => { result.current.openSettings(); });
+      const tokenAfterFirst = result.current.settingsScrollToken;
+
+      act(() => { result.current.openSettings(); });
+      expect(result.current.settingsVisible).toBe(true);
+      expect(result.current.settingsScrollToken).toBe(tokenAfterFirst + 1);
+    });
+  });
+
   describe('pendingCameraOpen', () => {
     it('triggerCameraOpen sets pendingCameraOpen to true', () => {
       const { result } = renderHook(() => useSettingsStore());
