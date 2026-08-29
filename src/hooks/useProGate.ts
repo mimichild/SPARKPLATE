@@ -25,7 +25,11 @@ export function useProGate() {
           text: '升級 Pro',
           onPress: () => {
             triggerSettingsOpen();
-            router.replace('/');
+            // 用 navigate 而非 replace：從其他分頁（router.push 進去的）呼叫時，首頁
+            // index 畫面仍留在堆疊背景沒被卸載，replace('/') 會另外新建一個 index 實例，
+            // 導致背景那個已經處理過 pendingSettingsOpen 的舊實例被晾在一邊，畫面上新出
+            // 現的 index 卻看不到旗標。navigate 會切回堆疊裡既有的 index 畫面。
+            router.navigate('/');
           },
         },
       ],

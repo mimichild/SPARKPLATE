@@ -54,6 +54,12 @@ describe('useProGate', () => {
 
     // 必須先導向設定頁（顯示方案標題／期間／價格／法律連結），不能繞過這些資訊直接購買。
     expect(useSettingsStore.getState().pendingSettingsOpen).toBe(true);
-    expect(router.replace).toHaveBeenCalledWith('/');
+    // 用 navigate 而非 replace：index.tsx 在使用者從首頁 push 進其他分頁後仍留在背景，
+    // replace('/') 會另外新建一個 index 實例，導致背景那個已經處理過 pendingSettingsOpen
+    // 旗標的舊實例被晾在一邊，畫面上新出現的 index 卻看不到旗標——導致按了「升級 Pro」
+    // 卻直接跳回首頁、設定頁完全沒打開。navigate 會切回堆疊裡既有的 index 畫面，不會有
+    // 兩個實例互搶旗標的問題。
+    expect(router.navigate).toHaveBeenCalledWith('/');
+    expect(router.replace).not.toHaveBeenCalled();
   });
 });

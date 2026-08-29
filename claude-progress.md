@@ -9,14 +9,31 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-29 為 121 tests passed，比 08-28 少 1 個是移除了 useProGate 舊行為的測試案例，非新增失敗）
-- **重要現況**：iOS 1.0.1（App Version 1.0.1 / Build 7）先前被 Apple 拒絕理由 4.3(a) Spam，回覆申訴後該理由已消失，但 Apple 人工複核追加發現新問題 **Guideline 3.1.2(c)**——App 內某條「升級 Pro」購買路徑會繞過方案標題／期間／價格資訊直接觸發購買；根因與修法見工作階段 028（已用 TDD 修正 `useProGate.ts` 與 `SettingsModal.tsx` 兩條繞過路徑，程式碼修正已完成、測試與 typecheck 皆過，**但尚未重新 build + 送審**，需使用者確認才能執行 eas build/submit）；**此拒絕不影響目前已上架的 1.0 版**，1.0 持續正常供應中，但線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好
-- ios-101-001／photo-naming-001：狀態改回 in_progress（工作階段 028 有實際程式碼修正在進行）；下一步是使用者確認後 eas build + eas submit + 回覆 Apple（附畫面錄影）；審查通過後需實機驗證四件事（啟動畫面無 icon、升級 Pro 正常購買且會先看到方案資訊、拍照檔名依時間排序、Pro 專屬功能升級提示會導向設定頁而非直接購買）才能改為 passing，見工作階段 026／027／028
+- **重要現況**：iOS 1.0.1 先前被 Apple 拒絕理由 4.3(a) Spam（回覆申訴後已消失）、接著又因 **Guideline 3.1.2(c)** 被拒（App 內「升級 Pro」購買路徑繞過方案資訊）；工作階段 028 修好後跑了 Build 8 並用 eas submit 上傳，但工作階段 029 使用者實機用 TestFlight 測試時發現修正沒生效（按「升級 Pro」直接跳回主畫面），排查後是 `router.replace('/')` 在有背景 index 畫面時會新建重複實例、跟舊實例互搶 pendingSettingsOpen 旗標，改用 `router.navigate('/')` 修正；**此問題只有透過使用者實機測試才發現，unit test 沒測出來**，見工作階段 029。程式碼修正已完成、測試與 typecheck 皆過，**尚未進行下一輪 eas build/submit（Build 9）**，需使用者確認才能執行；**這整串拒絕不影響目前已上架的 1.0 版**，1.0 持續正常供應中，但線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好
+- ios-101-001／photo-naming-001：狀態 in_progress；下一步是使用者確認後 eas build + eas submit（Build 9）→ 實機用 TestFlight 測試「升級 Pro」導向設定頁是否正常 → 錄影 → 回覆 Apple 3.1.2(c) 訊息附上錄影 → 等審查；審查通過後需實機驗證四件事（啟動畫面無 icon、升級 Pro 正常購買且會先看到方案資訊、拍照檔名依時間排序、Pro 專屬功能升級提示會導向設定頁而非直接購買）才能改為 passing，見工作階段 026／027／028／029
 - 目前最高優先級未完成功能（不含上述兩項）：無；AdMob 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決，但見上方「重要現況」，該次驗證是在訂閱審查還有效時做的，08-10 撤回提交後訂閱已失效）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
 - appstore-001：passing。2026-08-19 那輪送審已被 Apple 核准（版本狀態「已可發佈」），但核准後「定價與供應狀況」未設定供應地區，導致 App 顯示「已從 App Store 下架停售」；2026-08-27 已設定「所有國家或地區（175 個）」解除，24 小時內在 App Store 生效，「自動發佈此版本」設定確認生效中，不需額外手動發佈
 - 目前 blocker：無；等待 24 小時供應狀況全面生效讓 App 真正出現在 App Store 上；另有一個不阻擋上架、但需留意的待辦——App Store Connect 發佈頁面出現「受監管醫療器材聲明」提醒，2027 年初前需在「App 資訊」頁面聲明是否為受監管醫療器材（僅影響歐盟/歐洲經濟區/英國/美國上市），可之後找時間處理
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）；2026-08-08 App Store 審查一度被拒（Age Rating 廣告內容描述沒勾選，跟訂閱資訊無關），已修正並重新送審過一次；2026-08-10 又因為訂閱付費畫面缺必要資訊主動撤回審查、修復、重新送審（見工作階段 019）
 
 ## 工作階段日誌
+
+### 工作階段 029
+
+- 日期：2026-08-29
+- 本輪目標：接續工作階段 028，使用者確認後執行 eas build + eas submit 產生 Build 8；使用者實機用 TestFlight 測試後回報「在分享的地方按升級 PRO，會跑回主畫面，根本不會有升級的畫面」，請 Claude 排查
+- 已完成：
+  - `npx eas-cli build --platform ios --profile production --non-interactive`（buildNumber 自動從 7 遞增到 8，app.json version 仍是 1.0.1）→ Build 成功 → `npx eas-cli submit --platform ios --profile production --latest --non-interactive` → 上傳成功
+  - 背景等待約 8 分鐘後前往 App Store Connect TestFlight 頁面確認：Build 8 狀態「完成」處理、「正在測試」，已自動加入既有內部測試群組『Team (Expo)』；確認使用者（mimichild@gmail.com／又僖）已是該群組測試人員（先前裝過 1.0.0 (5)），不需額外設定即可透過 TestFlight App 更新
+  - 回覆使用者「新 build 怎麼裝到手機」的提問：說明走 TestFlight（非直接裝 IPA），且使用者已是內部測試人員會自動看到更新
+  - 使用者實機更新到 Build 8 後測試回報 bug：點『分享』的 Pro 專屬功能升級提示，按『升級 Pro』直接跳回主畫面，設定頁完全沒打開——用 systematic-debugging 排查：讀 `app/index.tsx` 確認使用者從首頁是用 `router.push('/(tabs)/gallery')` 進入分頁（不是 replace），代表 index 畫面會留在導覽堆疊背景、不會被卸載；讀 `useProGate.ts` 確認工作階段 028 寫的是 `router.replace('/')`——這會在目前所在的分頁位置另外新建一個 index 實例，而非切回背景那個既有實例；兩個 index 實例都訂閱同一個 zustand store，背景那個舊實例會搶先在 pendingSettingsOpen 變 true 的當下就處理掉（setShowSettings(true) + 清旗標），但畫面上使用者實際看到的是新建的那個 index 實例，它掛載時旗標早就被清空，所以完全沒反應——確認為 Build 8 送出去給使用者實測後才發現的新 bug，跟工作階段 028 修的 3.1.2(c) 繞過購買問題是不同層次（那個修法本身邏輯對，但觸發方式在有背景畫面的情境下有 race condition）
+  - 依 TDD 修正：先改 `src/__tests__/hooks/useProGate.test.ts` 斷言改成期待 `router.navigate('/')` 而非 `router.replace('/')`（Red：1 個測試失敗）；把 `useProGate.ts` 的 `router.replace('/')` 改成 `router.navigate('/')`（navigate 在堆疊裡已有同名畫面時會切回既有畫面而非新建，避免兩個實例互搶旗標）；補上程式碼註解說明這個 race condition 的成因，避免以後又改回 replace（Green：3 tests 全過）
+  - 更新 `feature_list.json`（ios-101-001 新增 4 筆 evidence：Build 8/submit/TestFlight 確認、bug 回報與排查、TDD 修正過程；notes 補充這輪發現與教訓）與 `claude-progress.md`「目前已驗證狀態」
+- 執行過的驗證：`npx jest src/__tests__/hooks/useProGate.test.ts`（Red→Green，3 tests 全過）；`npx jest`（全套 20 suites、121 tests 全過，無回歸）；`npx tsc --noEmit -p .`（本次改動的 2 個檔案無新增錯誤）；App Store Connect TestFlight 頁面文字讀取確認 Build 8 狀態與測試人員名單
+- 已擷取證據：見 feature_list.json ios-101-001 evidence（本輪新增 4 筆）
+- 提交記錄：（見本輪 commit）
+- 已知風險或未解決問題：程式碼修正已完成但**尚未進行下一輪 eas build/submit（Build 9）**，需要使用者確認才能執行；這次的教訓是「跨畫面導覽邏輯（router.replace vs navigate）的改動光靠 unit test 測不出堆疊行為的 race condition，必須請使用者實機測試才發現」，之後類似改動應該主動提醒使用者先實機測一輪再回覆 Apple，不要只憑 unit test 通過就認定沒問題
+- 下一步最佳動作：跟使用者確認是否要現在跑 `eas build --platform ios` + `eas submit`（Build 9）；上傳完成後請使用者再次實機用 TestFlight 測試「分享／截圖」等 Pro 專屬功能的升級流程，確認這次真的會正確導向設定頁並看到方案資訊；確認無誤後請使用者錄影，再去 App Store Connect 回覆 3.1.2(c) 那則訊息並附上錄影
 
 ### 工作階段 028
 
