@@ -10,7 +10,7 @@
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-29 為 124 tests passed）
 - **重要現況**：iOS 1.0.1 先前被 Apple 拒絕理由 4.3(a) Spam（回覆申訴後已消失）、接著又因 **Guideline 3.1.2(c)** 被拒（App 內「升級 Pro」購買路徑繞過方案資訊）。工作階段 028～031 陸續修正程式碼（架構改成全域 SettingsModal＋settingsScrollToken 捲回頂部），但**這個 3.1.2(c) 被拒的送審（提交 ID 6f1123ae...）至今從未真正修復重新送審**——App Store Connect 上掛的仍是最早被拒的 Build 7，Pro 月費／Pro 年費／SPARK PLATE Pro 訂閱群組三項狀態都回到「準備審查」（未核准、未在審查中），RevenueCat 後台對應顯示這兩個商品「Could not check」。工作階段 032 排查確認：使用者最新回報「按升級 Pro 都不會觸發付費頁面」不是程式碼 bug，是因為這是帳號第一次要上架的自動續訂訂閱，Apple 規定必須隨審查通過的 App 版本才會正式生效，目前卡住導致 RevenueCat `getOfferings()` 對任何人（含 Sandbox/TestFlight）都拿不到方案，`SettingsModal.tsx` 在方案為空時正確顯示「暫時無法載入方案資訊」fallback、不會有可購買按鈕。經使用者確認，暫時把六個 Pro 專屬功能（截圖、分享、開機用相機、拍照自動下載、匯出備份、匯入備份）按下時的提示，從「跳出升級 Pro、導去設定頁（現在是死路）」改成純告知的「訂閱 Pro 方案後解鎖」、不做任何導航（`useProGate.ts`）。**這整串拒絕不影響目前已上架的 1.0 版**，1.0 持續正常供應中，但線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好
-- ios-101-001／photo-naming-001：狀態 in_progress；已回覆 Apple 3.1.2(c) 訊息並附上錄影，但提交項目上當時掛的仍是不含修正的 Build 7；工作階段 033 已本機建置＋上傳 **Build 14**（原生打包含這幾輪全部 JS 修正，不依賴 OTA），TestFlight 狀態「完成」「準備提交」，等使用者實機測試確認六個 Pro 專屬功能入口行為正確後，需把這個 build 換掛到卡住的 3.1.2(c) 提交項目（目前還掛著 Build 7）上，再點「重新提交至 App 審查」→ 等審查通過（App 版本＋兩個訂閱＋訂閱群組會一起審）；審查通過後需實機驗證四件事（啟動畫面無 icon、升級 Pro 正常購買且會先看到方案資訊、拍照檔名依時間排序、Pro 專屬功能升級提示不再繞過購買）才能改為 passing，見工作階段 026～033；**備忘：下次遇到 EAS 免費 build 額度用完，可直接用 `eas build --local` 本機建置繞過，不用等額度重置**；**備忘：純 JS 改動不需要重新 native build，用 `eas update --branch production` 推 OTA 即可，省資源**；**備忘：第一次自動續訂訂閱若跟著的 App 版本被拒絕，訂閱狀態會被打回「準備審查」，RevenueCat 那邊商品會變成「Could not check」，購買功能會整個失效，必須實際走完一次審查通過才會恢復，不是程式碼能繞過的**
+- ios-101-001／photo-naming-001：狀態 in_progress；工作階段 033 使用者實機測試 Build 14 六個 Pro 專屬功能入口皆正常後，已把提交項目的建置版本從 Build 7 換成 **Build 14**、點「更新審查內容」讓四個項目（App 版本＋Pro 月費＋Pro 年費＋SPARK PLATE Pro 訂閱群組）狀態轉回「準備審查」、再點「重新提交至 App 審查」——**目前狀態「等待審查」，正式進入 Apple 審查佇列**（最長 48 小時，email 通知），是這輪 4.3(a)／3.1.2(c) 拒絕以來第一次完整重新送審成功；審查通過後需實機驗證四件事（啟動畫面無 icon、升級 Pro 正常購買且會先看到方案資訊、拍照檔名依時間排序、Pro 專屬功能升級提示不再繞過購買）才能改為 passing，見工作階段 026～033；**備忘：下次遇到 EAS 免費 build 額度用完，可直接用 `eas build --local` 本機建置繞過，不用等額度重置**；**備忘：純 JS 改動不需要重新 native build，用 `eas update --branch production` 推 OTA 即可，省資源**；**備忘：第一次自動續訂訂閱若跟著的 App 版本被拒絕，訂閱狀態會被打回「準備審查」，RevenueCat 那邊商品會變成「Could not check」，購買功能會整個失效，必須實際走完一次審查通過才會恢復，不是程式碼能繞過的**
 - 目前最高優先級未完成功能（不含上述兩項）：無；AdMob 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決，但見上方「重要現況」，該次驗證是在訂閱審查還有效時做的，08-10 撤回提交後訂閱已失效）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
 - appstore-001：passing。2026-08-19 那輪送審已被 Apple 核准（版本狀態「已可發佈」），但核准後「定價與供應狀況」未設定供應地區，導致 App 顯示「已從 App Store 下架停售」；2026-08-27 已設定「所有國家或地區（175 個）」解除，24 小時內在 App Store 生效，「自動發佈此版本」設定確認生效中，不需額外手動發佈
 - 目前 blocker：無；等待 24 小時供應狀況全面生效讓 App 真正出現在 App Store 上；另有一個不阻擋上架、但需留意的待辦——App Store Connect 發佈頁面出現「受監管醫療器材聲明」提醒，2027 年初前需在「App 資訊」頁面聲明是否為受監管醫療器材（僅影響歐盟/歐洲經濟區/英國/美國上市），可之後找時間處理
@@ -30,8 +30,8 @@
 - 執行過的驗證：`eas build --local` 指令輸出確認 Archive Succeeded、IPA 匯出成功；`eas submit` 指令輸出確認上傳成功；App Store Connect TestFlight 頁面文字讀取確認 Build 14 狀態與測試群組
 - 已擷取證據：見 feature_list.json ios-101-001 evidence（本輪新增 1 筆）
 - 提交記錄：（見本輪 commit，僅文件更新）
-- 已知風險或未解決問題：Build 14 原生打包已包含這幾輪全部 JS 修正（不依賴 OTA 下載時機），但**尚未經使用者實機測試**，也**尚未換掛到卡住的 3.1.2(c) 提交項目上**（目前該提交項目仍掛著 Build 7）
-- 下一步最佳動作：請使用者用 TestFlight 更新到 Build 14，完整重測六個 Pro 專屬功能入口（截圖、分享、開機用相機、拍照自動下載、匯出備份、匯入備份）的提示文案與導航行為；確認無誤後，去 App Store Connect 把該提交項目的建置版本從 Build 7 換成 Build 14，點「重新提交至 App 審查」
+- 已知風險或未解決問題：使用者測試 Build 14 六個入口皆正常後，已完成換 build＋重新提交，目前「等待審查」中，結果未知（尚未收到 Apple 回應）
+- 下一步最佳動作：等待 Apple 審查結果（email 通知或回 App Store Connect 查看，最長 48 小時）；若通過，需實機驗證四件事（啟動畫面無 icon、升級 Pro 正常購買且會先看到方案資訊、拍照檔名依時間排序、Pro 專屬功能升級提示不再繞過購買），驗證完成後把 ios-101-001／photo-naming-001 改為 passing；若再被拒，回到 systematic-debugging 排查新的拒絕原因
 
 ### 工作階段 032
 
