@@ -9,14 +9,39 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-29 為 124 tests passed）
-- **重要現況**：iOS 1.0.1 先前被 Apple 拒絕理由 4.3(a) Spam（回覆申訴後已消失）、接著又因 **Guideline 3.1.2(c)** 被拒（App 內「升級 Pro」購買路徑繞過方案資訊）。工作階段 028/029 用「router 導航回首頁 + 觸發旗標」的模式修了兩輪都失敗，工作階段 030 改用架構層級修法（`SettingsModal` 固定掛在 `app/_layout.tsx` 最頂層，靠 `settingsStore.settingsVisible` 全域布林值控制、不需要 router 導航），跑了 Build 10 但**當月 EAS 免費方案 iOS build 額度用完**（2026-09-01 重置），改用 `eas build --local` 本機建置成功繞過（實際是 Build 12，補裝了 fastlane），使用者實機測試：分享／截圖已修好，但設定頁內的兩個 toggle（開機用相機、拍照自動下載）按升級 Pro 後「停留在設定頁沒反應」——排查是設計疏漏非架構問題：這兩個 toggle 觸發時 settingsVisible 本來就已經是 true，沒有狀態變化，使用者當下捲動位置在畫面下方看不到最上面的方案資訊。工作階段 031 修正（新增 settingsScrollToken，每次 openSettings() 都遞增觸發捲回頂部），**這次修正純屬 JS 邏輯**，改用 `eas update --branch production` 推送 OTA 更新到已裝的 Build 12，不需要重新 build/送審。測試（124 tests）與 typecheck 皆過，**等使用者收到 OTA 更新後重新測試全部四個入口**；**這整串拒絕不影響目前已上架的 1.0 版**，1.0 持續正常供應中，但線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好
-- ios-101-001／photo-naming-001：狀態 in_progress；下一步是使用者用 TestFlight 收到 OTA 更新（或重開 App 觸發更新檢查）後，完整重測分享／截圖／開機用相機／拍照自動下載這四個入口 → 全部正常後錄影 → 回覆 Apple 3.1.2(c) 訊息附上錄影 → 等審查；審查通過後需實機驗證四件事（啟動畫面無 icon、升級 Pro 正常購買且會先看到方案資訊、拍照檔名依時間排序、Pro 專屬功能升級提示會導向設定頁而非直接購買）才能改為 passing，見工作階段 026～031；**備忘：下次遇到 EAS 免費 build 額度用完，可直接用 `eas build --local` 本機建置繞過，不用等額度重置**；**備忘：純 JS 改動不需要重新 native build，用 `eas update --branch production` 推 OTA 即可，省資源**
+- **重要現況**：iOS 1.0.1 先前被 Apple 拒絕理由 4.3(a) Spam（回覆申訴後已消失）、接著又因 **Guideline 3.1.2(c)** 被拒（App 內「升級 Pro」購買路徑繞過方案資訊）。工作階段 028～031 陸續修正程式碼（架構改成全域 SettingsModal＋settingsScrollToken 捲回頂部），但**這個 3.1.2(c) 被拒的送審（提交 ID 6f1123ae...）至今從未真正修復重新送審**——App Store Connect 上掛的仍是最早被拒的 Build 7，Pro 月費／Pro 年費／SPARK PLATE Pro 訂閱群組三項狀態都回到「準備審查」（未核准、未在審查中），RevenueCat 後台對應顯示這兩個商品「Could not check」。工作階段 032 排查確認：使用者最新回報「按升級 Pro 都不會觸發付費頁面」不是程式碼 bug，是因為這是帳號第一次要上架的自動續訂訂閱，Apple 規定必須隨審查通過的 App 版本才會正式生效，目前卡住導致 RevenueCat `getOfferings()` 對任何人（含 Sandbox/TestFlight）都拿不到方案，`SettingsModal.tsx` 在方案為空時正確顯示「暫時無法載入方案資訊」fallback、不會有可購買按鈕。經使用者確認，暫時把六個 Pro 專屬功能（截圖、分享、開機用相機、拍照自動下載、匯出備份、匯入備份）按下時的提示，從「跳出升級 Pro、導去設定頁（現在是死路）」改成純告知的「訂閱 Pro 方案後解鎖」、不做任何導航（`useProGate.ts`）。**這整串拒絕不影響目前已上架的 1.0 版**，1.0 持續正常供應中，但線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好
+- ios-101-001／photo-naming-001：狀態 in_progress；工作階段 032 的 `useProGate.ts` 改動已測試/typecheck 通過但**尚未 build/OTA 推送**；真正解除訂閱卡住需要：把含 3.1.2(c) 修正的 build（Build 12 或更新的）掛回 iOS App 版本 1.0.1 提交項目（目前還掛著 Build 7）→ 用手機錄一段四個入口的操作影片 → 回覆 Apple 那則 3.1.2(c) 訊息並附上錄影、重新提交至 App 審查 → 等審查通過（App 版本＋兩個訂閱＋訂閱群組會一起審）；審查通過後需實機驗證四件事（啟動畫面無 icon、升級 Pro 正常購買且會先看到方案資訊、拍照檔名依時間排序、Pro 專屬功能升級提示不再繞過購買）才能改為 passing，見工作階段 026～032；**備忘：下次遇到 EAS 免費 build 額度用完，可直接用 `eas build --local` 本機建置繞過，不用等額度重置**；**備忘：純 JS 改動不需要重新 native build，用 `eas update --branch production` 推 OTA 即可，省資源**；**備忘：第一次自動續訂訂閱若跟著的 App 版本被拒絕，訂閱狀態會被打回「準備審查」，RevenueCat 那邊商品會變成「Could not check」，購買功能會整個失效，必須實際走完一次審查通過才會恢復，不是程式碼能繞過的**
 - 目前最高優先級未完成功能（不含上述兩項）：無；AdMob 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決，但見上方「重要現況」，該次驗證是在訂閱審查還有效時做的，08-10 撤回提交後訂閱已失效）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
 - appstore-001：passing。2026-08-19 那輪送審已被 Apple 核准（版本狀態「已可發佈」），但核准後「定價與供應狀況」未設定供應地區，導致 App 顯示「已從 App Store 下架停售」；2026-08-27 已設定「所有國家或地區（175 個）」解除，24 小時內在 App Store 生效，「自動發佈此版本」設定確認生效中，不需額外手動發佈
 - 目前 blocker：無；等待 24 小時供應狀況全面生效讓 App 真正出現在 App Store 上；另有一個不阻擋上架、但需留意的待辦——App Store Connect 發佈頁面出現「受監管醫療器材聲明」提醒，2027 年初前需在「App 資訊」頁面聲明是否為受監管醫療器材（僅影響歐盟/歐洲經濟區/英國/美國上市），可之後找時間處理
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）；2026-08-08 App Store 審查一度被拒（Age Rating 廣告內容描述沒勾選，跟訂閱資訊無關），已修正並重新送審過一次；2026-08-10 又因為訂閱付費畫面缺必要資訊主動撤回審查、修復、重新送審（見工作階段 019）
 
 ## 工作階段日誌
+
+### 工作階段 032
+
+- 日期：2026-08-29
+- 本輪目標：使用者回報「分享／截圖」按升級 Pro 會跑回設定頁、「開機用相機／拍照自動下載」按升級 Pro 後停在設定頁，四個入口都不會觸發付費頁面，請 Claude 找原因並修正
+- 已完成：
+  - 用 systematic-debugging 排查：先讀 `useProGate.ts`／`settingsStore.ts`／`SettingsModal.tsx`／`app/_layout.tsx` 確認工作階段 028～031 的架構修法（全域 Modal＋scroll token）程式碼都還在、邏輯正確，不是這幾輪改壞的
+  - 用 claude-in-chrome 查 App Store Connect：提交詳情頁（提交 ID `6f1123ae-4e98-44fe-ac85-2618b5223204`）顯示「問題未解決——App 版本遭到拒絕，且目前無其他可獲接受或能通過核准的提交項目」，iOS App 1.0.1 掛的仍是 Build 7（3.1.2(c) 被拒絕的那個版本，從未換成含修正的 Build 12），Pro 月費／Pro 年費／SPARK PLATE Pro 訂閱群組三項狀態都回到「準備審查」
+  - 交叉查 RevenueCat 後台（app.revenuecat.com）Product catalog > Products 頁面：`com.sparkplate.app.pro.yearly`／`com.sparkplate.app.pro.monthly` 兩個 App Store 商品狀態都是「Could not check」，證實 RevenueCat 自己都無法跟 Apple 核對這兩個商品現況
+  - 確認根因：這是帳號第一次要上架的自動續訂訂閱，Apple 規定必須隨審查通過的 App 版本才會正式生效（含 Sandbox/TestFlight 測試），目前這唯一一次送審卡在「已拒絕」，訂閱從未真正核准過，導致 `Purchases.getOfferings()` 現在對任何人都拿不到方案；`SettingsModal.tsx` 在方案為空陣列時依規定顯示「暫時無法載入方案資訊，請稍後再試」fallback、不給可購買按鈕——使用者看到的「停在設定頁沒反應」正是這個 fallback，不是導覽壞掉，是程式碼正確地不讓你繞過去買。跟使用者說明後，使用者確認這不用等審查，先改 UX
+  - 使用者要求：截圖、分享、開機用相機、拍照自動下載、匯出備份、匯入備份這六個 Pro 專屬功能按下時，不要跳出「升級 Pro」導去設定頁，改成直接顯示「訂閱 Pro 方案後解鎖」
+  - 依 TDD 修正：先改 `src/__tests__/hooks/useProGate.test.ts`（斷言 Alert 不帶按鈕陣列、`settingsStore.settingsVisible` 呼叫後維持 false——Red：`npx jest` 顯示 2 個失敗）；`src/hooks/useProGate.ts` 的 `requirePro()` 移除 `openSettings()` 呼叫與 `useSettingsStore` import，`Alert.alert()` 改成只傳 title／message 兩個參數（不帶 buttons，系統預設單一 OK 鈕），不再導航（Green：3 tests 全過）
+  - 使用者接著要求六個入口不要一刀切：截圖、分享（在分頁頂欄，不在設定頁內部）要恢復原本「升級 Pro → 導去設定頁」的行為，其餘四個（已經在設定頁內部）維持純告知不導航
+  - 依 TDD 修正：先在 `useProGate.test.ts` 新增案例驗證 `requirePro(label, { openSettingsOnUpgrade: true })` 會顯示帶「升級 Pro」按鈕的提示且按下後開啟設定頁（Red：`npx jest` 顯示 1 個失敗）；`useProGate.ts` 的 `requirePro()` 加回 `useSettingsStore` 的 `openSettings`，新增第二個參數 `options?: { openSettingsOnUpgrade?: boolean }` 控制要不要顯示原本兩顆按鈕的提示並導航；`app/(tabs)/_layout.tsx` 的「截圖」「分享」呼叫改傳 `{ openSettingsOnUpgrade: true }`，`SettingsModal.tsx` 內部五個呼叫點維持不傳、走預設純告知（Green：4 tests 全過）
+  - 使用者再要求兩邊文案要一致，統一改成「升級 Pro 即可解鎖」（原本導航版多了「，要現在查看方案嗎？」、不導航版是「訂閱 Pro 方案後解鎖」，兩邊不同）
+  - 依 TDD 修正：先改 `useProGate.test.ts` 三個案例的期望文案（Red：`npx jest` 顯示 3 個失敗）；`useProGate.ts` 的 `requirePro()` 兩個分支的 Alert message 都改成 `'升級 Pro 即可解鎖'`（Green：4 tests 全過）
+  - 使用者最後要求截圖／分享：提示文字不要加其他句子或按鈕文字（就只有「{功能}為 Pro 專屬功能，升級 Pro 即可解鎖」這句話），並且要自動導去設定頁，不需要使用者額外按「升級 Pro」按鈕確認
+  - 依 TDD 修正：先改 `useProGate.test.ts` 的 `openSettingsOnUpgrade` 案例，斷言 Alert 不帶 buttons 陣列、呼叫 `requirePro` 後 `settingsVisible` 立刻變 true（不用手動觸發按鈕 onPress）（Red：`npx jest` 顯示 1 個失敗，仍收到帶按鈕陣列的呼叫）；`useProGate.ts` 簡化 `requirePro()`：兩種情況統一只傳 title/message、不帶 buttons；`openSettingsOnUpgrade: true` 時改成跳出提示的同時同步呼叫 `openSettings()`，不再靠按鈕 onPress 觸發（Green：4 tests 全過）
+  - 更新 `feature_list.json`（ios-101-001 新增 5 筆 evidence 記錄本輪排查與四次 UX 修正、`user_visible_behavior`／`verification`／`notes` 同步更新）與 `claude-progress.md`「目前已驗證狀態」
+  - 使用者確認推送：`npx eas-cli update --branch production --non-interactive` 發佈成功——iOS Update group `e95be076-07cd-4ee5-9753-b9fba62498fd`（Runtime version 1.0.1，跟 Build 12 相符）、Android Update group `3f8af773-58ea-479a-a037-77c710b4ec73`（Runtime version 1.0.0）
+- 執行過的驗證：`npx jest src/__tests__/hooks/useProGate.test.ts`（四輪 Red→Green，最終 4 tests 全過）；`npx jest`（全套 20 suites、125 tests 全過，無回歸）；`npx tsc --noEmit -p .`（本次改動的 3 個檔案無新增錯誤，既有 FlashList/Mood/MealGrade 型別錯誤與本次改動無關）；App Store Connect／RevenueCat 頁面文字讀取（get_page_text）確認訂閱審查卡住現況；`eas update` 指令輸出確認 iOS/Android 更新已發佈
+- 已擷取證據：見 feature_list.json ios-101-001 evidence（本輪新增 6 筆）
+- 提交記錄：（見本輪 commit）
+- 已知風險或未解決問題：這次 OTA 已推送，但**尚未經使用者實機確認生效**（可能需要完全關閉重開 App 才會抓到新 bundle，見工作階段 031 的已知風險）；還沒重新走 App Store 3.1.2(c) 的送審流程（Build 7 換成含修正的 build、錄影、回覆 Apple、重新提交）——沒完成這步，訂閱永遠不會真正可購買，不管前端怎麼改都一樣；使用者目前選擇先擋住無效的購買嘗試（改成純告知＋部分自動導航），沒有要求立即處理送審
+- 下一步最佳動作：請使用者完全關閉並重開 App 確認抓到 OTA 更新，重測六個 Pro 專屬功能入口的提示文案與導航行為是否符合預期；另外需要另外找時間跟使用者確認是否要處理卡住的 3.1.2(c) 送審（換 build 掛回提交項目、錄影、回覆 Apple、重新提交至審查），這步才能真正讓訂閱恢復可購買
 
 ### 工作階段 031
 

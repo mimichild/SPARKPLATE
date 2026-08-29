@@ -38,14 +38,14 @@ function BackHeader() {
       {isGallery && (
         <View style={styles.rightBtns}>
           <TouchableOpacity
-            onPress={() => requirePro('截圖') && triggerScreenshot()}
+            onPress={() => requirePro('截圖', { openSettingsOnUpgrade: true }) && triggerScreenshot()}
             activeOpacity={0.7}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             <Text style={styles.backText}>截圖</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => requirePro('分享') && triggerExportOpen()}
+            onPress={() => requirePro('分享', { openSettingsOnUpgrade: true }) && triggerExportOpen()}
             activeOpacity={0.7}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 8 }}
           >
