@@ -9,14 +9,30 @@
 - 儲存庫根目錄：/Users/mimi/Documents/SPARKPLATE
 - 標準啟動路徑：`RUN_START_COMMAND=1 ./init.sh`（實際指令見 init.sh 的 START_CMD）
 - 標準驗證路徑：./init.sh（pnpm install + pnpm test；2026-08-28 為 122 tests passed）
-- **重要現況**：iOS 1.0.1（含 RevenueCat 訂閱重新送審＋啟動畫面優化＋拍照檔名排序）已於 2026-08-28 正式送出 Apple 審查（App Version 1.0.1 / Build 7，連同 Pro 月費/年費訂閱與 SPARK PLATE Pro 訂閱群組共 4 個項目），狀態「等待審核」，最長可能需要 48 小時，審完會寄 email 通知；目前線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好，見工作階段 025／026
-- ios-101-001／photo-naming-001：狀態皆為 blocked（等待 Apple 審查結果，非程式碼卡住）；審查通過後需實機驗證三件事（啟動畫面無 icon、升級 Pro 正常購買、拍照檔名依時間排序）才能改為 passing，見工作階段 026
+- **重要現況**：iOS 1.0.1（App Version 1.0.1 / Build 7）已於 2026-08-29 被 Apple 拒絕，理由 **Guideline 4.3(a) Design: Spam**（判定與已提交的其他 App 共享類似 binary/metadata/概念），非技術性問題；已在 App Store Connect 訊息串回覆 Apple 說明 1.0.1 只是 1.0 的維護更新（修復升級 Pro 購買錯誤＋啟動畫面優化＋拍照檔名排序），非新概念/相似 App，等待 Apple 後續回應（無固定 SLA），見工作階段 027；**此拒絕不影響目前已上架的 1.0 版**，1.0 持續正常供應中，但線上 1.0 版本的「升級 Pro」仍是壞的（訂閱被開發者拒絕），要等 1.0.1 審查通過才會修好
+- ios-101-001／photo-naming-001：狀態皆為 blocked（等待 Apple 對 4.3(a) 申訴回覆的結果，非程式碼卡住）；若 Apple 之後要求重新提交，「重新提交至 App 審查」按鈕才會解鎖；審查通過後需實機驗證三件事（啟動畫面無 icon、升級 Pro 正常購買、拍照檔名依時間排序）才能改為 passing，見工作階段 026／027
 - 目前最高優先級未完成功能（不含上述兩項）：無；AdMob 已設定並**已實機驗證購買成功**（RevenueCat 官方事故已於 7/31 解決，但見上方「重要現況」，該次驗證是在訂閱審查還有效時做的，08-10 撤回提交後訂閱已失效）；順帶修好 `useProGate.ts` 一個真實 bug（見工作階段 016）
 - appstore-001：passing。2026-08-19 那輪送審已被 Apple 核准（版本狀態「已可發佈」），但核准後「定價與供應狀況」未設定供應地區，導致 App 顯示「已從 App Store 下架停售」；2026-08-27 已設定「所有國家或地區（175 個）」解除，24 小時內在 App Store 生效，「自動發佈此版本」設定確認生效中，不需額外手動發佈
 - 目前 blocker：無；等待 24 小時供應狀況全面生效讓 App 真正出現在 App Store 上；另有一個不阻擋上架、但需留意的待辦——App Store Connect 發佈頁面出現「受監管醫療器材聲明」提醒，2027 年初前需在「App 資訊」頁面聲明是否為受監管醫療器材（僅影響歐盟/歐洲經濟區/英國/美國上市），可之後找時間處理
 - 背景：Apple Developer Program 已生效（2026-07-20）；ios-001～ios-006、native-001 皆已 passing（含實機驗證音量鍵快門）；EAS 雲端建置成功產出 .ipa；已設定 EAS Update（OTA）支援並實際用過一次（音量鍵時間窗口調整就是用 eas update 推送，沒有重新走完整 build）；eas.json 加了 ascAppId，eas submit 可以完全非互動執行；2026-07-20 修好「匯入備份後資料庫唯讀」的既有 bug；2026-08-08 第一次跑本機 Android APK 建置（build-apk skill），過程中發現並修復 android/ manifest 缺 AdMob APPLICATION_ID 的問題（見工作階段 018）；2026-08-08 App Store 審查一度被拒（Age Rating 廣告內容描述沒勾選，跟訂閱資訊無關），已修正並重新送審過一次；2026-08-10 又因為訂閱付費畫面缺必要資訊主動撤回審查、修復、重新送審（見工作階段 019）
 
 ## 工作階段日誌
+
+### 工作階段 027
+
+- 日期：2026-08-29
+- 本輪目標：使用者提供 App Store Connect 送審頁面連結，請 Claude 查看 iOS 1.0.1 被拒絕的原因；接著使用者問「1.0.1 被拒會不會連累 1.0 下架」「1.0 都過了為什麼 1.0.1 會被判 SPAM」；最後要求草擬並代為回覆 App 審查申訴
+- 已完成：
+  - 用 claude-in-chrome 登入 App Store Connect 讀取「發佈」頁面，確認 iOS App 1.0.1（Build 7）狀態「已拒絕」，拒絕理由 **4.3.0 Design: Spam**；點進提交詳情頁（提交 ID 6f1123ae-4e98-44fe-ac85-2618b5223204）讀取 Apple 完整訊息：Guideline 4.3(a)，判定與已提交的其他 App（含使用者自己或其他開發者）共享類似 binary/metadata/概念，僅有微小差異；同一份提交草稿裡 Pro 月費／Pro 年費／SPARK PLATE Pro 訂閱群組三項狀態仍是「準備審查」，未被拒絕，只有 App 版本本身被拒
+  - 回覆使用者兩個問題：(1) 1.0.1 被拒不會影響已發佈的 1.0，App Store Connect 的「已發佈版本」與「審查中版本」是分開的，1.0 持續正常供應；(2) 為何 1.0 過了但 1.0.1 被判 spam——說明 4.3(a) 比對範圍包含「你或其他開發者」已上架的 App，從 progress log 得知使用者帳號下還有 SPARKSHAPE 等 SPARK 系列 App、結構/流程相似，加上審查本身有人工判定的不一致性與相似 App 池隨時間變化等因素，都是可能原因
+  - 依使用者要求草擬英文回覆文字（說明 1.0.1 是 1.0 的維護更新、非新概念或相似/重複 App，列出這次唯三改動：修復升級 Pro 購買錯誤即訂閱重新送審、啟動畫面優化、拍照檔名排序，並請審查員在 4.3(a) 下重新評估、如有具體相似對象請告知），先用 AskUserQuestion 取得使用者明確確認後，才在 App Store Connect 提交項目的「訊息」欄位點「回覆 App 審查」送出
+  - 確認回覆送出成功：訊息串從「訊息 (1)」變成「訊息 (2)」，新增一則署名「又僖」、時間「今天下午4:30」的回覆，內容完整比對無誤；「重新提交至 App 審查」按鈕仍反灰（4.3(a) 屬內容判定問題，需等 Apple 人工複核回覆，非需要重新上傳 build 才會解鎖）
+  - 更新 feature_list.json（ios-101-001 新增兩筆 evidence：拒絕原因、回覆送出記錄；notes 補充本輪處理經過；last_updated 改為 2026-08-29）與 claude-progress.md「目前已驗證狀態」反映最新現況
+- 執行過的驗證：App Store Connect 頁面文字讀取（get_page_text）確認拒絕理由文字與回覆送出後訊息串內容；無程式碼變更，不涉及 npx jest / init.sh
+- 已擷取證據：見 feature_list.json ios-101-001 evidence（本輪新增兩筆）
+- 提交記錄：（見本輪 commit，僅 feature_list.json 與 claude-progress.md 的文件更新）
+- 已知風險或未解決問題：Apple 對此次申訴回覆的時間未知（不是固定 48 小時 SLA），若 Apple 仍判定 spam 或要求更多資訊，需再進一步溝通或考慮調整 App 內容/差異化說明；ios-101-001／photo-naming-001 維持 blocked，等 Apple 回應後才能繼續走到實機驗證步驟
+- 下一步最佳動作：定期回 App Store Connect 提交詳情頁（或等 Apple email 通知）確認是否有新回覆；若 Apple 要求重新提交，「重新提交至 App 審查」按鈕會解鎖，屆時直接點擊即可（不需要重新 build）；若 Apple 維持拒絕或提出具體相似 App，需要跟使用者討論下一步（例如提供更多差異化說明，或評估是否需要調整 App 內容）
 
 ### 工作階段 026
 
