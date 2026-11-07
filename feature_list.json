@@ -300,7 +300,7 @@
       "area": "photo",
       "title": "同一天同一餐已有照片時，存新照前詢問是否覆蓋",
       "user_visible_behavior": "在『今日』或『相簿』頁新增照片並於餐點資訊視窗按確認時，若所選日期＋餐別已經有照片，跳出『已存在一張照片了，請問需要覆蓋舊照嗎？』；按『確定』才覆蓋舊照，按『取消』則不儲存這張新照片、舊照保留。沒有舊照時行為不變，直接儲存。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "npx jest src/__tests__/utils/confirmOverwrite.test.ts src/__tests__/hooks/useTodayMeals.test.tsx 全過（涵蓋提示文字、確定→true、取消→false、hasMealAt 判斷）。",
         "./init.sh 全部測試通過、npx tsc --noEmit 無新增錯誤。",
@@ -309,7 +309,8 @@
       "evidence": [
         "2026-11-07 | pnpm jest src/__tests__/utils src/__tests__/hooks/useTodayMeals.test.tsx（實作前） | 紅燈：confirmOverwrite 模組不存在、hasMealAt is not a function",
         "2026-11-07 | ./init.sh | Test Suites: 21 passed；Tests: 130 passed",
-        "2026-11-07 | npx tsc --noEmit（改動前後比較） | 皆為 19 行既有錯誤（FlashList estimatedItemSize、測試檔型別），無新增"
+        "2026-11-07 | npx tsc --noEmit（改動前後比較） | 皆為 19 行既有錯誤（FlashList estimatedItemSize、測試檔型別），無新增",
+        "2026-11-07 | Android 實機安裝 sparkplate-v1.0.1-20261107-1531.apk，同一餐先存一張再拍第二張按確認（使用者實測回報） | 使用者回報「正常」：跳出覆蓋詢問，取消保留舊照、確定覆蓋"
       ],
       "notes": "2026-11-07：程式碼與單元測試已完成；因 ios-101-001 仍佔用唯一 in_progress 名額（等待 Apple 審查），本項維持 not_started，待實機驗證第 3 步後改 passing。純 JS 改動，可用 eas update 推 OTA，不需重新 native build。"
     },
@@ -319,7 +320,7 @@
       "area": "backup",
       "title": "修復匯出備份 OutOfMemoryError（備份檔大時失敗）",
       "user_visible_behavior": "照片多、備份檔上百 MB 時，匯出備份也能成功；匯出完成後兩個平台都跳出系統分享面板讓使用者選擇儲存位置（Android 不再先選資料夾）。匯入大型備份也不會因記憶體不足失敗。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "npx jest src/__tests__/services/backupService.test.ts src/__tests__/components/BackupRestoreModal.test.tsx 全過（涵蓋分段寫入每段 ≤1MB、不使用整包字串、匯出→匯入內容完全還原、Android 改用分享面板）。",
         "./init.sh 全部測試通過、npx tsc --noEmit 無新增錯誤。",
@@ -330,9 +331,10 @@
         "2026-11-07 | pnpm jest src/__tests__/services/backupService.test.ts（修改前） | 2 failed：舊程式呼叫 writeAsStringAsync 整包寫入",
         "2026-11-07 | pnpm jest src/__tests__/components/BackupRestoreModal.test.tsx（修改前） | Android 匯出測試 failed：未呼叫 Sharing.shareAsync",
         "2026-11-07 | ./init.sh | Test Suites: 22 passed；Tests: 133 passed",
-        "2026-11-07 | npx tsc --noEmit | 19 行既有錯誤，無新增"
+        "2026-11-07 | npx tsc --noEmit | 19 行既有錯誤，無新增",
+        "2026-11-07 | Android 實機（原本 OOM 失敗的裝置）安裝 sparkplate-v1.0.1-20261107-1531.apk，設定→匯出備份→分享面板存檔，再匯入該檔（使用者實測回報） | 使用者回報「正常」：匯出成功、匯入後照片與紀錄皆在"
       ],
-      "notes": "2026-11-07：根因是匯出時把整包 ZIP 轉成 base64 字串一次寫入（Android 原生端需配置同等大小字串，Java heap 上限 256MB），Android 存到 SAF 資料夾時又整包讀成字串一次寫入；匯入同樣整包讀成字串。改為 expo-file-system 新版 File/FileHandle 以 Uint8Array 每段 1MB 讀寫，JSZip 以 generateInternalStream 串流產生；SAF 不支援分段寫入，經使用者同意 Android 改用分享面板（與 iOS 相同）。照片用 STORE 不再 DEFLATE（JPEG 已壓縮）。因 ios-101-001 佔用 in_progress，本項維持 not_started，待實機驗證。"
+      "notes": "2026-11-07：根因是匯出時把整包 ZIP 轉成 base64 字串一次寫入（Android 原生端需配置同等大小字串，Java heap 上限 256MB），Android 存到 SAF 資料夾時又整包讀成字串一次寫入；匯入同樣整包讀成字串。改為 expo-file-system 新版 File/FileHandle 以 Uint8Array 每段 1MB 讀寫，JSZip 以 generateInternalStream 串流產生；SAF 不支援分段寫入，經使用者同意 Android 改用分享面板（與 iOS 相同）。照片用 STORE 不再 DEFLATE（JPEG 已壓縮）。因 ios-101-001 佔用 in_progress，本項維持 not_started，待實機驗證。 2026-11-07：Android 實機驗證通過改 passing；iOS 走同一段新 File API 程式，下次 iOS 版本送審前需一併實測匯出／匯入。"
     }
   ]
 }
