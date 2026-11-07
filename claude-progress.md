@@ -30,8 +30,9 @@
 - 執行過的驗證：先寫測試確認紅燈；`./init.sh` 130 tests passed；`npx tsc --noEmit` 前後皆 19 行既有錯誤無新增
 - 已擷取證據：見 feature_list.json photo-overwrite-001
 - 提交記錄：見本輪 commit
+- 本機 Android APK 建置（build-apk skill）：BUILD SUCCESSFUL，已上傳 Google Drive `SPARK-Builds/SPARKPLATE/sparkplate-v1.0.1-20261107-1514.apk`（本機簽章，與 EAS 版不同，安裝前需先移除舊版）
 - 已知風險或未解決問題：尚未實機驗證
-- 下一步最佳動作：實機/模擬器驗證覆蓋詢問流程後，可用 `eas update --branch production` 推 OTA
+- 下一步最佳動作：用此 APK 實機驗證覆蓋詢問流程後，可用 `eas update --branch production` 推 OTA
 
 ### 工作階段 033
 
