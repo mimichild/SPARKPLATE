@@ -18,6 +18,21 @@
 
 ## 工作階段日誌
 
+### 工作階段 035
+
+- 日期：2026-11-07
+- 本輪目標：使用者回報 Android 匯出備份失敗（OutOfMemoryError，134MB 字串配置失敗），請求修正
+- 已完成：
+  - `src/services/backupService.ts`：匯出改用 JSZip `generateInternalStream` 串流產生，以 expo-file-system 新版 `File`/`FileHandle` 每段 1MB 寫入；輸入檔改讀 Uint8Array；照片用 STORE、資料庫用 DEFLATE；匯入改為分段讀取 ZIP、解出 Uint8Array 直接寫檔
+  - `src/components/BackupRestoreModal.tsx`：Android 匯出不再走 SAF 選資料夾（SAF 只能整包寫入），改用分享面板（經使用者同意），並在下次匯出前清掉 App 內殘留的舊備份 ZIP
+  - 新增 `src/__tests__/services/backupService.test.ts`（記憶體模擬檔案系統）、`BackupRestoreModal.test.tsx` 新增 Android 匯出測試
+  - 新增 backup-oom-001（not_started）
+- 執行過的驗證：兩支新測試先確認紅燈；`./init.sh` 133 tests passed；`npx tsc --noEmit` 19 行既有錯誤無新增
+- 已擷取證據：見 feature_list.json backup-oom-001
+- 提交記錄：見本輪 commit
+- 已知風險或未解決問題：尚未實機驗證；改用 expo-file-system 新版 API（File/FileHandle），iOS 也走同一段程式，需一併在 iOS 驗證匯出／匯入；Jest 環境下 JSZip 解壓 1.5MB 需數秒（Node 直接跑僅數毫秒，判斷為測試環境問題）
+- 下一步最佳動作：重建 APK 在原本失敗的裝置實測匯出＋匯入
+
 ### 工作階段 034
 
 - 日期：2026-11-07

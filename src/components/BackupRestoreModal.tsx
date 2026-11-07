@@ -69,57 +69,43 @@ export function BackupRestoreModal({ visible, mode, onClose }: Props) {
       const date     = new Date().toISOString().slice(0, 10);
       const filename = `sparkplate_backup_${date}.zip`;
 
-      if (Platform.OS === 'android') {
-        // Step 1: let user pick destination folder via SAF
-        setStep('picking');
-        const perm = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-        if (!perm.granted) { onClose(); return; }
+      // 兩個平台都用分享面板儲存（Android 可存到雲端硬碟、檔案 App 等）。
+      // Android 過去用 SAF 先選資料夾，但 SAF 只能一次寫入整個檔案，必須把整包
+      // ZIP 讀成 base64 字串，備份一大就 OutOfMemoryError；分享面板由系統直接
+      // 從檔案串流傳送，不受備份大小影響。
+      if (Platform.OS === 'android') await removeOldAndroidBackups();
 
-        // Step 2: generate ZIP with progress
-        setStep('running');
-        setProgress(0);
-        const zipPath = await exportBackup((p) => setProgress(p * 0.85)); // 0-85%
-
-        // Step 3: create file in chosen folder and write
-        setProgress(88);
-        const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
-          perm.directoryUri,
-          filename,
-          'application/zip',
-        );
-        const base64 = await FileSystem.readAsStringAsync(zipPath, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        setProgress(94);
-        await FileSystem.StorageAccessFramework.writeAsStringAsync(fileUri, base64, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-
-        // Clean up cache
-        await FileSystem.deleteAsync(zipPath, { idempotent: true });
-        setProgress(100);
-        setSavedName(filename);
-        setStep('done');
-
-      } else {
-        // iOS: generate ZIP then use share sheet to save
-        setStep('running');
-        setProgress(0);
-        const zipPath = await exportBackup(setProgress);
-        const canShare = await Sharing.isAvailableAsync();
-        if (!canShare) throw new Error('此裝置不支援分享功能');
-        await Sharing.shareAsync(zipPath, {
-          mimeType: 'application/zip',
-          dialogTitle: '選擇備份儲存位置',
-          UTI: 'public.zip-archive',
-        });
-        setSavedName(filename);
-        setStep('done');
-      }
+      setStep('running');
+      setProgress(0);
+      const zipPath = await exportBackup(setProgress);
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) throw new Error('此裝置不支援分享功能');
+      await Sharing.shareAsync(zipPath, {
+        mimeType: 'application/zip',
+        dialogTitle: '選擇備份儲存位置',
+        UTI: 'public.zip-archive',
+      });
+      setSavedName(filename);
+      setStep('done');
     } catch (e: any) {
       setErrorMsg(e?.message ?? '匯出失敗');
       setStep('error');
     }
+  }
+
+  // Android 的備份 ZIP 留在 App 內部空間（使用者看不到），分享後不能馬上刪
+  // （接收的 App 可能還在讀取），改成下次匯出前清掉舊檔，避免越積越多。
+  // iOS 的備份會出現在「檔案」App，屬於使用者可見的檔案，不自動刪除。
+  async function removeOldAndroidBackups() {
+    try {
+      const dir = FileSystem.documentDirectory ?? '';
+      const names = await FileSystem.readDirectoryAsync(dir);
+      for (const name of names) {
+        if (/^sparkplate_backup_.*\.zip$/.test(name)) {
+          await FileSystem.deleteAsync(`${dir}${name}`, { idempotent: true });
+        }
+      }
+    } catch { /* 清理失敗不影響匯出 */ }
   }
 
   // ── Import ──────────────────────────────────────────────────────────────────

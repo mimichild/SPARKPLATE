@@ -312,6 +312,27 @@
         "2026-11-07 | npx tsc --noEmit（改動前後比較） | 皆為 19 行既有錯誤（FlashList estimatedItemSize、測試檔型別），無新增"
       ],
       "notes": "2026-11-07：程式碼與單元測試已完成；因 ios-101-001 仍佔用唯一 in_progress 名額（等待 Apple 審查），本項維持 not_started，待實機驗證第 3 步後改 passing。純 JS 改動，可用 eas update 推 OTA，不需重新 native build。"
+    },
+    {
+      "id": "backup-oom-001",
+      "priority": 13,
+      "area": "backup",
+      "title": "修復匯出備份 OutOfMemoryError（備份檔大時失敗）",
+      "user_visible_behavior": "照片多、備份檔上百 MB 時，匯出備份也能成功；匯出完成後兩個平台都跳出系統分享面板讓使用者選擇儲存位置（Android 不再先選資料夾）。匯入大型備份也不會因記憶體不足失敗。",
+      "status": "not_started",
+      "verification": [
+        "npx jest src/__tests__/services/backupService.test.ts src/__tests__/components/BackupRestoreModal.test.tsx 全過（涵蓋分段寫入每段 ≤1MB、不使用整包字串、匯出→匯入內容完全還原、Android 改用分享面板）。",
+        "./init.sh 全部測試通過、npx tsc --noEmit 無新增錯誤。",
+        "Android 實機（原本會失敗、照片數量相同的裝置）：設定→匯出備份成功並跳出分享面板，存到雲端硬碟或檔案 App；再用該檔案匯入備份成功、照片與紀錄都在。"
+      ],
+      "evidence": [
+        "2026-11-07 | Android 實機截圖（使用者回報） | 匯出備份錯誤：ExponentFileSystem.writeAsStringAsync rejected → java.lang.OutOfMemoryError: Failed to allocate a 134882128 byte allocation，growth limit 268435456",
+        "2026-11-07 | pnpm jest src/__tests__/services/backupService.test.ts（修改前） | 2 failed：舊程式呼叫 writeAsStringAsync 整包寫入",
+        "2026-11-07 | pnpm jest src/__tests__/components/BackupRestoreModal.test.tsx（修改前） | Android 匯出測試 failed：未呼叫 Sharing.shareAsync",
+        "2026-11-07 | ./init.sh | Test Suites: 22 passed；Tests: 133 passed",
+        "2026-11-07 | npx tsc --noEmit | 19 行既有錯誤，無新增"
+      ],
+      "notes": "2026-11-07：根因是匯出時把整包 ZIP 轉成 base64 字串一次寫入（Android 原生端需配置同等大小字串，Java heap 上限 256MB），Android 存到 SAF 資料夾時又整包讀成字串一次寫入；匯入同樣整包讀成字串。改為 expo-file-system 新版 File/FileHandle 以 Uint8Array 每段 1MB 讀寫，JSZip 以 generateInternalStream 串流產生；SAF 不支援分段寫入，經使用者同意 Android 改用分享面板（與 iOS 相同）。照片用 STORE 不再 DEFLATE（JPEG 已壓縮）。因 ios-101-001 佔用 in_progress，本項維持 not_started，待實機驗證。"
     }
   ]
 }
