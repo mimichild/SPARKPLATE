@@ -131,4 +131,19 @@ describe('useTodayMeals', () => {
     expect(mockUpdateMeal).toHaveBeenCalledWith(mockDb, 'meal-1', { mood: 'great' });
     expect(mockGetMealsByDate).toHaveBeenCalledTimes(1);
   });
+
+  it('hasMealAt returns true when a meal exists for that date and type', async () => {
+    const { result } = renderHook(() => useTodayMeals());
+    await act(async () => {});
+    mockGetMealsByDate.mockResolvedValueOnce([MOCK_MEAL]);
+    await expect(result.current.hasMealAt('2026-05-26', 'lunch')).resolves.toBe(true);
+    expect(mockGetMealsByDate).toHaveBeenLastCalledWith(mockDb, '2026-05-26');
+  });
+
+  it('hasMealAt returns false when no meal of that type exists', async () => {
+    const { result } = renderHook(() => useTodayMeals());
+    await act(async () => {});
+    mockGetMealsByDate.mockResolvedValueOnce([MOCK_MEAL]);
+    await expect(result.current.hasMealAt('2026-05-26', 'dinner')).resolves.toBe(false);
+  });
 });

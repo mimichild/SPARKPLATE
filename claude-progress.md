@@ -18,6 +18,21 @@
 
 ## 工作階段日誌
 
+### 工作階段 034
+
+- 日期：2026-11-07
+- 本輪目標：使用者回報同一天同一餐拍第二張照片會直接覆蓋舊照，要求按確認時先詢問「已存在一張照片了，請問需要覆蓋舊照嗎？」，確定才覆蓋、取消則不儲存
+- 已完成：
+  - 新增 `src/utils/confirmOverwrite.ts`（Alert 詢問，回傳 Promise<boolean>）
+  - `useTodayMeals` 新增 `hasMealAt(date, mealType)`
+  - `app/(tabs)/today.tsx`、`app/(tabs)/gallery.tsx` 的 `handleMetaConfirm` 在儲存前檢查，取消則關閉視窗不儲存；順帶補上 today.tsx `handleMetaConfirm` 型別漏掉的 `date`
+  - 新增 photo-overwrite-001（not_started，因 ios-101-001 佔用 in_progress）
+- 執行過的驗證：先寫測試確認紅燈；`./init.sh` 130 tests passed；`npx tsc --noEmit` 前後皆 19 行既有錯誤無新增
+- 已擷取證據：見 feature_list.json photo-overwrite-001
+- 提交記錄：見本輪 commit
+- 已知風險或未解決問題：尚未實機驗證
+- 下一步最佳動作：實機/模擬器驗證覆蓋詢問流程後，可用 `eas update --branch production` 推 OTA
+
 ### 工作階段 033
 
 - 日期：2026-08-29

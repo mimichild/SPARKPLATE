@@ -10,6 +10,7 @@ import { CameraLaunchModal } from '@/components/CameraLaunchModal';
 import { AppText } from '@/components/AppText';
 import { useTodayMeals } from '@/hooks/useTodayMeals';
 import { usePhoto } from '@/hooks/usePhoto';
+import { confirmOverwrite } from '@/utils/confirmOverwrite';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { Meal, MealType, Mood, MealGrade } from '@/types';
 
@@ -17,7 +18,7 @@ type EditState = { visible: boolean; sourceUri: string };
 type MetaState = { visible: boolean; sourceUri: string };
 
 export default function TodayScreen() {
-  const { dayRecord, loading, addMealWithPhoto, deleteMealWithPhoto } = useTodayMeals();
+  const { dayRecord, loading, addMealWithPhoto, deleteMealWithPhoto, hasMealAt } = useTodayMeals();
   const { pickFromLibrary } = usePhoto();
   const { pendingCameraOpen, clearPendingCameraOpen } = useSettingsStore();
   const [sheetVisible,  setSheetVisible]  = useState(false);
@@ -54,10 +55,18 @@ export default function TodayScreen() {
   }
 
   async function handleMetaConfirm(meta: {
-    mealType: MealType; mood?: Mood; event?: string; grade?: MealGrade; note?: string;
+    date?: string; mealType: MealType; mood?: Mood; event?: string; grade?: MealGrade; note?: string;
   }) {
     if (!metaModal) return;
     const { mealType, ...rest } = meta;
+    const targetDate = meta.date ?? dayRecord.date;
+    if (await hasMealAt(targetDate, mealType)) {
+      const overwrite = await confirmOverwrite();
+      if (!overwrite) {
+        setMetaModal(null);
+        return;
+      }
+    }
     await addMealWithPhoto(mealType, metaModal.sourceUri, rest);
     setMetaModal(null);
   }

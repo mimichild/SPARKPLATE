@@ -30,6 +30,7 @@ interface UseTodayMealsReturn {
   ) => Promise<void>;
   updateMeal: (id: string, updates: Partial<Meal>) => Promise<void>;
   deleteMealWithPhoto: (id: string, photoId?: string) => Promise<void>;
+  hasMealAt: (date: string, mealType: MealType) => Promise<boolean>;
 }
 
 export function useTodayMeals(): UseTodayMealsReturn {
@@ -90,6 +91,14 @@ export function useTodayMeals(): UseTodayMealsReturn {
     [db, reload]
   );
 
+  const hasMealAt = useCallback(
+    async (date: string, mealType: MealType) => {
+      const meals = await getMealsByDate(db, date);
+      return meals.some((m) => m.mealType === mealType);
+    },
+    [db]
+  );
+
   return {
     dayRecord,
     loading,
@@ -98,5 +107,6 @@ export function useTodayMeals(): UseTodayMealsReturn {
     addMealWithPhoto,
     updateMeal: updateMealFn,
     deleteMealWithPhoto,
+    hasMealAt,
   };
 }

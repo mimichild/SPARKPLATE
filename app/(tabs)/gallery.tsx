@@ -20,6 +20,7 @@ import { usePhoto } from '@/hooks/usePhoto';
 import { useDB } from '@/hooks/useDB';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { getMealsByDateRange } from '@/services/mealService';
+import { confirmOverwrite } from '@/utils/confirmOverwrite';
 import { DayRecord, Meal, MealType, Mood, MealGrade } from '@/types';
 
 type EditState = { visible: boolean; sourceUri: string };
@@ -50,7 +51,7 @@ function todayDate() { return new Date().toISOString().slice(0, 10); }
 
 export default function GalleryScreen() {
   const { days, loading, hasMore, loadMore, reload } = useGallery();
-  const { addMealWithPhoto } = useTodayMeals();
+  const { addMealWithPhoto, hasMealAt } = useTodayMeals();
   const { pickFromLibrary } = usePhoto();
   const { fontColor, pendingCameraOpen, clearPendingCameraOpen, pendingExportOpen, clearPendingExportOpen, pendingScreenshot, clearPendingScreenshot } = useSettingsStore();
   const db = useDB();
@@ -142,6 +143,13 @@ export default function GalleryScreen() {
   }) {
     if (!metaModal) return;
     const { mealType, ...rest } = meta; // rest includes date
+    if (await hasMealAt(meta.date, mealType)) {
+      const overwrite = await confirmOverwrite();
+      if (!overwrite) {
+        setMetaModal(null);
+        return;
+      }
+    }
     await addMealWithPhoto(mealType, metaModal.sourceUri, rest);
     setMetaModal(null);
     reload();
